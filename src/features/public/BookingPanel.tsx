@@ -4,11 +4,11 @@ import { useTranslation } from "react-i18next"
 
 import { ErrorAlert } from "@/components/form"
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { ClassSession, PublicCoach, PublicResource } from "@/lib/api/types"
 import {
@@ -30,6 +30,8 @@ import {
   useUpcomingClasses,
 } from "./api"
 import { BookingBar } from "./BookingBar"
+import { brandStyle } from "./brand"
+import { kindOf } from "./booking-utils"
 import { usePublic } from "./context"
 import { useSelection, type BookWhat, type Selection } from "./selection"
 import { lengthsOf } from "@/components/booking/lengths"
@@ -62,6 +64,8 @@ export function BookingPanel() {
   const sportList = sports.data ?? []
   const sport = sportList.find((s) => s.id === sel.sport) ?? sportList[0]
   const courts = (resources.data ?? []).filter((r) => r.sport_id === sport?.id)
+  // customers see what the spaces are ("Choose a ring"); a mix of kinds is just "a space"
+  const spaceKind = kindOf(courts)
   const sportCoaches = (coaches.data ?? []).filter((c) =>
     c.sports.some((s) => s.id === sport?.id),
   )
@@ -100,11 +104,16 @@ export function BookingPanel() {
         }
       : null
   const availability = useAvailability(slug, query)
-  // once the rules are known, offer exactly the days that can be booked (today + max_days_ahead)
+  // spaces and coaches: once the rules are known, offer exactly the days that can be booked
+  // (today + max_days_ahead). Classes are not limited by that rule (any scheduled class can be
+  // booked), so their calendar reaches as far as the page goes.
   const rule = availability.data?.rule
-  const allowedDays = rule
-    ? Math.min(Math.max(rule.max_days_ahead + 1, 1), MAX_DAYS)
-    : daysAhead
+  const allowedDays =
+    what === "class"
+      ? MAX_DAYS
+      : rule
+        ? Math.min(Math.max(rule.max_days_ahead + 1, 1), MAX_DAYS)
+        : daysAhead
   if (allowedDays !== daysAhead) setDaysAhead(allowedDays)
 
   // length first (the shortest by default), then a start that allows it
@@ -151,7 +160,10 @@ export function BookingPanel() {
             label={t("public.step.what")}
             items={options.map((o) => ({
               id: o,
-              label: t(`public.what.${o}`),
+              label:
+                o === "court"
+                  ? t(`public.spaceKind.${spaceKind}`)
+                  : t(`public.what.${o}`),
             }))}
             value={what}
             onChange={(o) =>
@@ -162,7 +174,7 @@ export function BookingPanel() {
       )}
 
       {what === "court" && (
-        <Step title={t("public.step.court")}>
+        <Step title={t(`public.choose.${spaceKind}`)}>
           <TargetList
             items={courts}
             value={court?.id}
@@ -427,6 +439,7 @@ function DateStrip({
   onChange: (date: string) => void
 }) {
   const { t } = useTranslation()
+  const { business } = usePublic()
   const [open, setOpen] = useState(false)
   const shown = days.slice(0, 14)
   const first = new Date(`${days[0]}T00:00:00`)
@@ -478,11 +491,15 @@ function DateStrip({
       {!shown.includes(value) && (
         <p className="text-sm font-medium">{dayIn(middayOf(value, tz), tz)}</p>
       )}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl pb-6">
-          <SheetHeader>
-            <SheetTitle>{t("public.pickDate")}</SheetTitle>
-          </SheetHeader>
+      {/* centred on every screen; the dialog sits outside the page, so it takes the brand colour itself */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent
+          style={brandStyle(business.brand_color)}
+          className="w-auto max-w-[calc(100%-2rem)] gap-2 p-4 sm:max-w-fit"
+        >
+          <DialogHeader>
+            <DialogTitle>{t("public.pickDate")}</DialogTitle>
+          </DialogHeader>
           <div className="flex min-h-80 justify-center">
             <Suspense fallback={<Skeleton className="h-80 w-72 rounded-xl" />}>
               <Calendar
@@ -501,8 +518,8 @@ function DateStrip({
               />
             </Suspense>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

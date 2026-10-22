@@ -309,7 +309,7 @@ export function NewBookingDialog({
         {what !== "class" && (
           <div className="grid gap-3 sm:grid-cols-2">
             {what === "court" && (
-              <Field id="nb-court" label={t("setup.tabs.courts")}>
+              <Field id="nb-court" label={t("setup.tabs.spaces")}>
                 <Select
                   value={court ? String(court.id) : ""}
                   onValueChange={(v) => {

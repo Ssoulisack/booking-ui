@@ -10,20 +10,32 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import type { ScheduleOwner } from "@/lib/api/types"
-import { money } from "@/lib/format"
+import { duration, money } from "@/lib/format"
 
-import { manage, useChange, usePrice } from "../api"
+import { manage, useChange, useEffectiveRule, usePrice } from "../api"
 import { Panel } from "../ui"
+import { bookableLengths, priceFor } from "./shared"
 
-/** Price per hour of a court or coach, in the business currency */
+/** Which booking rule applies to the owner: a space's own (and its sport's), a coach's sport */
+export interface RuleScope {
+  sport_id?: number
+  resource_id?: number
+}
+
+/**
+ * Price per hour of a space or coach, in the business currency, with what the lengths people can
+ * book (from the booking rule in force) will cost
+ */
 export function PriceEditor({
   owner,
   id,
   currency,
+  rule,
 }: {
   owner: ScheduleOwner
   id: number
   currency: string
+  rule: RuleScope
 }) {
   const price = usePrice(owner, id)
   if (price.isPending) return <Skeleton className="h-36 rounded-xl" />
@@ -33,6 +45,7 @@ export function PriceEditor({
       owner={owner}
       id={id}
       currency={currency}
+      rule={rule}
       initial={price.data?.price_per_hour ?? null}
     />
   )
@@ -42,14 +55,19 @@ function PriceForm({
   owner,
   id,
   currency,
+  rule,
   initial,
 }: {
   owner: ScheduleOwner
   id: number
   currency: string
+  rule: RuleScope
   initial: number | null
 }) {
   const { t } = useTranslation()
+  const inForce = useEffectiveRule(rule)
+  // until the rule is known (or if it cannot be read): just one hour
+  const lengths = inForce.data ? bookableLengths(inForce.data) : [60]
   const [value, setValue] = useState(initial === null ? "" : String(initial))
   const save = useChange(manage.savePrice, ["price"])
   const amount = Number(value)
@@ -88,9 +106,16 @@ function PriceForm({
             />
             {valid && (
               <span className="text-sm text-muted-foreground">
-                {t("setup.price.example", {
-                  price: money(Math.round(amount * 1.5), currency),
-                })}
+                {lengths
+                  .map((m) =>
+                    m === null
+                      ? "…"
+                      : t("setup.price.lengthPrice", {
+                          length: duration(m),
+                          price: money(priceFor(amount, m), currency),
+                        }),
+                  )
+                  .join(" · ")}
               </span>
             )}
           </div>

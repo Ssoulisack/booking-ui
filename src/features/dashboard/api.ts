@@ -16,7 +16,10 @@ import type {
   Media,
   OpeningHour,
   Price,
-  RepeatClassResult,
+  Timetable,
+  TimetableInput,
+  TimetableResult,
+  TimetableStop,
   Rule,
   RuleFields,
   RuleScope,
@@ -134,6 +137,15 @@ export function useClassList(from: string, to: string) {
           query: { from, to, limit: 100 },
         })
       ).items,
+  })
+}
+
+/** The branch's weekly class timetables */
+export function useTimetables() {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("timetables"),
+    queryFn: () => api<Timetable[]>(`${base}/class-timetables`),
   })
 }
 
@@ -287,13 +299,20 @@ export const manage = {
           method: "POST",
           body: c,
         }),
-  repeatClass: (base: string, body: Record<string, unknown>) =>
-    api<RepeatClassResult>(`${base}/class-sessions/repeat`, {
-      method: "POST",
-      body,
-    }),
   deleteClass: (base: string, id: number) =>
     apiMessage(`${base}/class-sessions/${id}`, { method: "DELETE" }),
+  saveTimetable: (base: string, t: { id?: number } & TimetableInput) =>
+    t.id
+      ? api<TimetableResult>(`${base}/class-timetables/${t.id}`, {
+          method: "PUT",
+          body: t,
+        })
+      : api<TimetableResult>(`${base}/class-timetables`, {
+          method: "POST",
+          body: t,
+        }),
+  stopTimetable: (base: string, id: number) =>
+    api<TimetableStop>(`${base}/class-timetables/${id}`, { method: "DELETE" }),
 
   saveRule: (
     base: string,

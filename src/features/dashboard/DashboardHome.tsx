@@ -142,12 +142,12 @@ function Checklist({ isOwner }: { isOwner: boolean }) {
     {
       done: active.length > 0,
       label: t("overview.steps.court"),
-      to: "setup/courts",
+      to: "setup/spaces",
     },
     {
       done: bookable,
       label: t("overview.steps.hoursPrice"),
-      to: "setup/courts",
+      to: "setup/spaces",
     },
   ]
   const ready = steps.slice(1).every((s) => s.done)

@@ -13,7 +13,6 @@ import {
 import { z } from "zod"
 
 import { ErrorAlert, TextField } from "@/components/form"
-import ClickSpark from "@/components/reactbits/ClickSpark"
 import { Button } from "@/components/ui/button"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -32,7 +31,6 @@ import {
   useCreateBooking,
   useResources,
 } from "./api"
-import { DEFAULT_BRAND } from "./brand"
 import { usePublic } from "./context"
 import { readSelection, selectionQuery } from "./selection"
 
@@ -156,22 +154,17 @@ export function CheckoutPage() {
       create.error.code,
     )
 
+  // the page sparks wherever it is tapped (PageSpark), this button included
   const confirmButton = (
-    <ClickSpark
-      sparkColor={business.brand_color || DEFAULT_BRAND}
-      sparkCount={12}
-      sparkRadius={28}
+    <Button
+      type="submit"
+      size="lg"
+      className="h-12 w-full text-base"
+      disabled={create.isPending}
     >
-      <Button
-        type="submit"
-        size="lg"
-        className="h-12 w-full text-base"
-        disabled={create.isPending}
-      >
-        {create.isPending && <Spinner />}
-        {t("public.confirm")}
-      </Button>
-    </ClickSpark>
+      {create.isPending && <Spinner />}
+      {t("public.confirm")}
+    </Button>
   )
 
   return (

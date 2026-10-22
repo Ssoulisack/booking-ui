@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-import { signInAs, type Club, type Session } from "./helpers"
+import { call, signInAs, type Club, type Session } from "./helpers"
 
 // A new branch goes from "New branch" to a published booking page using only the screens.
 
@@ -54,9 +54,10 @@ test("the owner opens a branch, sets it up and publishes it", async ({
   // the row shows the name and the type (both "Tennis" here)
   await expect(page.getByText("Tennis", { exact: true })).toHaveCount(2)
 
-  // 4. a court, then its opening hours and price
-  await page.getByRole("link", { name: "Courts", exact: true }).click()
-  await page.getByRole("button", { name: "Add court" }).first().click()
+  // 4. a space (a court), then its opening hours and price
+  await page.getByRole("link", { name: "Spaces", exact: true }).click()
+  await expect(page).toHaveURL(/\/setup\/spaces$/)
+  await page.getByRole("button", { name: "Add space" }).first().click()
   await page.getByRole("dialog").getByLabel("Name").fill("Court A")
   await page.getByRole("dialog").getByRole("button", { name: "Save" }).click()
   await expect(page.getByRole("dialog")).toBeHidden()
@@ -72,6 +73,12 @@ test("the owner opens a branch, sets it up and publishes it", async ({
   await page.getByRole("button", { name: "Save opening hours" }).click()
   await expect(page.getByText("Opening hours saved.")).toBeVisible()
   await page.getByLabel("Price per hour (LAK)").fill("120000")
+  // what each bookable length costs, from the company rule (1 h to 3 h in steps of 30 min)
+  await expect(
+    page.getByText(
+      "1 h = ₭120,000 · 1 h 30 min = ₭180,000 · 2 h = ₭240,000 · … · 3 h = ₭360,000",
+    ),
+  ).toBeVisible()
   await page.getByRole("button", { name: "Save price" }).click()
   await expect(page.getByText("Price saved.")).toBeVisible()
 
@@ -127,25 +134,52 @@ test("the owner adds a coach, a class timetable, a closed day and a sport rule",
     "No opening hours",
   )
 
-  // a timetable: Monday to Friday for four weeks
+  // a weekly class: Monday to Saturday, no end; its classes are made 60 days ahead
   await page.getByRole("link", { name: "Classes", exact: true }).click()
-  await page.getByRole("button", { name: "Add a timetable" }).click()
-  await page.getByRole("dialog").getByLabel("Title").fill("Junior tennis")
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Create classes" })
-    .click()
+  await page.getByRole("button", { name: "Weekly class" }).click()
+  const weeklyDialog = page.getByRole("dialog")
+  await weeklyDialog.getByLabel("Title").fill("Junior tennis")
+  await expect(
+    weeklyDialog.getByRole("checkbox", { name: "No end" }),
+  ).toBeChecked()
+  await weeklyDialog.getByRole("button", { name: "Save" }).click()
   await expect(page.getByText(/classes created/)).toBeVisible()
-  await expect(page.getByText("Junior tennis").first()).toBeVisible()
+  const weekly = page.locator("section", {
+    has: page.getByRole("heading", { name: "Weekly classes" }),
+  })
+  await expect(weekly).toContainText("Junior tennis")
+  await expect(weekly).toContainText("Mon–Sat 18:00–19:00")
+  await expect(weekly).toContainText("no end")
+  await expect(
+    page
+      .locator("li", { hasText: "Junior tennis" })
+      .filter({ hasText: "Weekly" })
+      .first(),
+  ).toBeVisible()
 
   // a closed day for the whole venue
   await page.getByRole("link", { name: "Closed days", exact: true }).click()
   await page.getByRole("button", { name: "Add closed time" }).click()
-  // three weeks ahead: the club is shared, and a closure today would block the desk test
-  const later = new Date(Date.now() + 21 * 86_400_000).toLocaleDateString(
-    "en-CA",
-    { timeZone: "Asia/Vientiane" },
+  // three weeks ahead or later (the club is shared, and a closure today would block the desk
+  // test): the first day that is not a Sunday (no weekly class) and not closed already
+  const closures = await call<Array<{ starts_at: string }>>(
+    `/branches/${club.id}/closures?limit=100`,
+    { token: club.ownerToken },
   )
+  const closedDays = new Set(
+    closures.map((c) =>
+      new Date(c.starts_at).toLocaleDateString("en-CA", {
+        timeZone: "Asia/Vientiane",
+      }),
+    ),
+  )
+  let later = ""
+  for (let ahead = 21; !later; ahead++) {
+    const day = new Date(Date.now() + ahead * 86_400_000)
+    const ymd = day.toLocaleDateString("en-CA", { timeZone: "Asia/Vientiane" })
+    if (new Date(`${ymd}T12:00:00`).getDay() !== 0 && !closedDays.has(ymd))
+      later = ymd
+  }
   await page.getByRole("dialog").getByLabel("From").fill(later)
   await page.getByRole("dialog").getByLabel("To").fill(later)
   await page
@@ -154,6 +188,10 @@ test("the owner adds a coach, a class timetable, a closed day and a sport rule",
     .fill("Court repairs")
   await page.getByRole("dialog").getByRole("button", { name: "Save" }).click()
   await expect(page.getByText("Court repairs").first()).toBeVisible()
+  // the weekly class that day had no bookings, so it was removed
+  await expect(
+    page.getByText("1 weekly class without bookings was removed."),
+  ).toBeVisible()
 
   // tennis bookings up to 2 hours: the rule in force follows
   await page.getByRole("link", { name: "Booking rules", exact: true }).click()
@@ -163,4 +201,14 @@ test("the owner adds a coach, a class timetable, a closed day and a sport rule",
   await tennis.getByLabel("Longest booking").fill("120")
   await tennis.getByRole("button", { name: "Save rules" }).click()
   await expect(tennis.getByText("1 h to 2 h, in steps of 30 min")).toBeVisible()
+
+  // stop the weekly class: its upcoming classes go (none had bookings)
+  await page.getByRole("link", { name: "Classes", exact: true }).click()
+  await weekly.getByRole("button", { name: "Stop" }).click()
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Stop" })
+    .click()
+  await expect(page.getByText(/^Stopped\. \d+ upcoming class/)).toBeVisible()
+  await expect(weekly).toHaveCount(0)
 })

@@ -47,7 +47,16 @@ import { ReadyBadges } from "./ReadyBadges"
 import { RuleEditor } from "./RuleEditor"
 import { useInvalidate } from "./shared"
 
-const KINDS: ResourceKind[] = ["court", "pitch", "ring", "other"]
+const KINDS: ResourceKind[] = [
+  "court",
+  "pitch",
+  "ring",
+  "lane",
+  "bay",
+  "table",
+  "room",
+  "other",
+]
 
 const schema = z.object({
   sport_id: z
@@ -64,7 +73,7 @@ const schema = z.object({
 })
 type Values = z.infer<typeof schema>
 
-/** /setup/courts — courts, pitches and rings, grouped by sport */
+/** /setup/spaces — the bookable spaces (courts, pitches, rings, lanes…), grouped by sport */
 export function CourtsPage() {
   const { t } = useTranslation()
   const sports = useSportsList()
@@ -297,7 +306,7 @@ function CourtDialog({
   )
 }
 
-/** /setup/courts/:resourceId — opening hours, price and the court's own booking rule */
+/** /setup/spaces/:resourceId — opening hours, price and the space's own booking rule */
 export function CourtDetailPage() {
   const { t } = useTranslation()
   const { resourceId } = useParams()
@@ -320,7 +329,7 @@ export function CourtDetailPage() {
         <Button asChild variant="ghost" className="-ml-3 h-11 lg:h-9">
           <Link to="..">
             <ArrowLeftIcon />
-            {t("setup.tabs.courts")}
+            {t("setup.tabs.spaces")}
           </Link>
         </Button>
         <PageHeader
@@ -337,6 +346,7 @@ export function CourtDetailPage() {
             owner="resource"
             id={court.id}
             currency={settings.data.in_force.currency}
+            rule={{ sport_id: court.sport_id, resource_id: court.id }}
           />
           {role !== "staff" && (
             <RuleEditor

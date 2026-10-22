@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test"
+import { expect, type Locator, type Page } from "@playwright/test"
 
 export const API = process.env.E2E_API_URL ?? "http://localhost:3000/api/v1"
 const MAILPIT = process.env.E2E_MAILPIT_URL ?? "http://localhost:8025"
@@ -254,4 +254,34 @@ export async function setNationality(session: Session, name: string) {
     token: session.access_token,
     body: { name, nationality: "TH", email: user.email, phone: "" },
   })
+}
+
+/** At least `n` branches in the company (extra ones are empty drafts), for the long-list screens */
+export async function atLeastBranches(owner: Session, n: number) {
+  const have = await call<unknown[]>("/company/branches", {
+    token: owner.access_token,
+  })
+  for (let i = have.length; i < n; i++) {
+    await call("/company/branches", {
+      method: "POST",
+      token: owner.access_token,
+      body: { name: `E2E Draft ${Date.now()}-${i}` },
+    })
+  }
+}
+
+/** At least `n` live branches, so the brand home shows its search and filters (from 5) */
+export async function atLeastLiveBranches(owner: Session, n: number) {
+  const live = await call<unknown[]>("/public/branches?limit=100")
+  for (let i = live.length; i < n; i++) await publishedClub(owner)
+}
+
+/** Presses a hold button (React Bits HoldButton) long enough to confirm, then lets go */
+export async function holdButton(page: Page, button: Locator, ms = 1700) {
+  await button.scrollIntoViewIfNeeded()
+  const box = (await button.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.waitForTimeout(ms)
+  await page.mouse.up()
 }

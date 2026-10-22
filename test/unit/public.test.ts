@@ -2,12 +2,18 @@ import { colord, extend } from "colord"
 import a11yPlugin from "colord/plugins/a11y"
 import { describe, expect, it } from "vitest"
 
-import { brandStyle } from "@/features/public/brand"
+import { brandStyle, ringColors } from "@/features/public/brand"
 import {
   bookingTitle,
   canCancel,
+  kindOf,
   zoneOf,
 } from "@/features/public/booking-utils"
+import {
+  bookableLengths,
+  priceFor,
+  weekdayText,
+} from "@/features/dashboard/setup/shared"
 import { readSelection, selectionQuery } from "@/features/public/selection"
 import type { Booking } from "@/lib/api/types"
 import { dayIn, duration, money, nextDays, timeIn } from "@/lib/format"
@@ -157,5 +163,77 @@ describe("links from businesses", () => {
     expect(webUrl("javascript:alert(1)")).toBeUndefined()
     expect(webUrl("not a url")).toBeUndefined()
     expect(webUrl("")).toBeUndefined()
+  })
+})
+
+describe("what customers call the spaces", () => {
+  it("uses the kind the spaces share", () => {
+    expect(kindOf([{ kind: "ring" }, { kind: "ring" }])).toBe("ring")
+    expect(kindOf([{ kind: "lane" }])).toBe("lane")
+  })
+
+  it("says space for a mix, for other, or for none", () => {
+    expect(kindOf([{ kind: "court" }, { kind: "room" }])).toBe("space")
+    expect(kindOf([{ kind: "other" }])).toBe("space")
+    expect(kindOf([])).toBe("space")
+  })
+})
+
+describe("hero rings in the brand colour", () => {
+  it("glows in lighter tints on a dark brand", () => {
+    const r = ringColors("#0e7c66")
+    expect(r.theme).toBe("dark")
+    expect(colord(r.color).brightness()).toBeGreaterThan(
+      colord("#0e7c66").brightness(),
+    )
+  })
+
+  it("draws deeper shades on a pale brand", () => {
+    const r = ringColors("#fde68a")
+    expect(r.theme).toBe("light")
+    expect(colord(r.colorTwo).brightness()).toBeLessThan(
+      colord("#fde68a").brightness(),
+    )
+  })
+
+  it("falls back to the default brand for a missing or bad colour", () => {
+    expect(ringColors(undefined)).toEqual(ringColors("#0e7c66"))
+    expect(ringColors("not a colour")).toEqual(ringColors("#0e7c66"))
+  })
+})
+
+describe("weekly class days as text", () => {
+  const short = (d: number) =>
+    ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]
+
+  it("joins a run of three or more days", () => {
+    expect(weekdayText([1, 2, 3, 4, 5, 6], short)).toBe("Mon–Sat")
+    expect(weekdayText([6, 0], short)).toBe("Sat, Sun")
+  })
+
+  it("lists days that are apart, Monday first", () => {
+    expect(weekdayText([5, 1, 3], short)).toBe("Mon, Wed, Fri")
+    expect(weekdayText([0, 1, 2, 3], short)).toBe("Mon–Wed, Sun")
+  })
+})
+
+describe("price of each bookable length", () => {
+  it("rounds half up like the backend", () => {
+    expect(priceFor(150000, 60)).toBe(150000)
+    expect(priceFor(150000, 90)).toBe(225000)
+    expect(priceFor(100, 50)).toBe(83) // 83.33
+    expect(priceFor(250, 90)).toBe(375)
+  })
+
+  it("lists the lengths the rule allows", () => {
+    const rule = (min: number, max: number, step: number) => ({
+      min_duration_min: min,
+      max_duration_min: max,
+      duration_step_min: step,
+    })
+    expect(bookableLengths(rule(60, 60, 30))).toEqual([60])
+    expect(bookableLengths(rule(60, 120, 30))).toEqual([60, 90, 120])
+    // many lengths: the first three, a gap, the longest
+    expect(bookableLengths(rule(60, 180, 30))).toEqual([60, 90, 120, null, 180])
   })
 })

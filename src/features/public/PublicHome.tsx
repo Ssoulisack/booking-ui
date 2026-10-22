@@ -10,6 +10,7 @@ import { webUrl } from "@/lib/url"
 import { useCoaches, useUpcomingClasses } from "./api"
 import { BookingPanel } from "./BookingPanel"
 import { usePublic } from "./context"
+import { BrandRings } from "./BrandRings"
 
 /** /b/:slug — the business's page: name, booking, classes, coaches, about */
 export function PublicHome() {
@@ -53,11 +54,7 @@ function Hero() {
           className="absolute inset-0 size-full object-cover opacity-35 mix-blend-luminosity"
         />
       )}
-      {/* court markings: a centre line and a service line, drawn faintly behind the name */}
-      <div
-        aria-hidden
-        className="absolute inset-y-6 right-[-20%] left-[35%] rounded-sm border-2 border-current court-lines opacity-15 sm:left-[50%]"
-      />
+      <BrandRings brand={business.brand_color} />
       <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-4 pt-8 pb-7 sm:pt-12 sm:pb-10">
         {business.company_name && business.company_name !== business.name && (
           <p className="text-sm font-semibold tracking-wide uppercase opacity-80">

@@ -15,7 +15,7 @@ describe("error messages", () => {
 
   it("names the date of a repeating-class clash", () => {
     expect(codeMessage("SLOT_NOT_AVAILABLE_ON_2026-11-02", t)).toBe(
-      "The court or coach is not free on 2026-11-02.",
+      "The space or coach is not free on 2026-11-02.",
     )
   })
 

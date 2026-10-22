@@ -3,6 +3,7 @@ import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 import { PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 
 import { PageError } from "@/components/page-state"
 import { Button } from "@/components/ui/button"
@@ -130,7 +131,8 @@ function ClosureDialog({ tz, onClose }: { tz: string; onClose: () => void }) {
   const [start, setStart] = useState("08:00")
   const [end, setEnd] = useState("12:00")
   const [reason, setReason] = useState("")
-  const save = useChange(manage.saveClosure, ["closures"])
+  // closing removes free weekly classes in that time, so the class list changes too
+  const save = useChange(manage.saveClosure, ["closures", "classes"])
   const input = "h-11 text-base lg:h-9 lg:text-sm"
 
   const submit = (e: React.FormEvent) => {
@@ -152,7 +154,32 @@ function ClosureDialog({ tz, onClose }: { tz: string; onClose: () => void }) {
         ends_at: endsAt.toISOString(),
         reason: reason.trim(),
       },
-      { onSuccess: onClose },
+      {
+        onSuccess: (res) => {
+          if (res.classes_removed)
+            toast.success(
+              t("setup.closures.classesRemoved", {
+                count: res.classes_removed,
+              }),
+            )
+          // booked classes stay: staff must call those customers, so this one waits to be closed
+          const kept = res.classes_kept ?? []
+          if (kept.length)
+            toast.warning(
+              t("setup.closures.classesKept", {
+                count: kept.length,
+                list: kept
+                  .map(
+                    (c) =>
+                      `${dayIn(c.starts_at, tz)} ${timeIn(c.starts_at, tz)} ${c.title}`,
+                  )
+                  .join("; "),
+              }),
+              { duration: Infinity, closeButton: true },
+            )
+          onClose()
+        },
+      },
     )
   }
 

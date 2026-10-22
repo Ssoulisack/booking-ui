@@ -7,7 +7,7 @@ import { useDashboard } from "../context"
 
 const TABS = [
   "sports",
-  "courts",
+  "spaces",
   "coaches",
   "classes",
   "closures",

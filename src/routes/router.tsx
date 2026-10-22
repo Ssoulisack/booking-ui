@@ -7,7 +7,7 @@ import {
 
 import { CrashScreen, NotFound, PageLoader } from "@/components/page-state"
 
-import { GuestOnly, RequireCompany, RequireUser } from "./guards"
+import { GuestOnly, OldCourtsLink, RequireCompany, RequireUser } from "./guards"
 
 // Each area is its own download, so a customer opening /b/{slug} on a phone never loads the
 // dashboard or company code.
@@ -196,8 +196,10 @@ export const router = createBrowserRouter([
                         element: <Navigate to="sports" replace />,
                       },
                       page("sports", "SportsPage"),
-                      page("courts", "CourtsPage"),
-                      page("courts/:resourceId", "CourtDetailPage"),
+                      page("spaces", "CourtsPage"),
+                      page("spaces/:resourceId", "CourtDetailPage"),
+                      // the old address (before courts were called spaces)
+                      { path: "courts/*", element: <OldCourtsLink /> },
                       page("coaches", "CoachesPage"),
                       page("coaches/:coachId", "CoachDetailPage"),
                       page("classes", "ClassesPage"),

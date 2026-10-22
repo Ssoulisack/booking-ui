@@ -309,6 +309,10 @@ export function CoachDetailPage() {
           owner="coach"
           id={coach.id}
           currency={settings.data.in_force.currency}
+          // a coach of one sport follows that sport's rule; of several, the branch rule
+          rule={
+            coach.sports.length === 1 ? { sport_id: coach.sports[0].id } : {}
+          }
         />
       </div>
     </div>

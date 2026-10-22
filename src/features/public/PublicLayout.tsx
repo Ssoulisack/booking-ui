@@ -21,6 +21,7 @@ import { useSession } from "@/stores/session"
 import { usePublicBranch } from "./api"
 import { brandStyle, DEFAULT_BRAND } from "./brand"
 import { BrandMark } from "./BrandMark"
+import { PageSpark } from "./PageSpark"
 import type { PublicContext } from "./context"
 
 /** /b/:slug/* — a branch's public pages, in the company's brand colour and language */
@@ -53,10 +54,12 @@ export function PublicLayout() {
       style={brandStyle(business.data.brand_color)}
       className="min-h-dvh bg-[#f3f5f4] text-[#141a17]"
     >
-      <PublicTopBar business={business.data} />
-      <Outlet
-        context={{ slug, business: business.data } satisfies PublicContext}
-      />
+      <PageSpark>
+        <PublicTopBar business={business.data} />
+        <Outlet
+          context={{ slug, business: business.data } satisfies PublicContext}
+        />
+      </PageSpark>
     </div>
   )
 }

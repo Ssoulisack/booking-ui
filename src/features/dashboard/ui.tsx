@@ -159,6 +159,9 @@ export function DeleteButton({
   error,
   open,
   onOpenChange,
+  label,
+  title,
+  description,
 }: {
   what: string
   onConfirm: () => void
@@ -166,25 +169,37 @@ export function DeleteButton({
   error: unknown
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /** a worded button (e.g. "Stop") instead of the bin icon; also the confirm button's text */
+  label?: string
+  title?: string
+  description?: string
 }) {
   const { t } = useTranslation()
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-lg"
-          className="size-11 text-muted-foreground lg:size-9"
-          aria-label={t("dash.deleteWhat", { what })}
-        >
-          <Trash2Icon />
-        </Button>
+        {label ? (
+          <Button variant="ghost" className="h-11 lg:h-9">
+            {label}
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            className="size-11 text-muted-foreground lg:size-9"
+            aria-label={t("dash.deleteWhat", { what })}
+          >
+            <Trash2Icon />
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("dash.deleteTitle", { what })}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {title ?? t("dash.deleteTitle", { what })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("dash.deleteLead")}
+            {description ?? t("dash.deleteLead")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <ErrorAlert error={error} />
@@ -199,7 +214,7 @@ export function DeleteButton({
             onClick={onConfirm}
           >
             {pending && <Spinner />}
-            {t("dash.delete")}
+            {label ?? t("dash.delete")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

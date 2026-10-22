@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 
 import {
+  atLeastLiveBranches,
   call,
   menuLinks,
   publishedClub,
@@ -22,6 +23,8 @@ test("a guest opens the brand home, picks a branch and books", async ({
   page,
 }) => {
   const { name, slug } = club()
+  // the search and filters appear from 5 live branches
+  await atLeastLiveBranches(owner(), 5)
   const company = await call<{ name: string }>("/public/company")
   await page.goto("/")
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
@@ -30,6 +33,10 @@ test("a guest opens the brand home, picks a branch and books", async ({
   await expect(
     page.getByRole("heading", { name: "Our branches" }),
   ).toBeVisible()
+
+  // a tap anywhere on a public page sparks (a short-lived canvas over the page)
+  await page.getByRole("heading", { name: "Our branches" }).click()
+  await expect(page.locator("canvas[aria-hidden=true]").first()).toBeAttached()
 
   // filters: only the sports and provinces the branches have
   await page.getByRole("button", { name: "Boxing", exact: true }).click()

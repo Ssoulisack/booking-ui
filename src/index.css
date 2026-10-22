@@ -147,18 +147,6 @@
   line-height: 0.95;
 }
 
-/* Court markings drawn in the brand's text colour, behind the business name */
-@utility court-lines {
-  background-image:
-    linear-gradient(to right, currentColor 2px, transparent 2px),
-    linear-gradient(to bottom, currentColor 2px, transparent 2px);
-  background-size:
-    50% 100%,
-    100% 50%;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
 /* Swipeable rows (date strip): hide the scrollbar, keep scrolling */
 @utility no-scrollbar {
   scrollbar-width: none;

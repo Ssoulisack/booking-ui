@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Booking",
-    "tagline": "Book courts, coaches and classes"
+    "tagline": "Book spaces, coaches and classes"
   },
   "actions": {
     "logIn": "Log in",
@@ -160,7 +160,10 @@
     "cancelConfirm": "Cancel booking",
     "cancelled": "Booking cancelled.",
     "cancelUntil": "You can cancel online until {{when}}.",
-    "tooLateToCancel": "It is too late to cancel online. Call the branch: {{phone}}"
+    "tooLateToCancel": "It is too late to cancel online. Call the branch: {{phone}}",
+    "holdToCancel": "Hold to cancel",
+    "cancelling": "Cancelling…",
+    "holdHint": "Press and hold for {{seconds}} seconds to cancel the booking"
   },
   "public": {
     "notFoundTitle": "This page is not available",
@@ -176,7 +179,7 @@
     "step": {
       "sport": "Sport",
       "what": "What would you like?",
-      "court": "Choose a court",
+      "court": "Choose a space",
       "coach": "Choose a coach",
       "day": "Day",
       "time": "Start time",
@@ -184,7 +187,7 @@
       "class": "Choose a class"
     },
     "what": {
-      "court": "Court",
+      "court": "Space",
       "coach": "Lesson with a coach",
       "class": "Group class"
     },
@@ -235,7 +238,27 @@
     "shareLink": "Share",
     "openLink": "Open",
     "yourBooking": "Your booking",
-    "allBranches": "All branches"
+    "allBranches": "All branches",
+    "choose": {
+      "court": "Choose a court",
+      "pitch": "Choose a pitch",
+      "ring": "Choose a ring",
+      "lane": "Choose a lane",
+      "bay": "Choose a bay",
+      "table": "Choose a table",
+      "room": "Choose a room",
+      "space": "Choose a space"
+    },
+    "spaceKind": {
+      "court": "Court",
+      "pitch": "Pitch",
+      "ring": "Ring",
+      "lane": "Lane",
+      "bay": "Bay",
+      "table": "Table",
+      "room": "Room",
+      "space": "Space"
+    }
   },
   "weekday": {
     "0": "Sunday",
@@ -272,7 +295,7 @@
   "setup": {
     "tabs": {
       "sports": "Sports",
-      "courts": "Courts",
+      "spaces": "Spaces",
       "coaches": "Coaches",
       "classes": "Classes",
       "closures": "Closed days",
@@ -292,11 +315,15 @@
       "court": "Court",
       "pitch": "Pitch",
       "ring": "Ring",
+      "lane": "Lane",
+      "bay": "Bay",
+      "table": "Table",
+      "room": "Room",
       "other": "Other"
     },
     "sports": {
       "title": "Sports",
-      "lead": "The sports people can book here. Courts, coaches and classes each belong to a sport.",
+      "lead": "The sports people can book here. Spaces, coaches and classes each belong to a sport.",
       "add": "Add sport",
       "edit": "Edit sport",
       "empty": "No sports yet. Start with the sport you offer most.",
@@ -306,20 +333,20 @@
       "typeRequired": "Choose the type of sport."
     },
     "courts": {
-      "title": "Courts, pitches and rings",
-      "lead": "Each can be booked on its own. Open one to set its opening hours, price and rules.",
-      "add": "Add court",
-      "edit": "Edit court",
-      "empty": "No courts yet.",
-      "needSport": "Add a sport first, then its courts.",
+      "title": "Spaces",
+      "lead": "Courts, pitches, rings, lanes, bays, tables or rooms: each is booked on its own. Open one to set its opening hours, price and rules.",
+      "add": "Add space",
+      "edit": "Edit space",
+      "empty": "No spaces yet.",
+      "needSport": "Add a sport first, then its spaces.",
       "kind": "Type",
-      "namePlaceholder": "Court 1",
+      "namePlaceholder": "Court 1, Ring A, Lane 3…",
       "afterAdd": "Next, open it to set opening hours and a price.",
       "hoursAndPrice": "Hours and price of {{name}}"
     },
     "coaches": {
       "title": "Coaches",
-      "lead": "Coaches can be booked for lessons, alone or together with a court.",
+      "lead": "Coaches can be booked for lessons, alone or together with a space.",
       "add": "Add coach",
       "edit": "Edit coach",
       "empty": "No coaches yet.",
@@ -345,43 +372,59 @@
     },
     "price": {
       "title": "Price",
-      "lead": "Per hour. Longer and shorter bookings are worked out from it.",
+      "lead": "Per hour. Below it: what each length people can book costs, from the booking rules.",
       "perHour": "Price per hour ({{currency}})",
       "notSet": "No price yet: it cannot be booked.",
-      "example": "90 minutes = {{price}}",
       "save": "Save price",
-      "saved": "Price saved."
+      "saved": "Price saved.",
+      "lengthPrice": "{{length}} = {{price}}"
     },
     "classes": {
       "title": "Group classes",
-      "lead": "Classes in the next month. People book seats until the class is full.",
+      "lead": "Weekly classes keep making their classes 60 days ahead. Below: the classes of the next month.",
       "addOne": "Add a class",
-      "addRepeat": "Add a timetable",
       "edit": "Edit class",
       "editLead": "Once seats are booked, only the title, price and a bigger capacity can change.",
-      "repeatLead": "The same class on chosen weekdays between two dates. Closed days are skipped.",
-      "createAll": "Create classes",
       "empty": "No classes in the next month.",
       "seats_one": "{{count}} seat",
       "seats_other": "{{count}} seats",
       "titleField": "Title",
       "titlePlaceholder": "Evening boxing class",
       "coach": "Coach (optional)",
-      "court": "Court (optional)",
+      "court": "Space (optional)",
       "none": "None",
       "date": "Date",
-      "from": "From",
-      "to": "To",
       "weekdays": "Every",
       "start": "Starts",
       "end": "Ends",
       "capacity": "Seats",
       "price": "Price per seat ({{currency}})",
       "fillIn": "Fill in the title, seats and at least one weekday.",
-      "repeatNote": "Each date becomes its own class, so you can change or delete one later.",
       "created_one": "{{count}} class created.",
       "created_other": "{{count}} classes created.",
-      "skipped": "Skipped (closed): {{dates}}"
+      "skipped": "Skipped (closed): {{dates}}",
+      "addWeekly": "Weekly class",
+      "editWeekly": "Edit weekly class",
+      "weeklyLead": "Repeats every week on the days you tick, with no need to set it up again. Classes are made 60 days ahead and closed days are skipped.",
+      "editWeeklyLead": "Upcoming classes without bookings are made again with these details; classes that already have bookings keep theirs.",
+      "weeklyNote": "Each class can still be changed or deleted on its own below.",
+      "weeklyTitle": "Weekly classes",
+      "weeklyPanelLead": "These keep running: the next 60 days of classes are always made, skipping closed days.",
+      "weeklyBadge": "Weekly",
+      "startsOn": "Starts on",
+      "ends": "Ends",
+      "noEnd": "No end",
+      "endsOn": "Last day",
+      "fromNoEnd": "From {{from}} · no end",
+      "fromTo": "{{from}} – {{to}}",
+      "stop": "Stop",
+      "stopTitle": "Stop {{title}}?",
+      "stopLead": "No more classes are made. Upcoming classes without bookings are removed; classes with bookings stay.",
+      "stopped_one": "Stopped. {{count}} upcoming class removed.",
+      "stopped_other": "Stopped. {{count}} upcoming classes removed.",
+      "keptBooked_one": "{{count}} class with bookings was kept.",
+      "keptBooked_other": "{{count}} classes with bookings were kept.",
+      "skippedTaken": "Skipped (space or coach already booked): {{dates}}"
     },
     "closures": {
       "title": "Closed days",
@@ -395,20 +438,24 @@
       "from": "From",
       "to": "To",
       "reason": "Reason (optional)",
-      "reasonPlaceholder": "New Year, court repair…",
-      "dialogLead": "Times already booked are not cancelled."
+      "reasonPlaceholder": "New Year, repairs…",
+      "dialogLead": "Times already booked are not cancelled.",
+      "classesRemoved_one": "{{count}} weekly class without bookings was removed.",
+      "classesRemoved_other": "{{count}} weekly classes without bookings were removed.",
+      "classesKept_one": "{{count}} class in this time has bookings and was kept: {{list}}. Contact those customers.",
+      "classesKept_other": "{{count}} classes in this time have bookings and were kept: {{list}}. Contact those customers."
     }
   },
   "rules": {
     "title": "Booking rules",
-    "lead": "The company rule applies everywhere; this branch, a sport or a court can change any part of it. The most specific one wins.",
+    "lead": "The company rule applies everywhere; this branch, a sport or a space can change any part of it. The most specific one wins.",
     "sportTitle": "{{sport}}",
     "sportLead": "Leave a field empty to use the branch rule.",
-    "courtTitle": "Rules for this court",
+    "courtTitle": "Rules for this space",
     "courtLead": "Leave a field empty to use the {{sport}} rule.",
-    "courtsTitle": "Courts with their own rules",
-    "courtsLead": "Set on each court's page.",
-    "noCourtRules": "No court has its own rules.",
+    "courtsTitle": "Spaces with their own rules",
+    "courtsLead": "Set on each space's page.",
+    "noCourtRules": "No space has its own rules.",
     "emptyInherits": "Empty fields use the wider rule (shown in grey).",
     "inForce": "Rule in force",
     "save": "Save rules",
@@ -554,8 +601,8 @@
     "steps": {
       "profile": "Add the branch's address and description",
       "sport": "Add a sport",
-      "court": "Add a court, pitch or ring",
-      "hoursPrice": "Give a court opening hours and a price"
+      "court": "Add a space (court, pitch, ring…)",
+      "hoursPrice": "Give a space opening hours and a price"
     },
     "publish": "Publish booking page",
     "publishNeeds": "Steps 2 to 4 are needed before publishing.",
@@ -567,7 +614,7 @@
     "liveLead": "Share this link. Bookings appear in your dashboard.",
     "openPage": "Open page",
     "share": {
-      "text": "Book a court at {{name}}:",
+      "text": "Book at {{name}}:",
       "qrAlt": "QR code for the booking page of {{name}}",
       "share": "Share QR and link",
       "download": "Download QR",
@@ -597,7 +644,7 @@
     "hasAccount": "Has an account",
     "customerEmail": "Customer's email",
     "what": "What",
-    "pickCourtOrCoach": "Choose a court or a coach to see free times.",
+    "pickCourtOrCoach": "Choose a space or a coach to see free times.",
     "fillIn": "Fill in who is booking (find the account) and choose a time or a class.",
     "notes": "Note",
     "createdBy": {
@@ -606,7 +653,7 @@
       "staff": "Booked at the desk"
     },
     "itemKind": {
-      "resource": "Court",
+      "resource": "Space",
       "coach": "Coach",
       "class_session": "Class"
     },
@@ -641,8 +688,8 @@
       "day": "Day",
       "week": "Week"
     },
-    "lane": "Court or coach",
-    "noLanes": "No courts or coaches yet. Add them in Setup.",
+    "lane": "Space or coach",
+    "noLanes": "No spaces or coaches yet. Add them in Setup.",
     "paid": "Paid",
     "paidShort": "Paid",
     "unpaid": "Unpaid",
@@ -687,7 +734,7 @@
     "tabs": {
       "bookings": "Bookings",
       "money": "Money",
-      "courts": "Court use",
+      "courts": "Space use",
       "unpaid": "Unpaid"
     },
     "bookings": "Bookings",
@@ -714,7 +761,7 @@
     "lostCancelled": "Cancelled",
     "lostCancelledHint": "Not part of the booked value.",
     "moneyPerDay": "Booked and paid per day ({{currency}})",
-    "utilisation": "Court use",
+    "utilisation": "Space use",
     "utilisationLead": "Booked time as a share of opening hours. Classes count as booked.",
     "hoursOf": "{{booked}} of {{open}} hours",
     "unpaidTitle": "Unpaid after the booking ended",

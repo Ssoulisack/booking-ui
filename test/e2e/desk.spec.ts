@@ -45,7 +45,7 @@ async function walkIn(page: Page, name: string, court: string) {
   const dialog = page.getByRole("dialog")
   await dialog.getByLabel("Full name").fill(name)
   await dialog.getByLabel("Phone").fill("020 5555 4321")
-  await dialog.getByRole("combobox", { name: "Courts" }).click()
+  await dialog.getByRole("combobox", { name: "Spaces" }).click()
   await page.getByRole("option", { name: court }).click()
   // the first start of the day: earlier today is allowed at the desk, and it has already started
   const first = dialog

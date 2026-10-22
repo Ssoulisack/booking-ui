@@ -2,6 +2,7 @@ import { expect, test, type Browser } from "@playwright/test"
 
 import {
   answerNationality,
+  atLeastBranches,
   call,
   inviteToken,
   PASSWORD,
@@ -55,7 +56,8 @@ test("the owner sets the brand, opens a branch and gives it a manager", async ({
   const branchId = Number(new URL(page.url()).pathname.split("/").pop())
   await expect(page.getByText(`You are Owner at ${branchName}.`)).toBeVisible()
 
-  // --- invite a manager for this branch only ---
+  // --- invite a manager for this branch only (more than 6 branches: the picker has a search) ---
+  await atLeastBranches(owner(), 7)
   await page.goto("/company/team")
   await page.getByRole("link", { name: /^Invite/ }).click()
   await expect(page).toHaveURL("/company/team/invite")
@@ -202,8 +204,9 @@ test("the owner finds the QR codes of the home and of a branch", async ({
     "home-qr.png",
   )
 
+  await atLeastBranches(owner(), 21)
   await page.goto("/company/branches")
-  // every run adds branches: the list is split into pages of 20
+  // more than 20 branches: the list is split into pages of 20
   await expect(page.getByText(/^Page 1 of \d+$/)).toBeVisible()
   await expect(page.getByRole("button", { name: "QR code" })).not.toHaveCount(0)
   expect(await page.locator("main li").count()).toBeLessThanOrEqual(20)

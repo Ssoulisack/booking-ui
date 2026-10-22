@@ -54,3 +54,11 @@ export function EndSession({ reason }: { reason: string }) {
   useEffect(() => signOut(reason), [signOut, reason])
   return <PageLoader />
 }
+
+/** /setup/courts/… → /setup/spaces/… (bookmarks from before the rename) */
+export function OldCourtsLink() {
+  const { pathname } = useLocation()
+  return (
+    <Navigate to={pathname.replace("/setup/courts", "/setup/spaces")} replace />
+  )
+}

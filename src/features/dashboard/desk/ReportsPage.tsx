@@ -217,7 +217,15 @@ function BookingsReportView({ from, to }: { from: string; to: string }) {
   const report = useReport("bookings", from, to)
   if (report.isPending) return <Skeleton className="h-80 rounded-xl" />
   if (report.isError) return <PageError error={report.error} />
-  const r = report.data
+  // a list the server leaves out counts as empty: one odd answer must not crash the screen
+  const r = {
+    ...report.data,
+    by_status: report.data.by_status ?? {},
+    per_day: report.data.per_day ?? [],
+    per_sport: report.data.per_sport ?? [],
+    booked_value: report.data.booked_value ?? [],
+    top_customers: report.data.top_customers ?? [],
+  }
   const by = (s: string) => r.by_status[s] ?? 0
   const config = {
     total: { label: t("reports.bookings"), color: BLUE },
@@ -300,7 +308,12 @@ function BookingsReportView({ from, to }: { from: string; to: string }) {
       </Panel>
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel title={t("reports.perSport")}>
-          <ul className="space-y-3">
+          {r.per_sport.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              {t("reports.empty")}
+            </p>
+          )}
+          <ul className="space-y-3 empty:hidden">
             {r.per_sport.map((s) => (
               <li key={s.sport_id} className="space-y-1">
                 <div className="flex justify-between text-sm">

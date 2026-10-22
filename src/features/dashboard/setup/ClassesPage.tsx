@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { BranchSettings, ClassSession } from "@/lib/api/types"
+import type { BranchSettings, ClassSession, Timetable } from "@/lib/api/types"
 import { dayIn, money, nextDays, timeIn } from "@/lib/format"
 
 import {
@@ -33,10 +33,14 @@ import {
 } from "../api"
 import { DeleteButton, EmptyState, FormDialog, PageHeader } from "../ui"
 import { useInvalidate, WEEK } from "./shared"
+import { TimetablePanel } from "./Timetables"
 
 const RANGE_DAYS = 31
 
-/** /setup/classes — group classes in the next month: add one, add a timetable, edit, delete */
+/**
+ * /setup/classes — weekly classes (made automatically 60 days ahead) and the classes of the next
+ * month: add one, add a weekly class, edit, delete
+ */
 export function ClassesPage() {
   const { t } = useTranslation()
   const settings = useSettings()
@@ -44,9 +48,9 @@ export function ClassesPage() {
   const days = useMemo(() => nextDays(tz, RANGE_DAYS), [tz])
   const classes = useClassList(days[0], days[days.length - 1])
   const sports = useSportsList()
-  const [dialog, setDialog] = useState<"one" | "repeat" | ClassSession | null>(
-    null,
-  )
+  const [dialog, setDialog] = useState<
+    "one" | "weekly" | ClassSession | { timetable: Timetable } | null
+  >(null)
   const noSports = sports.data?.length === 0
 
   const byDay = new Map<string, ClassSession[]>()
@@ -66,10 +70,10 @@ export function ClassesPage() {
               variant="outline"
               className="h-11 lg:h-9"
               disabled={noSports}
-              onClick={() => setDialog("repeat")}
+              onClick={() => setDialog("weekly")}
             >
               <RepeatIcon />
-              {t("setup.classes.addRepeat")}
+              {t("setup.classes.addWeekly")}
             </Button>
             <Button
               className="h-11 lg:h-9"
@@ -82,6 +86,12 @@ export function ClassesPage() {
           </>
         }
       />
+      <div className="mb-6">
+        <TimetablePanel
+          tz={tz}
+          onEdit={(timetable) => setDialog({ timetable })}
+        />
+      </div>
       {classes.isPending || settings.isPending ? (
         <Skeleton className="h-40 rounded-xl" />
       ) : classes.isError ? (
@@ -111,8 +121,22 @@ export function ClassesPage() {
       )}
       {dialog && settings.data && (
         <ClassDialog
-          mode={dialog === "repeat" ? "repeat" : "one"}
-          cls={typeof dialog === "object" ? dialog : undefined}
+          mode={
+            dialog === "weekly" ||
+            (typeof dialog === "object" && "timetable" in dialog)
+              ? "weekly"
+              : "one"
+          }
+          cls={
+            typeof dialog === "object" && !("timetable" in dialog)
+              ? dialog
+              : undefined
+          }
+          timetable={
+            typeof dialog === "object" && "timetable" in dialog
+              ? dialog.timetable
+              : undefined
+          }
           settings={settings.data}
           onClose={() => setDialog(null)}
         />
@@ -154,6 +178,9 @@ function ClassRow({
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">
           {cls.title}{" "}
+          {cls.timetable_id && (
+            <Badge variant="outline">{t("setup.classes.weeklyBadge")}</Badge>
+          )}{" "}
           {cls.active === false && (
             <Badge variant="secondary">{t("dash.hidden")}</Badge>
           )}
@@ -192,18 +219,23 @@ interface FormState {
   capacity: string
   price: string
   weekdays: number[]
-  from: string
-  to: string
+  starts_on: string
+  /** "" = no end */
+  ends_on: string
+  no_end: boolean
 }
 
 function ClassDialog({
   mode,
   cls,
+  timetable: tt,
   settings,
   onClose,
 }: {
-  mode: "one" | "repeat"
+  mode: "one" | "weekly"
   cls?: ClassSession
+  /** editing a weekly class */
+  timetable?: Timetable
   settings: BranchSettings
   onClose: () => void
 }) {
@@ -213,26 +245,28 @@ function ClassDialog({
   const coaches = useCoachesList().data ?? []
   const courts = useResourcesList().data ?? []
   const today = nextDays(tz, 1)[0]
+  const from = cls ?? tt
   const [f, setF] = useState<FormState>(() => ({
-    sport_id: String(cls?.sport_id ?? sports[0]?.id ?? ""),
-    title: cls?.title ?? "",
-    coach_id: cls?.coach_id ? String(cls.coach_id) : "none",
-    resource_id: cls?.resource_id ? String(cls.resource_id) : "none",
+    sport_id: String(from?.sport_id ?? sports[0]?.id ?? ""),
+    title: from?.title ?? "",
+    coach_id: from?.coach_id ? String(from.coach_id) : "none",
+    resource_id: from?.resource_id ? String(from.resource_id) : "none",
     date: cls ? dayKey(cls.starts_at, tz) : today,
-    start: cls ? timeIn(cls.starts_at, tz) : "18:00",
-    end: cls ? timeIn(cls.ends_at, tz) : "19:00",
-    capacity: String(cls?.capacity ?? 10),
-    price: String(cls?.price ?? ""),
-    weekdays: [1, 2, 3, 4, 5],
-    from: today,
-    to: nextDays(tz, 28)[27],
+    start: cls ? timeIn(cls.starts_at, tz) : (tt?.start_time ?? "18:00"),
+    end: cls ? timeIn(cls.ends_at, tz) : (tt?.end_time ?? "19:00"),
+    capacity: String(from?.capacity ?? 10),
+    price: String(from?.price ?? ""),
+    weekdays: tt?.weekdays ?? [1, 2, 3, 4, 5, 6],
+    starts_on: tt?.starts_on ?? today,
+    ends_on: tt?.ends_on || nextDays(tz, 28)[27],
+    no_end: tt ? !tt.ends_on : true,
   }))
   const set = (patch: Partial<FormState>) => setF({ ...f, ...patch })
   const [missing, setMissing] = useState(false)
 
   const single = useChange(manage.saveClass, ["classes"])
-  const repeat = useChange(manage.repeatClass, ["classes"])
-  const pending = single.isPending || repeat.isPending
+  const weekly = useChange(manage.saveTimetable, ["classes", "timetables"])
+  const pending = single.isPending || weekly.isPending
   const sportId = Number(f.sport_id)
   const sportCoaches = coaches.filter((c) =>
     c.sports.some((s) => s.id === sportId),
@@ -254,29 +288,41 @@ function ClassDialog({
     if (
       !common.title ||
       !f.capacity ||
-      (mode === "repeat" && f.weekdays.length === 0)
+      (mode === "weekly" && f.weekdays.length === 0)
     ) {
       setMissing(true)
       return
     }
-    if (mode === "repeat") {
-      repeat.mutate(
+    if (mode === "weekly") {
+      weekly.mutate(
         {
+          id: tt?.id,
           ...common,
           start_time: f.start,
           end_time: f.end,
           weekdays: f.weekdays,
-          from: f.from,
-          to: f.to,
+          starts_on: f.starts_on,
+          ends_on: f.no_end ? "" : f.ends_on,
+          active: tt?.active ?? true,
         },
         {
           onSuccess: (res) => {
+            const closed = res.skipped.filter((d) => d.reason === "closed")
+            const taken = res.skipped.filter((d) => d.reason === "taken")
+            const notes = [
+              closed.length > 0 &&
+                t("setup.classes.skipped", {
+                  dates: closed.map((d) => d.date).join(", "),
+                }),
+              taken.length > 0 &&
+                t("setup.classes.skippedTaken", {
+                  dates: taken.map((d) => d.date).join(", "),
+                }),
+              res.kept_booked > 0 &&
+                t("setup.classes.keptBooked", { count: res.kept_booked }),
+            ].filter(Boolean)
             toast.success(t("setup.classes.created", { count: res.created }), {
-              description: res.skipped.length
-                ? t("setup.classes.skipped", {
-                    dates: res.skipped.map((s) => s.date).join(", "),
-                  })
-                : undefined,
+              description: notes.length ? notes.join(" ") : undefined,
             })
             onClose()
           },
@@ -304,22 +350,24 @@ function ClassDialog({
       title={
         cls
           ? t("setup.classes.edit")
-          : mode === "repeat"
-            ? t("setup.classes.addRepeat")
-            : t("setup.classes.addOne")
+          : tt
+            ? t("setup.classes.editWeekly")
+            : mode === "weekly"
+              ? t("setup.classes.addWeekly")
+              : t("setup.classes.addOne")
       }
       description={
-        mode === "repeat"
-          ? t("setup.classes.repeatLead")
+        mode === "weekly"
+          ? tt
+            ? t("setup.classes.editWeeklyLead")
+            : t("setup.classes.weeklyLead")
           : cls
             ? t("setup.classes.editLead")
             : undefined
       }
-      submitLabel={
-        mode === "repeat" ? t("setup.classes.createAll") : t("dash.save")
-      }
+      submitLabel={t("dash.save")}
       pending={pending}
-      error={single.error ?? repeat.error}
+      error={single.error ?? weekly.error}
       onSubmit={submit}
     >
       <div className="grid gap-4 sm:grid-cols-2">
@@ -381,27 +429,41 @@ function ClassDialog({
         ) : (
           <>
             <div className="space-y-1.5">
-              <Label htmlFor="cls-from">{t("setup.classes.from")}</Label>
+              <Label htmlFor="cls-from">{t("setup.classes.startsOn")}</Label>
               <Input
                 id="cls-from"
                 type="date"
-                value={f.from}
-                min={today}
-                onChange={(e) => set({ from: e.target.value })}
+                value={f.starts_on}
+                min={tt ? undefined : today}
+                onChange={(e) => set({ starts_on: e.target.value })}
                 className={input}
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="cls-to">{t("setup.classes.to")}</Label>
-              <Input
-                id="cls-to"
-                type="date"
-                value={f.to}
-                min={f.from}
-                onChange={(e) => set({ to: e.target.value })}
-                className={input}
-              />
-            </div>
+            <fieldset className="space-y-1.5">
+              <legend className="mb-1.5 text-sm font-medium">
+                {t("setup.classes.ends")}
+              </legend>
+              <div className="flex flex-wrap items-center gap-2">
+                <Label className="flex h-11 items-center gap-2 rounded-lg border px-3 font-normal lg:h-9">
+                  <Checkbox
+                    checked={f.no_end}
+                    onCheckedChange={(on) => set({ no_end: on === true })}
+                  />
+                  {t("setup.classes.noEnd")}
+                </Label>
+                {!f.no_end && (
+                  <Input
+                    id="cls-to"
+                    type="date"
+                    aria-label={t("setup.classes.endsOn")}
+                    value={f.ends_on}
+                    min={f.starts_on}
+                    onChange={(e) => set({ ends_on: e.target.value })}
+                    className={`${input} w-auto`}
+                  />
+                )}
+              </div>
+            </fieldset>
             <fieldset className="space-y-1.5 sm:col-span-2">
               <legend className="mb-1.5 text-sm font-medium">
                 {t("setup.classes.weekdays")}
@@ -484,10 +546,10 @@ function ClassDialog({
       {missing && (
         <p className="text-sm text-destructive">{t("setup.classes.fillIn")}</p>
       )}
-      {mode === "repeat" && (
+      {mode === "weekly" && (
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
           <CalendarPlusIcon className="mt-0.5 size-4 shrink-0" />
-          {t("setup.classes.repeatNote")}
+          {t("setup.classes.weeklyNote")}
         </p>
       )}
     </FormDialog>

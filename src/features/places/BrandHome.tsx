@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { brandStyle, DEFAULT_BRAND } from "@/features/public/brand"
 import { BrandMark } from "@/features/public/BrandMark"
+import { PageSpark } from "@/features/public/PageSpark"
 import { applyBusinessLanguage } from "@/i18n"
 import type { DirectoryBranch, PublicCompany } from "@/lib/api/types"
 import { money } from "@/lib/format"
@@ -27,6 +28,7 @@ import { UserMenu } from "@/layouts/UserMenu"
 import { useSession } from "@/stores/session"
 
 import { useLiveBranches, usePublicCompany } from "./api"
+import { BrandRings } from "@/features/public/BrandRings"
 
 /** From this many branches on, the list gets a search, sport chips and a province picker */
 const MANY = 5
@@ -61,30 +63,32 @@ export function BrandHome() {
       style={brandStyle(company.data.brand_color)}
       className="min-h-dvh bg-[#f3f5f4] text-[#141a17]"
     >
-      <TopBar company={company.data} />
-      <Hero company={company.data} branches={live} />
-      <main className="mx-auto max-w-5xl px-4 pt-8 pb-16">
-        <section id="branches" className="scroll-mt-20 space-y-5">
-          <h2 className="text-3xl display-tight">
-            {t("home.branchesTitle", { count: live.length })}
-          </h2>
-          {branches.isPending ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {[0, 1, 2].map((i) => (
-                <Skeleton key={i} className="h-64 rounded-2xl" />
-              ))}
-            </div>
-          ) : branches.isError ? (
-            <PageError
-              error={branches.error}
-              onRetry={() => branches.refetch()}
-            />
-          ) : (
-            <BranchList branches={live} company={company.data} />
-          )}
-        </section>
-      </main>
-      <Footer company={company.data} />
+      <PageSpark>
+        <TopBar company={company.data} />
+        <Hero company={company.data} branches={live} />
+        <main className="mx-auto max-w-5xl px-4 pt-8 pb-16">
+          <section id="branches" className="scroll-mt-20 space-y-5">
+            <h2 className="text-3xl display-tight">
+              {t("home.branchesTitle", { count: live.length })}
+            </h2>
+            {branches.isPending ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-64 rounded-2xl" />
+                ))}
+              </div>
+            ) : branches.isError ? (
+              <PageError
+                error={branches.error}
+                onRetry={() => branches.refetch()}
+              />
+            ) : (
+              <BranchList branches={live} company={company.data} />
+            )}
+          </section>
+        </main>
+        <Footer company={company.data} />
+      </PageSpark>
     </div>
   )
 }
@@ -147,10 +151,7 @@ function Hero({
           className="absolute inset-0 size-full object-cover opacity-35 mix-blend-luminosity"
         />
       )}
-      <div
-        aria-hidden
-        className="absolute inset-y-6 right-[-20%] left-[35%] rounded-sm border-2 border-current court-lines opacity-15 sm:left-[50%]"
-      />
+      <BrandRings brand={company.brand_color} />
       <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-4 pt-8 pb-8 sm:pt-12 sm:pb-12">
         <div role="heading" aria-level={1}>
           <BlurText

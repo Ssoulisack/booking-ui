@@ -21,3 +21,12 @@ export function canCancel(b: Booking, now = Date.now()) {
     now < Date.parse(b.cancellable_until)
   )
 }
+
+const NAMED_KINDS = ["court", "pitch", "ring", "lane", "bay", "table", "room"]
+
+/** The kind all these spaces share (court, ring, lane…), or "space" when they differ or are "other" */
+export function kindOf(spaces: Array<{ kind: string }>): string {
+  const kinds = new Set(spaces.map((r) => r.kind))
+  const [only] = kinds
+  return kinds.size === 1 && NAMED_KINDS.includes(only) ? only : "space"
+}
