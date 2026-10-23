@@ -84,6 +84,7 @@
   },
   "nav": {
     "menu": "Menu",
+    "backTo": "Back to {{name}}",
     "account": "My account",
     "myBookings": "My bookings",
     "dashboard": "Branch dashboard",
@@ -103,6 +104,38 @@
     "companySettings": "Company settings",
     "branchSettings": "Branch settings",
     "home": "Home"
+  },
+  "look": {
+    "appearance": "Look of the pages",
+    "appearanceLead": "The rings and fonts customers see on the home and branch pages. The brand colour is set above.",
+    "rings": "Ring colours",
+    "ringsAuto": "Made from the brand colour. Add a colour to choose your own (up to 4).",
+    "ringColor": "Ring colour {{n}}",
+    "ringColorHex": "Ring colour {{n}} code",
+    "removeColor": "Remove colour {{n}}",
+    "addColor": "Add colour",
+    "useBrand": "Use the brand colour",
+    "headingFont": "Heading font",
+    "bodyFont": "Text font",
+    "default": "default",
+    "sampleHeading": "Book a time",
+    "sampleBody": "Pick a day and a start time. Free cancellation up to 24 hours before.",
+    "previewTitle": "Live preview",
+    "previewNote": "Follows your choices as you make them. Nothing is saved until you press Save.",
+    "sampleName": "Your branch",
+    "sameAsCompany": "Same as the company",
+    "branchAppearanceLead": "Each branch follows the company's look unless you choose its own here.",
+    "fromBrand": "made from the brand colour"
+  },
+  "area": {
+    "choose": "Work in",
+    "company": "Company",
+    "branch": "Branch"
+  },
+  "breadcrumb": {
+    "label": "Breadcrumb",
+    "invite": "Invite",
+    "details": "Details"
   },
   "switcher": {
     "label": "Branch",
@@ -170,9 +203,10 @@
     "notFoundLead": "The link may be wrong, or the branch is not open for online booking yet.",
     "nav": {
       "book": "Book",
+      "booking": "Booking",
       "classes": "Classes",
       "coaches": "Coaches",
-      "about": "About"
+      "policy": "Policy"
     },
     "bookTitle": "Book a time",
     "nothingToBook": "Nothing can be booked online yet. Please contact the branch.",
@@ -211,7 +245,6 @@
     "price": "Price",
     "classesTitle": "Coming up",
     "coachesTitle": "Coaches",
-    "aboutTitle": "About",
     "policyTitle": "Booking policy",
     "checkoutTitle": "Confirm your booking",
     "changeChoice": "Change time",
@@ -239,6 +272,14 @@
     "openLink": "Open",
     "yourBooking": "Your booking",
     "allBranches": "All branches",
+    "branch": "Branch",
+    "bookAt": "At {{name}}",
+    "bookNow": "Book now",
+    "call": "Call",
+    "map": "Map",
+    "switchBranch": "Choose a branch",
+    "youAreHere": "You are here",
+    "seeAllBranches": "See all branches",
     "choose": {
       "court": "Choose a court",
       "pitch": "Choose a pitch",
@@ -794,6 +835,9 @@
     "lead": "Try again. If it keeps happening, go back to the start and tell us what you were doing."
   },
   "identity": {
+    "holdToSave": "Hold to save",
+    "saving": "Saving…",
+    "holdHint": "Press and hold for {{seconds}} seconds to save your details",
     "title": "My account",
     "completeTitle": "One more step",
     "completeLead": "Choose your nationality. Lao numbers log in with their phone; others with their email.",
@@ -911,6 +955,14 @@
     "branchName": "Branch name",
     "linkHint": "Lower-case letters, numbers and dashes. It can change until the branch publishes.",
     "branchCreated": "{{name}} opened. Set it up next.",
+    "clone": "Clone",
+    "cloneTitle": "Clone {{name}}",
+    "cloneLead": "A new draft with the same setup. Give it its own name.",
+    "cloneSubmit": "Clone branch",
+    "branchCloned": "{{name}} created as a copy. Check it, then publish.",
+    "template": "Start from a branch (optional)",
+    "templateNone": "Nothing: start empty",
+    "cloneCopies": "Copied: details, sports, spaces with hours and prices, coaches, booking rules, weekly classes and coming closed days. Not copied: bookings, customers, employees and uploaded pictures.",
     "branchesLead": "Every branch of the company. Closing one takes it offline without deleting anything.",
     "openBranch": "Open",
     "close": "Close",
@@ -958,6 +1010,7 @@
     "noBranchMatch": "No branch matches."
   },
   "home": {
+    "nav": { "branches": "Branches", "contact": "Contact" },
     "branchesTitle_one": "Our branch",
     "branchesTitle_other": "Our branches",
     "bookNow": "Book now",

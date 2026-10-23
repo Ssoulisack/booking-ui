@@ -367,6 +367,8 @@ const project = (m, x, y) => {
 export interface MagicRingsProps {
   color?: string;
   colorTwo?: string;
+  /** up to four colours the rings blend through, from the innermost out; replaces color and colorTwo when given */
+  colors?: string[];
   ringCount?: number;
   motion?: 'pulse' | 'ripple' | 'breathe';
   speed?: number;
@@ -395,9 +397,19 @@ export interface MagicRingsProps {
   style?: CSSProperties;
 }
 
+/** the colour at mix (0..1) along the palette, blending between neighbouring colours */
+const blendPalette = (palette: number[][], mix: number): number[] => {
+  if (palette.length === 1) return palette[0].slice(0, 3);
+  const at = clamp(mix, 0, 1) * (palette.length - 1);
+  const i = Math.min(Math.floor(at), palette.length - 2);
+  const f = at - i;
+  return [0, 1, 2].map(k => palette[i][k] + (palette[i + 1][k] - palette[i][k]) * f);
+};
+
 const MagicRings = ({
   color = '#A855F7',
   colorTwo = '#6366F1',
+  colors,
   ringCount = 6,
   motion = 'pulse',
   speed = 1,
@@ -431,11 +443,13 @@ const MagicRings = ({
   const [generation, setGeneration] = useState(0);
 
   const light = theme === 'light';
-  const first = parseColor(color);
-  const second = parseColor(colorTwo);
+  const list = colors && colors.length > 0 ? colors.slice(0, 4) : [color, colorTwo];
+  const palette = list.map(value => {
+    const parsed = parseColor(value);
+    return light ? parsed : parsed.map(toLinear);
+  });
   const settings = {
-    color: light ? first : first.map(toLinear),
-    colorTwo: light ? second : second.map(toLinear),
+    palette,
     ringCount: clamp(Math.round(ringCount), 1, MAX_RINGS),
     motion: MOTIONS.includes(motion) ? motion : 'pulse',
     speed: Math.max(0, speed),
@@ -631,9 +645,7 @@ const MagicRings = ({
         frameData.set([shiftX, shiftY, Math.cos(angle), Math.sin(angle)], slots * 4);
         tints.set(
           [
-            s.color[0] + (s.colorTwo[0] - s.color[0]) * mix,
-            s.color[1] + (s.colorTwo[1] - s.color[1]) * mix,
-            s.color[2] + (s.colorTwo[2] - s.color[2]) * mix,
+            ...blendPalette(s.palette, mix),
             width
           ],
           slots * 4

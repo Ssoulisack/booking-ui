@@ -3,7 +3,6 @@ import { expect, test } from "@playwright/test"
 import {
   atLeastLiveBranches,
   call,
-  menuLinks,
   publishedClub,
   signInAs,
   type Club,
@@ -21,7 +20,7 @@ const customer = (): Session => JSON.parse(process.env.E2E_CUSTOMER!) as Session
 
 test("a guest opens the brand home, picks a branch and books", async ({
   page,
-}) => {
+}, info) => {
   const { name, slug } = club()
   // the search and filters appear from 5 live branches
   await atLeastLiveBranches(owner(), 5)
@@ -55,20 +54,36 @@ test("a guest opens the brand home, picks a branch and books", async ({
   await card.click()
   await expect(page).toHaveURL(`/b/${slug}`)
   await expect(page.getByRole("heading", { level: 1 })).toContainText(name)
-  // the branch page carries the company name above the branch name
-  await expect(page.getByText(company.name, { exact: true })).toBeVisible()
+  // the branch page says which branch this is and lets the customer switch
+  await expect(page.getByText("Branch", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Choose a branch" }).click()
+  const sheet = page.getByRole("dialog", { name: "Choose a branch" })
+  await expect(sheet).toContainText(company.name)
+  await expect(sheet).toContainText(`${name}You are here`)
+  await expect(
+    sheet.getByRole("link", { name: "See all branches" }),
+  ).toBeVisible()
+  await page.keyboard.press("Escape")
+  await expect(sheet).toBeHidden()
 
   await page.getByRole("radio", { name: /Court 1/ }).click()
   await page
     .getByRole("radiogroup", { name: "Day" })
     .getByRole("radio")
-    .nth(5)
+    // phone and tablet share the club: one day each so the bookings do not clash
+    .nth(info.project.name === "phone" ? 5 : 6)
     .click()
-  await page
+  // the list is redrawn when the day's times arrive: try again until the pick holds
+  const last = page
     .getByRole("radiogroup", { name: "Start time" })
     .getByRole("radio")
     .last()
-    .click()
+  await expect(async () => {
+    await last.click({ timeout: 2000 })
+    await expect(last).toHaveAttribute("aria-checked", "true", {
+      timeout: 1000,
+    })
+  }).toPass()
   await page.getByRole("button", { name: "Book", exact: true }).click()
   await page.getByLabel("Full name").fill("Home Guest")
   await page.getByLabel("Phone").fill("020 5555 7788")
@@ -79,9 +94,7 @@ test("a guest opens the brand home, picks a branch and books", async ({
 
   // Back to the home: the filters are still in the address
   await page.goto(`/b/${slug}`)
-  const width = page.viewportSize()?.width ?? 0
-  if (width < 768) await page.getByRole("button", { name: "Menu" }).click()
-  await page.getByRole("link", { name: "All branches" }).first().click()
+  await page.getByRole("link", { name: "All branches" }).click()
   await expect(page).toHaveURL("/")
 })
 
@@ -126,11 +139,38 @@ test("a customer sees bookings from two branches in My bookings", async ({
   await filter.getByRole("button", { name: "All branches" }).click()
   await expect(cards.filter({ hasText: first.name })).not.toHaveCount(0)
 
-  // the customer's menu leads to the brand home
+  // tablets and phones: the Gooey Nav at the bottom, My bookings active (no Home: All branches is in the avatar menu)
   const width = page.viewportSize()?.width ?? 0
   if (width < 1024) {
-    expect(await menuLinks(page)).toEqual(["Home", "My bookings", "My account"])
+    const nav = page.getByRole("navigation").last()
+    await expect(nav.getByRole("button")).toHaveText([
+      "My bookings",
+      "My account",
+    ])
+    await expect(
+      nav.getByRole("button", { name: "My bookings" }),
+    ).toHaveAttribute("aria-current", "page")
+    await nav.getByRole("button", { name: "My account" }).click()
+    await expect(page).toHaveURL("/account/profile")
   }
+
+  // no branch visited yet: the arrow leads to all branches, and the avatar menu has them too
+  const top = page.getByRole("banner")
+  await expect(
+    top.getByRole("link", { name: "Back to All branches" }),
+  ).toBeVisible()
+  await top.getByRole("button", { name: "My account" }).click()
+  await expect(
+    page.getByRole("menuitem", { name: "All branches" }),
+  ).toBeVisible()
+  await page.keyboard.press("Escape")
+
+  // came from a branch (a scanned QR code or a link): My bookings and My account lead back to it
+  await page.goto(`/b/${first.slug}`)
+  await page.getByRole("link", { name: "My bookings" }).click()
+  await expect(page).toHaveURL("/account")
+  await top.getByRole("link", { name: `Back to ${first.name}` }).click()
+  await expect(page).toHaveURL(`/b/${first.slug}`)
   await page.goto("/")
   await expect(page.getByRole("link", { name: /My bookings/ })).toBeVisible()
   await expect(

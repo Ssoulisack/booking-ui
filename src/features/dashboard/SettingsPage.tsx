@@ -11,7 +11,15 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
+import { usePublicCompany } from "@/features/places/api"
+import {
+  DEFAULT_BODY_FONT,
+  DEFAULT_HEADING_FONT,
+  FONTS,
+} from "@/features/public/look"
 import { Area, Choice, ModePicker, Text } from "@/features/settings/fields"
+import { FontField, RingColorsField } from "@/features/settings/look-fields"
+import { LookPreview } from "@/features/settings/LookPreview"
 import {
   filledLinks,
   SOCIAL,
@@ -58,12 +66,17 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
     booking_mode: settings.booking_mode,
     booking_policy: settings.booking_policy,
     require_approval: settings.require_approval,
+    ring_colors: settings.ring_colors,
+    heading_font: settings.heading_font,
+    body_font: settings.body_font,
   }))
   const set = (patch: Partial<SettingsInput>) => setF({ ...f, ...patch })
   const save = useChange(manage.saveSettings, ["settings"])
   const slugLocked = !!settings.published_at
   const company = settings.in_force
   const links = f.social_links ?? {}
+  // the saved brand colour and logo (set in Company settings) for the colours and the preview
+  const brand = usePublicCompany().data ?? { brand_color: "", logo_url: "" }
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -275,6 +288,94 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
         </div>
       </Panel>
 
+      <Panel title={t("look.appearance")} lead={t("look.branchAppearanceLead")}>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+          <div className="divide-y">
+            <Override
+              id="o-rings"
+              label={t("look.rings")}
+              companyValue={
+                company.ring_colors.length > 0
+                  ? company.ring_colors.join(", ")
+                  : t("look.fromBrand")
+              }
+              own={f.ring_colors !== null}
+              onOwn={(on) =>
+                set({
+                  ring_colors: on
+                    ? (f.ring_colors ?? company.ring_colors)
+                    : null,
+                })
+              }
+            >
+              <RingColorsField
+                value={f.ring_colors ?? []}
+                onChange={(v) => set({ ring_colors: v })}
+                brand={brand.brand_color}
+              />
+            </Override>
+            <Override
+              id="o-heading-font"
+              label={t("look.headingFont")}
+              companyValue={fontLabel(
+                company.heading_font,
+                DEFAULT_HEADING_FONT,
+              )}
+              own={f.heading_font !== null}
+              onOwn={(on) =>
+                set({
+                  heading_font: on
+                    ? (f.heading_font ?? company.heading_font)
+                    : null,
+                })
+              }
+            >
+              <FontField
+                id="s-heading-font"
+                kind="heading"
+                label={t("look.headingFont")}
+                value={f.heading_font ?? ""}
+                onChange={(v) => set({ heading_font: v })}
+              />
+            </Override>
+            <Override
+              id="o-body-font"
+              label={t("look.bodyFont")}
+              companyValue={fontLabel(company.body_font, DEFAULT_BODY_FONT)}
+              own={f.body_font !== null}
+              onOwn={(on) =>
+                set({
+                  body_font: on ? (f.body_font ?? company.body_font) : null,
+                })
+              }
+            >
+              <FontField
+                id="s-body-font"
+                kind="body"
+                label={t("look.bodyFont")}
+                value={f.body_font ?? ""}
+                onChange={(v) => set({ body_font: v })}
+              />
+            </Override>
+          </div>
+          {/* follows the choices as they are made; above them on a phone */}
+          <div className="order-first space-y-2 lg:sticky lg:top-20 lg:order-none lg:self-start">
+            <LookPreview
+              name={f.name}
+              brand={brand.brand_color}
+              look={{
+                ring_colors: f.ring_colors ?? company.ring_colors,
+                heading_font: f.heading_font ?? company.heading_font,
+                body_font: f.body_font ?? company.body_font,
+              }}
+            />
+            <p className="text-sm text-muted-foreground">
+              {t("look.previewNote")}
+            </p>
+          </div>
+        </div>
+      </Panel>
+
       <div className="space-y-3">
         <ErrorAlert error={save.error} />
         <Button type="submit" className="h-11 lg:h-9" disabled={save.isPending}>
@@ -328,4 +429,9 @@ function Override({
       {own && children}
     </div>
   )
+}
+
+/** The name of a font key, or of the default when none is chosen */
+function fontLabel(key: string, fallback: string) {
+  return (FONTS.find((f) => f.key === (key || fallback)) ?? FONTS[0]).label
 }

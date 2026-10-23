@@ -57,7 +57,7 @@ export function BookingCard({
               {booking.branch_name}
             </p>
           )}
-          <h3 className="text-2xl display-tight">{bookingTitle(booking)}</h3>
+          <h3 className="display-tight text-2xl">{bookingTitle(booking)}</h3>
           <p className="text-sm text-muted-foreground">{booking.sport_name}</p>
         </div>
         <StatusBadge status={booking.status} />

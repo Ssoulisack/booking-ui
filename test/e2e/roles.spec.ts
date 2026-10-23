@@ -78,8 +78,28 @@ test.describe.serial("roles land in the right area", () => {
       page.getByText(`You are Owner at ${branchName}.`),
     ).toBeVisible()
     expect(await menuLinks(page)).toEqual(
-      expect.arrayContaining(["Setup", "Branch settings", "Company"]),
+      expect.arrayContaining(["Setup", "Branch settings"]),
     )
+    // the trail starts at the company, then the branch
+    const trail = page.getByRole("navigation", { name: "Breadcrumb" })
+    await expect(trail.getByRole("link", { name: "Company" })).toBeVisible()
+    await expect(trail).toContainText(branchName)
+
+    // "Work in": Company or Branch, above the menu
+    await page.getByRole("button", { name: "Menu" }).click()
+    const menu = page.getByRole("dialog")
+    await expect(menu.getByRole("radio", { name: "Branch" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    )
+    await menu.getByRole("radio", { name: "Company" }).click()
+    await expect(page).toHaveURL("/company")
+
+    // a deeper page: every step back is a link
+    await page.goto("/company/team/invite")
+    await expect(trail.locator("[aria-current=page]")).toHaveText("Invite")
+    await trail.getByRole("link", { name: "Employees" }).click()
+    await expect(page).toHaveURL("/company/team")
   })
 
   test("a manager sees their branch's setup and reports, not its settings or the company", async ({
@@ -97,7 +117,14 @@ test.describe.serial("roles land in the right area", () => {
       expect.arrayContaining(["Calendar", "Setup", "Reports"]),
     )
     expect(links).not.toContain("Branch settings")
-    expect(links).not.toContain("Company")
+    // no Company / Branch choice: the trail starts at their branch
+    await page.getByRole("button", { name: "Menu" }).click()
+    await expect(page.getByRole("dialog").getByRole("radio")).toHaveCount(0)
+    await page.keyboard.press("Escape")
+    await page.goto(`/dashboard/${branchId}/bookings`)
+    const trail = page.getByRole("navigation", { name: "Breadcrumb" })
+    await expect(trail.getByRole("link", { name: branchName })).toBeVisible()
+    await expect(trail.locator("[aria-current=page]")).toHaveText("Bookings")
 
     // pages above the role are closed even by typing the address
     await page.goto(`/dashboard/${branchId}/settings`)

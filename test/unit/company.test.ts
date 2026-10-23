@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { readablePassword, slugify } from "@/features/company/api"
+import { copyName } from "@/features/company/clone"
 import { paginate } from "@/features/company/paging"
 import { matchesMember, parseEmployeeNo } from "@/features/company/team-filter"
 import type { TeamMember } from "@/lib/api/types"
@@ -128,5 +129,28 @@ describe("pages of a whole list", () => {
 
   it("has one empty page for an empty list", () => {
     expect(paginate([], 1).meta.total_page).toBe(1)
+  })
+})
+
+describe("name of a cloned branch", () => {
+  const branch = (name: string) => ({ name, slug: slugify(name) })
+
+  it("adds -COPY to the branch", () => {
+    expect(copyName("NONGBONE", [branch("NONGBONE")])).toBe("NONGBONE-COPY")
+  })
+
+  it("counts -COPY-1, -2, -3 from the original, also when the source is a copy", () => {
+    const all = [branch("NONGBONE"), branch("NONGBONE-COPY")]
+    expect(copyName("NONGBONE-COPY", all)).toBe("NONGBONE-COPY-1")
+    expect(copyName("NONGBONE", all)).toBe("NONGBONE-COPY-1")
+    all.push(branch("NONGBONE-COPY-1"))
+    expect(copyName("NONGBONE-COPY-1", all)).toBe("NONGBONE-COPY-2")
+    all.push(branch("NONGBONE-COPY-2"))
+    expect(copyName("NONGBONE", all)).toBe("NONGBONE-COPY-3")
+  })
+
+  it("skips a name whose link is taken", () => {
+    const taken = [{ name: "Other", slug: "nongbone-copy" }]
+    expect(copyName("NONGBONE", taken)).toBe("NONGBONE-COPY-1")
   })
 })

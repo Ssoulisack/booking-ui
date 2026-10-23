@@ -16,8 +16,6 @@ import type { Booking } from "@/lib/api/types"
 import { dayIn, timeIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { AccountShell } from "./AccountShell"
-
 /** /account — the customer's bookings at every branch, with a branch filter once there are two */
 export function AccountPage() {
   const { t } = useTranslation()
@@ -49,7 +47,7 @@ export function AccountPage() {
   ].sort((a, b) => a[1].localeCompare(b[1]))
 
   return (
-    <AccountShell>
+    <>
       <div className="mx-auto max-w-2xl">
         <PageTitle title={t("account.title")} />
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
@@ -110,7 +108,7 @@ export function AccountPage() {
           </div>
         )}
       </div>
-    </AccountShell>
+    </>
   )
 }
 

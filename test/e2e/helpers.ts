@@ -74,7 +74,11 @@ export async function logIn(page: Page, email: string, password = PASSWORD) {
 }
 
 export async function logOut(page: Page) {
-  await page.getByRole("button", { name: "My account" }).click()
+  // the avatar in the top bar (tablets and phones also have a "My account" item in the bottom menu)
+  await page
+    .getByRole("banner")
+    .getByRole("button", { name: "My account" })
+    .click()
   await page.getByRole("menuitem", { name: "Log out" }).click()
   await expect(page).toHaveURL(/\/login$/)
 }

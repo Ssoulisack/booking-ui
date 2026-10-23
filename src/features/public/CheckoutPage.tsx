@@ -175,7 +175,7 @@ export function CheckoutPage() {
           {t("public.changeChoice")}
         </Link>
       </Button>
-      <h1 className="text-4xl display-tight">{t("public.checkoutTitle")}</h1>
+      <h1 className="display-tight text-4xl">{t("public.checkoutTitle")}</h1>
 
       <section className="rounded-xl bg-white p-4">
         {loading ? (
@@ -186,7 +186,7 @@ export function CheckoutPage() {
         ) : (
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-2xl display-tight">{title}</p>
+              <p className="display-tight text-2xl">{title}</p>
               <p className="text-sm text-muted-foreground">{when}</p>
               {isClass && seats > 1 && (
                 <p className="text-sm text-muted-foreground">
@@ -195,7 +195,7 @@ export function CheckoutPage() {
               )}
             </div>
             {price && (
-              <p className="shrink-0 text-2xl display-tight tabular-nums">
+              <p className="shrink-0 display-tight text-2xl tabular-nums">
                 {money(price.amount, price.currency)}
               </p>
             )}

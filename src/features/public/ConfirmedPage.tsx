@@ -27,7 +27,7 @@ export function ConfirmedPage() {
         <span className="flex size-12 items-center justify-center rounded-full bg-[var(--brand)] text-[var(--brand-foreground)]">
           <CheckIcon className="size-7" />
         </span>
-        <h1 className="text-4xl display-tight">
+        <h1 className="display-tight text-4xl">
           {pending ? t("public.requestedTitle") : t("public.bookedTitle")}
         </h1>
         <p className="text-muted-foreground">
@@ -37,7 +37,7 @@ export function ConfirmedPage() {
 
       <div className="rounded-xl border-2 border-dashed border-[var(--brand-line)] bg-white px-4 py-5 text-center">
         <p className="text-sm text-muted-foreground">{t("public.showCode")}</p>
-        <p className="text-6xl display-tight tracking-wider text-[var(--brand-ink)]">
+        <p className="display-tight text-6xl tracking-wider text-[var(--brand-ink)]">
           {booking.code}
         </p>
       </div>

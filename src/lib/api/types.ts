@@ -76,6 +76,11 @@ export interface CompanyInput {
   logo_key: string
   cover_key: string
   brand_color: string
+  /** up to 4 colours for the rings; empty = made from the brand colour */
+  ring_colors: string[]
+  /** keys of FONTS (features/public/look.ts); "" = the default */
+  heading_font: string
+  body_font: string
   description: string
   phone: string
   email: string
@@ -164,6 +169,9 @@ export interface PublicCompany {
   logo_url: string
   cover_url: string
   brand_color: string
+  ring_colors: string[]
+  heading_font: string
+  body_font: string
   description: string
   phone: string
   email: string
@@ -182,6 +190,9 @@ export interface PublicBranch {
   logo_url: string
   cover_url: string
   brand_color: string
+  ring_colors: string[]
+  heading_font: string
+  body_font: string
   description: string
   address: string
   province: Province | ""
@@ -345,6 +356,10 @@ export interface SettingsInput {
   booking_mode: BookingMode | null
   booking_policy: string | null
   require_approval: boolean | null
+  /** the look: null = the company's */
+  ring_colors: string[] | null
+  heading_font: string | null
+  body_font: string | null
 }
 
 export interface BranchSettings extends SettingsInput {
@@ -360,6 +375,9 @@ export interface BranchSettings extends SettingsInput {
     booking_mode: BookingMode
     booking_policy: string
     require_approval: boolean
+    ring_colors: string[]
+    heading_font: string
+    body_font: string
   }
   public_path: string
   published_at: string | null

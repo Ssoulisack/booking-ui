@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router"
 
@@ -50,6 +51,14 @@ export function BookingBar({
   const { slug } = usePublic()
   const affix = currencyAffix(currency)
 
+  // lets the floating menu (MobileNav) rise above this bar
+  useEffect(() => {
+    document.documentElement.dataset.bookingBar = ""
+    return () => {
+      delete document.documentElement.dataset.bookingBar
+    }
+  }, [])
+
   return (
     <div className="fixed inset-x-0 bottom-0 z-20 border-t border-black/10 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-white/85">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
@@ -58,7 +67,7 @@ export function BookingBar({
           <p className="truncate text-sm text-muted-foreground">{when}</p>
         </div>
         {price !== undefined && (
-          <p className="shrink-0 text-2xl display-tight tabular-nums">
+          <p className="shrink-0 display-tight text-2xl tabular-nums">
             {affix.before}
             <CountUp
               to={price}

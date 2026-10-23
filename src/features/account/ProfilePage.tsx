@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { ErrorAlert, SubmitButton, TextField } from "@/components/form"
 import { PageTitle } from "@/components/page-state"
+import HoldButton from "@/components/reactbits/HoldButton"
 import { FieldGroup } from "@/components/ui/field"
 import { authApi, authKeys } from "@/features/auth/api"
 import { IdentityFields } from "@/features/auth/IdentityFields"
@@ -16,7 +17,8 @@ import type { User } from "@/lib/api/types"
 import { displayPhone } from "@/lib/phone"
 import { useSession } from "@/stores/session"
 
-import { AccountShell } from "./AccountShell"
+// how long Save is held
+const HOLD_MS = 1000
 
 /**
  * /account/profile — the person's own name, nationality, phone and email, and the customer (or employee) number
@@ -29,7 +31,7 @@ export function ProfilePage() {
   const completing = params.get("complete") === "1"
   if (!user) return null
   return (
-    <AccountShell>
+    <>
       <div className="mx-auto max-w-lg space-y-6">
         <PageTitle
           title={completing ? t("identity.completeTitle") : t("identity.title")}
@@ -57,7 +59,7 @@ export function ProfilePage() {
           completing={completing}
         />
       </div>
-    </AccountShell>
+    </>
   )
 }
 
@@ -115,9 +117,29 @@ function ProfileForm({
           nationality={nationality}
         />
       </FieldGroup>
-      <SubmitButton pending={save.isPending}>
-        {completing ? t("identity.continue") : t("identity.save")}
-      </SubmitButton>
+      {completing ? (
+        <SubmitButton pending={save.isPending}>
+          {t("identity.continue")}
+        </SubmitButton>
+      ) : (
+        // hold, not tap: no accidental changes to the person's own details
+        <HoldButton
+          className="w-full"
+          backgroundColor="#dcfce7"
+          textColor="#166534"
+          fillColor="#16a34a"
+          fillTextColor="#ffffff"
+          radius={10}
+          holdTime={HOLD_MS}
+          resetAfter={1500}
+          disabled={save.isPending}
+          doneLabel={t("identity.saving")}
+          hint={t("identity.holdHint", { seconds: HOLD_MS / 1000 })}
+          onHold={() => void form.handleSubmit((v) => save.mutate(v))()}
+        >
+          {t("identity.holdToSave")}
+        </HoldButton>
+      )}
     </form>
   )
 }

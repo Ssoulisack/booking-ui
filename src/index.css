@@ -7,6 +7,20 @@
 @import "@fontsource/noto-sans-lao/600.css";
 @import "@fontsource/noto-sans-thai/400.css";
 @import "@fontsource/noto-sans-thai/600.css";
+/* the fonts a company can choose for its booking pages (files load only when used) */
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/800.css";
+@import "@fontsource/kanit/400.css";
+@import "@fontsource/kanit/600.css";
+@import "@fontsource/kanit/800.css";
+@import "@fontsource/prompt/400.css";
+@import "@fontsource/prompt/600.css";
+@import "@fontsource/prompt/800.css";
+@import "@fontsource/sarabun/400.css";
+@import "@fontsource/sarabun/600.css";
+@import "@fontsource/sarabun/800.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -55,6 +69,15 @@
 }
 
 :root {
+  /* dashboard areas: Company (deep teal menu, #0D9276) and Branch (light menu, green marks) */
+  --area-company: #0d9276;
+  --area-company-soft: oklch(0.95 0.035 172);
+  --area-company-ink: oklch(0.44 0.09 172);
+  --area-company-menu: oklch(0.27 0.05 172);
+  --area-company-glow: oklch(0.8 0.12 172);
+  --area-branch: oklch(0.6 0.13 163);
+  --area-branch-soft: oklch(0.95 0.04 163);
+  --area-branch-ink: oklch(0.42 0.1 163);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -141,10 +164,16 @@
 
 /* Public page: the condensed heavy cut of Noto Sans for names and times, like a scoreboard */
 @utility display-tight {
-  font-stretch: 62.5%;
+  font-family: var(--brand-heading-font, var(--font-sans));
+  font-stretch: var(--brand-heading-stretch, 62.5%);
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 0.95;
+}
+
+/* The Gooey Nav sits above the booking bar while one is showing */
+html[data-booking-bar] .mobile-nav {
+  bottom: calc(env(safe-area-inset-bottom) + 5.75rem);
 }
 
 /* Swipeable rows (date strip): hide the scrollbar, keep scrolling */

@@ -2,6 +2,8 @@ import { colord, extend } from "colord"
 import a11yPlugin from "colord/plugins/a11y"
 import type { CSSProperties } from "react"
 
+import { lookStyle, type Look } from "./look"
+
 extend([a11yPlugin])
 
 const INK = "#141a17"
@@ -13,7 +15,10 @@ export const DEFAULT_BRAND = "#0e7c66"
  * shadcn components follow the brand. Text on the brand is white or ink, whichever reads better;
  * a pale brand colour is darkened for links and text on white so it stays readable (WCAG AA).
  */
-export function brandStyle(hex: string | undefined): CSSProperties {
+export function brandStyle(
+  hex: string | undefined,
+  look?: Look,
+): CSSProperties {
   const base = colord(hex || DEFAULT_BRAND).isValid()
     ? colord(hex || DEFAULT_BRAND)
     : colord(DEFAULT_BRAND)
@@ -34,6 +39,7 @@ export function brandStyle(hex: string | undefined): CSSProperties {
     "--primary": base.toHex(),
     "--primary-foreground": onBrand,
     "--ring": base.alpha(0.5).toRgbString(),
+    ...lookStyle(look),
   } as CSSProperties
 }
 

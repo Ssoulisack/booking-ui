@@ -8,7 +8,7 @@ import {
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, useSearchParams } from "react-router"
+import { Link, useNavigate, useSearchParams } from "react-router"
 
 import { PageError } from "@/components/page-state"
 import BlurText from "@/components/reactbits/BlurText"
@@ -17,7 +17,9 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { brandStyle, DEFAULT_BRAND } from "@/features/public/brand"
 import { BrandMark } from "@/features/public/BrandMark"
+import { MobileNav } from "@/features/public/MobileNav"
 import { PageSpark } from "@/features/public/PageSpark"
+import { useScrollSpy } from "@/features/public/scroll-spy"
 import { applyBusinessLanguage } from "@/i18n"
 import type { DirectoryBranch, PublicCompany } from "@/lib/api/types"
 import { money } from "@/lib/format"
@@ -26,6 +28,8 @@ import { webUrl } from "@/lib/url"
 import { cn } from "@/lib/utils"
 import { UserMenu } from "@/layouts/UserMenu"
 import { useSession } from "@/stores/session"
+
+import defaultBranchPhoto from "@/assets/default-branch.jpg"
 
 import { useLiveBranches, usePublicCompany } from "./api"
 import { BrandRings } from "@/features/public/BrandRings"
@@ -52,23 +56,27 @@ export function BrandHome() {
     }
   }, [data])
 
-  if (company.isPending) return <HomeSkeleton />
-  if (company.isError) {
-    return <PageError error={company.error} onRetry={() => company.refetch()} />
+  if (!data) {
+    if (company.isError) {
+      return (
+        <PageError error={company.error} onRetry={() => company.refetch()} />
+      )
+    }
+    return <HomeSkeleton />
   }
 
   const live = branches.data ?? []
   return (
     <div
-      style={brandStyle(company.data.brand_color)}
-      className="min-h-dvh bg-[#f3f5f4] text-[#141a17]"
+      style={brandStyle(data.brand_color, data)}
+      className="min-h-dvh bg-[#f3f5f4] pb-24 text-[#141a17] lg:pb-0"
     >
       <PageSpark>
-        <TopBar company={company.data} />
-        <Hero company={company.data} branches={live} />
+        <TopBar company={data} />
+        <Hero company={data} branches={live} />
         <main className="mx-auto max-w-5xl px-4 pt-8 pb-16">
           <section id="branches" className="scroll-mt-20 space-y-5">
-            <h2 className="text-3xl display-tight">
+            <h2 className="display-tight text-3xl">
               {t("home.branchesTitle", { count: live.length })}
             </h2>
             {branches.isPending ? (
@@ -83,13 +91,46 @@ export function BrandHome() {
                 onRetry={() => branches.refetch()}
               />
             ) : (
-              <BranchList branches={live} company={company.data} />
+              <BranchList branches={live} company={data} />
             )}
           </section>
         </main>
-        <Footer company={company.data} />
+        <Footer company={data} />
+        <HomeNav company={data} />
       </PageSpark>
     </div>
+  )
+}
+
+/** Tablets and phones: Branches / Contact / My bookings (or Log in) in the Gooey Nav */
+function HomeNav({ company }: { company: PublicCompany }) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const user = useSession((s) => s.user)
+  const hasContact =
+    !!company.phone ||
+    !!company.email ||
+    Object.values(company.social_links ?? {}).some((url) => webUrl(url))
+  const sections = [
+    { id: "branches", label: t("home.nav.branches") },
+    ...(hasContact ? [{ id: "contact", label: t("home.nav.contact") }] : []),
+  ]
+  const { active, jump } = useScrollSpy(sections.map((s) => s.id))
+  return (
+    <MobileNav
+      color={company.brand_color}
+      active={active}
+      items={[
+        ...sections.map((s, i) => ({
+          label: s.label,
+          onSelect: () => jump(i),
+        })),
+        {
+          label: user ? t("nav.myBookings") : t("actions.logIn"),
+          onSelect: () => navigate(user ? "/account" : "/login"),
+        },
+      ]}
+    />
   )
 }
 
@@ -105,7 +146,7 @@ function TopBar({ company }: { company: PublicCompany }) {
             logo={company.logo_url}
             className="size-8"
           />
-          <span className="truncate text-lg display-tight">{company.name}</span>
+          <span className="truncate display-tight text-lg">{company.name}</span>
         </Link>
         {user ? (
           <>
@@ -151,7 +192,7 @@ function Hero({
           className="absolute inset-0 size-full object-cover opacity-35 mix-blend-luminosity"
         />
       )}
-      <BrandRings brand={company.brand_color} />
+      <BrandRings brand={company.brand_color} colors={company.ring_colors} />
       <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-4 pt-8 pb-8 sm:pt-12 sm:pb-12">
         <div role="heading" aria-level={1}>
           <BlurText
@@ -159,7 +200,7 @@ function Hero({
             animateBy="letters"
             trigger="load"
             delay={35}
-            className="text-5xl display-tight sm:text-7xl"
+            className="display-tight text-5xl sm:text-7xl"
           />
         </div>
         {company.description && (
@@ -372,12 +413,20 @@ function BranchCard({
       className="group block overflow-hidden rounded-2xl bg-white ring-1 ring-black/5 transition-shadow focus-visible:ring-3 focus-visible:ring-ring/50 active:shadow-sm"
     >
       <div className="relative h-28 bg-[var(--brand)]">
-        {b.cover_url && (
+        {b.cover_url ? (
           <img
             src={b.cover_url}
             alt=""
             loading="lazy"
             className="size-full object-cover"
+          />
+        ) : (
+          // no photo of its own: the project's default one, whole, on its own light background
+          <img
+            src={defaultBranchPhoto}
+            alt=""
+            loading="lazy"
+            className="size-full bg-[#f7f7f7] object-contain"
           />
         )}
         <span className="absolute -bottom-6 left-4 rounded-xl ring-4 ring-white">
@@ -389,7 +438,7 @@ function BranchCard({
         </span>
       </div>
       <div className="space-y-2 px-4 pt-8 pb-4">
-        <h3 className="text-xl display-tight leading-tight">{b.name}</h3>
+        <h3 className="display-tight text-xl leading-tight">{b.name}</h3>
         {types.length > 0 && (
           <p className="flex flex-wrap gap-1.5">
             {types.map((type) => (
@@ -430,9 +479,9 @@ function Footer({ company }: { company: PublicCompany }) {
   )
   if (!company.phone && !company.email && links.length === 0) return null
   return (
-    <footer className="border-t border-black/5 bg-white">
+    <footer id="contact" className="border-t border-black/5 bg-white">
       <div className="mx-auto max-w-5xl space-y-4 px-4 py-8">
-        <h2 className="text-2xl display-tight">{t("home.contactTitle")}</h2>
+        <h2 className="display-tight text-2xl">{t("home.contactTitle")}</h2>
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
           {company.phone && (
             <a

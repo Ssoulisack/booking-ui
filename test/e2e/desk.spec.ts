@@ -52,8 +52,12 @@ async function walkIn(page: Page, name: string, court: string) {
     .getByRole("radiogroup", { name: "Start time" })
     .getByRole("radio")
     .first()
-  await first.click()
-  await expect(first).toHaveAttribute("aria-checked", "true")
+  await expect(async () => {
+    await first.click({ timeout: 2000 })
+    await expect(first).toHaveAttribute("aria-checked", "true", {
+      timeout: 1000,
+    })
+  }).toPass()
   await dialog.getByRole("button", { name: "Book", exact: true }).click()
   await expect(page.getByText(/^Booked: /)).toBeVisible()
   await expect(page.getByRole("dialog", { name: court })).toBeVisible() // the booking opens

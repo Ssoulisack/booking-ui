@@ -209,7 +209,8 @@ test("the owner finds the QR codes of the home and of a branch", async ({
   // more than 20 branches: the list is split into pages of 20
   await expect(page.getByText(/^Page 1 of \d+$/)).toBeVisible()
   await expect(page.getByRole("button", { name: "QR code" })).not.toHaveCount(0)
-  expect(await page.locator("main li").count()).toBeLessThanOrEqual(20)
+  // (ul: the breadcrumb trail is an ol)
+  expect(await page.locator("main ul > li").count()).toBeLessThanOrEqual(20)
   await page.getByLabel("Search branches").fill(club.name)
   await page
     .getByRole("listitem")
@@ -221,6 +222,107 @@ test("the owner finds the QR codes of the home and of a branch", async ({
   await expect(
     dialog.getByRole("link", { name: "Download QR" }),
   ).toHaveAttribute("download", `${club.slug}-qr.png`)
+})
+
+// 2f: a branch is cloned from its row, or from "Start from a branch" in New branch; the copy is
+// named NAME-COPY, then NAME-COPY-1, -2 …; the setup comes along and the copy is a draft
+test("the owner clones a branch from its row and from the New branch dialog", async ({
+  page,
+}) => {
+  // its own branch: phone and tablet each clone one, so the names stay predictable
+  const club = await publishedClub(owner(), `E2E Source ${Date.now()}`)
+  await signInAs(page, owner())
+
+  // --- the row's Clone button ---
+  await page.goto(`/company/branches?q=${encodeURIComponent(club.name)}`)
+  const row = page.getByRole("listitem").filter({ hasText: club.name })
+  await row.getByRole("button", { name: "Clone" }).click()
+  const dialog = page.getByRole("dialog", { name: `Clone ${club.name}` })
+  await expect(dialog.getByLabel("Branch name")).toHaveValue(
+    `${club.name}-COPY`,
+  )
+  await expect(dialog).toContainText("Not copied: bookings")
+  await dialog.getByRole("button", { name: "Clone branch" }).click()
+  await expect(page).toHaveURL(/\/dashboard\/\d+$/)
+  await expect(page.getByText(`${club.name}-COPY`).first()).toBeVisible()
+
+  // the copy has the setup: a space of the original
+  await page.goto(`${new URL(page.url()).pathname}/setup/spaces`)
+  await expect(page.getByText("Court 1").first()).toBeVisible()
+
+  // --- "Start from a branch" in New branch: the next free name is -COPY-1 ---
+  await page.goto("/company/branches")
+  await page.getByRole("button", { name: "New branch" }).click()
+  const fresh = page.getByRole("dialog", { name: "New branch" })
+  await fresh.getByLabel("Start from a branch (optional)").selectOption({
+    label: club.name,
+  })
+  await expect(fresh.getByLabel("Branch name")).toHaveValue(
+    `${club.name}-COPY-1`,
+  )
+  // a name of their own wins over the suggestion
+  await fresh.getByLabel("Branch name").fill(`${club.name} Annex`)
+  await fresh.getByRole("button", { name: "Clone branch" }).click()
+  await expect(page).toHaveURL(/\/dashboard\/\d+$/)
+  await expect(page.getByText(`${club.name} Annex`).first()).toBeVisible()
+})
+
+// 2g: ring colours (up to 4) and fonts for the whole company, a branch's own look, and a preview of
+// what is not saved yet
+test("the owner sets the look, sees it live before saving, and a branch can have its own", async ({
+  page,
+}) => {
+  await signInAs(page, owner())
+  await page.goto("/company/settings")
+  const panel = page.locator("section").filter({
+    has: page.getByRole("heading", { name: "Look of the pages" }),
+  })
+  await panel.getByRole("button", { name: "Add colour" }).click()
+  await panel.getByRole("button", { name: "Add colour" }).click()
+  await panel.getByLabel("Ring colour 1 code").fill("#ff0000")
+  await panel.getByLabel("Ring colour 2 code").fill("#0000ff")
+  await panel.getByLabel("Heading font").selectOption("kanit")
+  await panel.getByLabel("Text font").selectOption("inter")
+
+  // --- the live preview beside the form follows the choices; nothing is saved yet ---
+  const preview = panel.getByRole("region", { name: "Live preview" })
+  await expect(preview).toHaveAttribute("style", /Kanit/)
+  await expect(preview).toHaveAttribute("style", /Inter/)
+  const saved = await call<{ heading_font: string; ring_colors: string[] }>(
+    "/public/company",
+  )
+  expect(saved.ring_colors).not.toContain("#ff0000")
+
+  // --- save: the public home now carries it ---
+  await page.getByRole("button", { name: "Save settings" }).click()
+  await expect(page.getByText("Settings saved.")).toBeVisible()
+  const after = await call<{ heading_font: string; ring_colors: string[] }>(
+    "/public/company",
+  )
+  expect(after.heading_font).toBe("kanit")
+  expect(after.ring_colors).toEqual(["#ff0000", "#0000ff"])
+
+  // --- a branch can follow the company, or have its own fonts and colours ---
+  const club = await publishedClub(owner(), `E2E Look ${Date.now()}`)
+  await page.goto(`/dashboard/${club.id}/settings`)
+  await page.locator("#o-body-font").click()
+  await page.getByLabel("Text font").selectOption("poppins")
+  await page.locator("#o-rings").click()
+  await page.getByRole("button", { name: "Use the brand colour" }).click()
+  await page.getByRole("button", { name: "Save settings" }).click()
+  await expect(page.getByText("Settings saved.")).toBeVisible()
+  await page.goto(`/b/${club.slug}`)
+  const wrapper = page.locator("[style*='--brand-heading-font']").first()
+  await expect(wrapper).toHaveAttribute("style", /Poppins/)
+  await expect(wrapper).toHaveAttribute("style", /Kanit/)
+
+  // leave the company as found for the other specs
+  await page.goto("/company/settings")
+  await panel.getByRole("button", { name: "Use the brand colour" }).click()
+  await panel.getByLabel("Heading font").selectOption("noto-condensed")
+  await panel.getByLabel("Text font").selectOption("noto-sans")
+  await page.getByRole("button", { name: "Save settings" }).click()
+  await expect(page.getByText("Settings saved.")).toBeVisible()
 })
 
 // 2b: the owner finds an employee by name, ID, phone or email, and by branch

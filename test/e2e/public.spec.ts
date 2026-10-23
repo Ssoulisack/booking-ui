@@ -23,8 +23,13 @@ async function pickFirstTime(page: Page) {
     .getByRole("radiogroup", { name: "Start time" })
     .getByRole("radio")
     .first()
-  await first.click()
-  await expect(first).toHaveAttribute("aria-checked", "true")
+  // the list is redrawn when the day's times arrive: try again until the pick holds
+  await expect(async () => {
+    await first.click({ timeout: 2000 })
+    await expect(first).toHaveAttribute("aria-checked", "true", {
+      timeout: 1000,
+    })
+  }).toPass()
 }
 
 test("a customer books a court for 90 minutes and cancels it", async ({

@@ -1,6 +1,5 @@
 import {
   BarChart3Icon,
-  Building2Icon,
   CalendarDaysIcon,
   ClipboardListIcon,
   HandCoinsIcon,
@@ -18,6 +17,7 @@ import { usableBranches, useMyBranches } from "@/features/auth/api"
 import type { BranchRole } from "@/lib/api/types"
 import { roleAtLeast } from "@/lib/roles"
 import { AppShell, type NavItem } from "@/layouts/AppShell"
+import { crumbsFor } from "@/layouts/crumbs"
 import { EndSession } from "@/routes/guards"
 import { useCurrentBranch } from "@/stores/branch"
 import { runsCompany, useSession } from "@/stores/session"
@@ -74,6 +74,23 @@ const NAV: Array<
   { path: "settings", key: "branchSettings", icon: SettingsIcon, min: "admin" },
 ]
 
+// the name of each /dashboard/:id/… path segment in the breadcrumbs (ids are "Details")
+const DASHBOARD_CRUMBS: Record<string, string> = {
+  calendar: "nav.calendar",
+  bookings: "nav.bookings",
+  customers: "nav.customers",
+  "cash-up": "nav.cashUp",
+  setup: "nav.setup",
+  reports: "nav.reports",
+  settings: "nav.branchSettings",
+  sports: "setup.tabs.sports",
+  spaces: "setup.tabs.spaces",
+  coaches: "setup.tabs.coaches",
+  classes: "setup.tabs.classes",
+  closures: "setup.tabs.closures",
+  rules: "setup.tabs.rules",
+}
+
 /**
  * /dashboard/:branchId — for the people who work at the branch, and for the owner and admins at
  * every branch. The branch list is re-read on every page change (and after a MEMBERSHIP_DISABLED
@@ -118,12 +135,24 @@ export function DashboardLayout() {
     icon,
     end,
   }))
-  if (runsCompany(user)) {
-    nav.push({ to: "/company", label: t("nav.company"), icon: Building2Icon })
-  }
+  // the owner and admins start the trail at the company; everyone else at their branch
+  const company = runsCompany(user)
+  const crumbs = crumbsFor(
+    { label: branch.name, to: base },
+    base,
+    pathname,
+    (segment) => t(DASHBOARD_CRUMBS[segment] ?? "breadcrumb.details"),
+  )
+  if (company) crumbs.unshift({ label: t("nav.company"), to: "/company" })
 
   return (
-    <AppShell nav={nav} context={<BranchSwitcher current={branch} />}>
+    <AppShell
+      nav={nav}
+      area="branch"
+      areaSwitch={company}
+      crumbs={crumbs}
+      context={<BranchSwitcher current={branch} />}
+    >
       <Outlet context={{ branch } satisfies DashboardContext} />
     </AppShell>
   )

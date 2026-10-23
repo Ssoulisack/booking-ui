@@ -411,7 +411,7 @@ function TargetList({
                 : "border-black/10 active:bg-[var(--brand-soft)]",
             )}
           >
-            <span className="text-xl display-tight">{item.name}</span>
+            <span className="display-tight text-xl">{item.name}</span>
             {item.price_per_hour !== null && item.currency && (
               <span className="shrink-0 text-sm text-muted-foreground">
                 {t("public.perHour", {
@@ -473,7 +473,7 @@ function DateStrip({
               )}
             >
               <span className="text-xs">{dayIn(iso, tz).split(" ")[0]}</span>
-              <span className="text-2xl display-tight tabular-nums">
+              <span className="display-tight text-2xl tabular-nums">
                 {Number(d.slice(8))}
               </span>
             </button>
@@ -494,7 +494,7 @@ function DateStrip({
       {/* centred on every screen; the dialog sits outside the page, so it takes the brand colour itself */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          style={brandStyle(business.brand_color)}
+          style={brandStyle(business.brand_color, business)}
           className="w-auto max-w-[calc(100%-2rem)] gap-2 p-4 sm:max-w-fit"
         >
           <DialogHeader>
@@ -578,7 +578,7 @@ function ClassList({
                 className="flex w-full flex-col gap-1 px-4 py-3 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring"
               >
                 <span className="flex items-baseline justify-between gap-3">
-                  <span className="text-2xl display-tight tabular-nums">
+                  <span className="display-tight text-2xl tabular-nums">
                     {timeIn(c.starts_at, tz)}–{timeIn(c.ends_at, tz)}
                   </span>
                   <span className="text-sm font-medium">
@@ -638,7 +638,7 @@ function SeatStepper({
         −
       </button>
       <span
-        className="w-6 text-center text-2xl display-tight tabular-nums"
+        className="w-6 text-center display-tight text-2xl tabular-nums"
         aria-live="polite"
       >
         {value}

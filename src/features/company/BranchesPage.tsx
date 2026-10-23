@@ -1,4 +1,4 @@
-import { PlusIcon, QrCodeIcon, SearchIcon } from "lucide-react"
+import { CopyIcon, PlusIcon, QrCodeIcon, SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useSearchParams } from "react-router"
@@ -35,13 +35,17 @@ import type { BranchSummary } from "@/lib/api/types"
 
 import { slugify, useBranches, useCreateBranch, useSetClosed } from "./api"
 import { paginate } from "./paging"
+import { copyName } from "./clone"
 import { Pager, StatusBadge } from "./ui"
 
 /** /company/branches — every branch: open its dashboard, its QR code, close or reopen it, open a new one */
 export function BranchesPage() {
   const { t } = useTranslation()
   const [params, setParams] = useSearchParams()
-  const [creating, setCreating] = useState(params.get("new") === "1")
+  // the dialog: open from "New branch" (no source) or from a row's "Clone" (that branch)
+  const [creating, setCreating] = useState<
+    { from: BranchSummary | null } | undefined
+  >(params.get("new") === "1" ? { from: null } : undefined)
   const branches = useBranches()
   const [page, setPage] = useState(1)
   const q = (params.get("q") ?? "").trim().toLowerCase()
@@ -58,7 +62,10 @@ export function BranchesPage() {
         title={t("nav.branches")}
         lead={t("company.branchesLead")}
         actions={
-          <Button className="h-11 lg:h-9" onClick={() => setCreating(true)}>
+          <Button
+            className="h-11 lg:h-9"
+            onClick={() => setCreating({ from: null })}
+          >
             <PlusIcon />
             {t("company.newBranch")}
           </Button>
@@ -94,7 +101,11 @@ export function BranchesPage() {
           )}
           <ul className="divide-y rounded-xl bg-background ring-1 ring-border empty:hidden">
             {rows.items.map((b) => (
-              <BranchRow key={b.id} branch={b} />
+              <BranchRow
+                key={b.id}
+                branch={b}
+                onClone={() => setCreating({ from: b })}
+              />
             ))}
           </ul>
           <Pager meta={rows.meta} page={rows.page} onPage={setPage} />
@@ -102,8 +113,9 @@ export function BranchesPage() {
       )}
       {creating && (
         <NewBranchDialog
+          from={creating.from}
           onClose={() => {
-            setCreating(false)
+            setCreating(undefined)
             if (params.has("new")) setParams({}, { replace: true })
           }}
         />
@@ -112,7 +124,13 @@ export function BranchesPage() {
   )
 }
 
-function BranchRow({ branch: b }: { branch: BranchSummary }) {
+function BranchRow({
+  branch: b,
+  onClone,
+}: {
+  branch: BranchSummary
+  onClone: () => void
+}) {
   const { t } = useTranslation()
   return (
     <li className="flex flex-wrap items-center gap-3 px-4 py-3">
@@ -129,6 +147,10 @@ function BranchRow({ branch: b }: { branch: BranchSummary }) {
         <Link to={`/dashboard/${b.id}`}>{t("company.openBranch")}</Link>
       </Button>
       {b.status === "published" && <QrButton branch={b} />}
+      <Button variant="outline" className="h-11 lg:h-9" onClick={onClone}>
+        <CopyIcon />
+        {t("company.clone")}
+      </Button>
       <CloseButton branch={b} />
     </li>
   )
@@ -214,31 +236,71 @@ function CloseButton({ branch: b }: { branch: BranchSummary }) {
   )
 }
 
-/** A new branch starts as a draft; its dashboard opens to set it up */
-function NewBranchDialog({ onClose }: { onClose: () => void }) {
+/**
+ * A new branch starts as a draft; its dashboard opens to set it up. It can start as a copy of
+ * another branch's setup ("Start from a branch", or the row's Clone button).
+ */
+function NewBranchDialog({
+  from,
+  onClose,
+}: {
+  from: BranchSummary | null
+  onClose: () => void
+}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const create = useCreateBranch()
-  const [name, setName] = useState("")
-  const [slug, setSlug] = useState("")
+  const branches = useBranches().data ?? []
+  const [source, setSource] = useState(from?.id ?? 0)
+  const [name, setName] = useState(() =>
+    from ? copyName(from.name, branches) : "",
+  )
+  const [slug, setSlug] = useState(() =>
+    from ? slugify(copyName(from.name, branches)) : "",
+  )
+  const [nameTouched, setNameTouched] = useState(false)
   const [slugTouched, setSlugTouched] = useState(false)
+
+  // choosing a branch to copy suggests the copy's name, until the person types their own
+  const choose = (id: number) => {
+    setSource(id)
+    if (nameTouched) return
+    const src = branches.find((b) => b.id === id)
+    const next = src ? copyName(src.name, branches) : ""
+    setName(next)
+    if (!slugTouched) setSlug(slugify(next))
+  }
 
   return (
     <FormDialog
       open
       onOpenChange={(o) => !o && onClose()}
-      title={t("company.newBranch")}
-      description={t("company.newBranchLead")}
-      submitLabel={t("company.createBranch")}
+      title={
+        from
+          ? t("company.cloneTitle", { name: from.name })
+          : t("company.newBranch")
+      }
+      description={from ? t("company.cloneLead") : t("company.newBranchLead")}
+      submitLabel={
+        source ? t("company.cloneSubmit") : t("company.createBranch")
+      }
       pending={create.isPending}
       error={create.error}
       onSubmit={(e) => {
         e.preventDefault()
         create.mutate(
-          { name: name.trim(), slug: slug.trim() },
+          {
+            name: name.trim(),
+            slug: slug.trim(),
+            ...(source ? { clone_from: source } : {}),
+          },
           {
             onSuccess: (b) => {
-              toast.success(t("company.branchCreated", { name: b.name }))
+              toast.success(
+                t(source ? "company.branchCloned" : "company.branchCreated", {
+                  name: b.name,
+                }),
+              )
               onClose()
               navigate(`/dashboard/${b.id}`)
             },
@@ -246,12 +308,41 @@ function NewBranchDialog({ onClose }: { onClose: () => void }) {
         )
       }}
     >
+      {!from && branches.length > 0 && (
+        <Field>
+          <FieldLabel htmlFor="branch-template">
+            {t("company.template")}
+          </FieldLabel>
+          {/* native picker: the phone's own list, and typing jumps to a branch */}
+          <select
+            id="branch-template"
+            value={source}
+            onChange={(e) => choose(Number(e.target.value))}
+            className="h-11 w-full rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
+          >
+            <option value={0}>{t("company.templateNone")}</option>
+            {[...branches]
+              .sort((x, y) => x.name.localeCompare(y.name))
+              .map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+          </select>
+        </Field>
+      )}
+      {source > 0 && (
+        <p className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
+          {t("company.cloneCopies")}
+        </p>
+      )}
       <Field>
         <FieldLabel htmlFor="branch-name">{t("company.branchName")}</FieldLabel>
         <Input
           id="branch-name"
           value={name}
           onChange={(e) => {
+            setNameTouched(true)
             setName(e.target.value)
             if (!slugTouched) setSlug(slugify(e.target.value))
           }}

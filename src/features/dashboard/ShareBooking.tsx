@@ -208,7 +208,7 @@ function Poster({ url, name, qr }: { url: string; name: string; qr: string }) {
   const { t } = useTranslation()
   return createPortal(
     <div className="qr-poster hidden flex-col items-center justify-center gap-6 bg-white p-12 text-center text-black">
-      <h1 className="text-5xl display-tight">{name}</h1>
+      <h1 className="display-tight text-5xl">{name}</h1>
       <img src={qr} alt="" className="size-[12cm]" />
       <p className="text-3xl font-semibold">{t("overview.share.scan")}</p>
       <p className="text-lg break-all">{url}</p>

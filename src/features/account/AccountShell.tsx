@@ -1,16 +1,27 @@
-import { HomeIcon, TicketIcon, UserRoundIcon } from "lucide-react"
-import type { ReactNode } from "react"
+import { TicketIcon, UserRoundIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { Outlet } from "react-router"
 
+import { readOrigin } from "@/features/public/origin"
 import { AppShell } from "@/layouts/AppShell"
 
-/** The customer's own area: the brand home, My bookings and My account */
-export function AccountShell({ children }: { children: ReactNode }) {
+/**
+ * /account/*: the customer's own area (My bookings, My account). One layout for both pages, so the
+ * menu stays put and its pill slides from one item to the other. The top-left arrow leads back to
+ * the branch they came from, or to all branches when they came from nowhere.
+ */
+export function AccountLayout() {
   const { t } = useTranslation()
+  const origin = readOrigin()
   return (
     <AppShell
+      gooey
+      back={
+        origin
+          ? { to: `/b/${origin.slug}`, label: origin.name }
+          : { to: "/", label: t("public.allBranches") }
+      }
       nav={[
-        { to: "/", label: t("nav.home"), icon: HomeIcon, end: true },
         {
           to: "/account",
           label: t("nav.myBookings"),
@@ -24,7 +35,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
         },
       ]}
     >
-      {children}
+      <Outlet />
     </AppShell>
   )
 }

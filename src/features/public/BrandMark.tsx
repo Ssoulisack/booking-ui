@@ -1,10 +1,12 @@
-/** The company logo, or the name's first letter on the brand colour */
+import defaultLogo from "@/assets/default-logo.png"
+
+/** The company logo, or the project's default logo (transparent, no background) when none was uploaded */
 export function BrandMark({
-  name,
   logo,
   className = "size-9",
 }: {
-  name: string
+  // kept so every place that shows the mark passes the company name
+  name?: string
   logo: string
   className?: string
 }) {
@@ -13,16 +15,15 @@ export function BrandMark({
       <img
         src={logo}
         alt=""
-        className={`${className} shrink-0 rounded-lg bg-white object-cover`}
+        className={`${className} shrink-0 rounded-lg object-cover`}
       />
     )
   }
   return (
-    <span
-      aria-hidden
-      className={`${className} flex shrink-0 items-center justify-center rounded-lg bg-[var(--brand)] text-lg display-tight text-[var(--brand-foreground)]`}
-    >
-      {name.trim().charAt(0).toUpperCase()}
-    </span>
+    <img
+      src={defaultLogo}
+      alt=""
+      className={`${className} shrink-0 object-contain`}
+    />
   )
 }

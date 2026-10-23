@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, Outlet } from "react-router"
+import { Link, Outlet, useLocation } from "react-router"
 
 import { ErrorAlert } from "@/components/form"
 import { Button } from "@/components/ui/button"
@@ -19,11 +19,24 @@ import { ShareBooking } from "@/features/dashboard/ShareBooking"
 import { PageHeader, Panel } from "@/features/dashboard/ui"
 import { money } from "@/lib/format"
 import { AppShell } from "@/layouts/AppShell"
+import { crumbsFor } from "@/layouts/crumbs"
 
 import { useBranches, useCompany, useCompanyReport } from "./api"
 import { thisMonth } from "./period"
 import { paginate } from "./paging"
 import { Pager, StatusBadge } from "./ui"
+
+// the name of each /company/… path segment in the breadcrumbs
+const COMPANY_CRUMBS: Record<string, string> = {
+  branches: "nav.branches",
+  team: "nav.team",
+  invite: "breadcrumb.invite",
+  customers: "nav.customers",
+  reports: "nav.reports",
+  users: "nav.users",
+  rules: "nav.bookingRules",
+  settings: "nav.companySettings",
+}
 
 // the overview shows fewer branch cards per page than the Branches list
 const OVERVIEW_PAGE = 10
@@ -31,6 +44,7 @@ const OVERVIEW_PAGE = 10
 /** /company — the owner's and admins' area (see RequireCompany) */
 export function CompanyLayout() {
   const { t } = useTranslation()
+  const { pathname } = useLocation()
   const company = useCompany()
   const nav = [
     {
@@ -59,9 +73,18 @@ export function CompanyLayout() {
       icon: SettingsIcon,
     },
   ]
+  const crumbs = crumbsFor(
+    { label: company.data?.name || t("nav.company"), to: "/company" },
+    "/company",
+    pathname,
+    (segment) => t(COMPANY_CRUMBS[segment] ?? "breadcrumb.details"),
+  )
   return (
     <AppShell
       nav={nav}
+      area="company"
+      areaSwitch
+      crumbs={crumbs}
       context={
         <span className="truncate px-2 font-medium">
           {company.data?.name ?? ""}

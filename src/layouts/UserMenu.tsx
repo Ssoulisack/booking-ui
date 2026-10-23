@@ -2,6 +2,7 @@ import {
   BriefcaseIcon,
   LogOutIcon,
   Building2Icon,
+  LayoutGridIcon,
   TicketIcon,
   UserRoundIcon,
 } from "lucide-react"
@@ -30,7 +31,7 @@ const initials = (name: string) =>
     .join("") || "?"
 
 /** Avatar menu: the areas this person can open, and log out */
-export function UserMenu() {
+export function UserMenu({ allBranches = false }: { allBranches?: boolean }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const user = useSession((s) => s.user)
@@ -92,6 +93,15 @@ export function UserMenu() {
             {t("nav.myBookings")}
           </Link>
         </DropdownMenuItem>
+        {allBranches && (
+          <DropdownMenuItem asChild>
+            <Link to="/">
+              <LayoutGridIcon />
+              {t("public.allBranches")}
+            </Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/account/profile">
             <UserRoundIcon />

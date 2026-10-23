@@ -33,7 +33,7 @@ export function GuestBookingPage() {
 
   return (
     <main className="mx-auto max-w-xl space-y-6 px-4 pt-8 pb-16">
-      <h1 className="text-4xl display-tight">{t("public.yourBooking")}</h1>
+      <h1 className="display-tight text-4xl">{t("public.yourBooking")}</h1>
       {booking.isPending ? (
         <Skeleton className="h-48 rounded-xl" />
       ) : booking.isError ? (

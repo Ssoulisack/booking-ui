@@ -30,6 +30,8 @@ import {
   TIMEZONES,
   withCurrent,
 } from "@/features/settings/options"
+import { FontField, RingColorsField } from "@/features/settings/look-fields"
+import { LookPreview } from "@/features/settings/LookPreview"
 import type { Company, CompanyInput, EffectiveRule } from "@/lib/api/types"
 
 import {
@@ -55,6 +57,9 @@ function CompanyForm({ company }: { company: Company }) {
     logo_key: company.logo_key,
     cover_key: company.cover_key,
     brand_color: company.brand_color || DEFAULT_BRAND,
+    ring_colors: company.ring_colors ?? [],
+    heading_font: company.heading_font ?? "",
+    body_font: company.body_font ?? "",
     description: company.description,
     phone: company.phone,
     email: company.email,
@@ -124,6 +129,38 @@ function CompanyForm({ company }: { company: Company }) {
               value={f.brand_color}
               onChange={(v) => set({ brand_color: v })}
             />
+          </div>
+        </div>
+      </Panel>
+      <Panel title={t("look.appearance")} lead={t("look.appearanceLead")}>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+          <div className="space-y-5">
+            <RingColorsField
+              value={f.ring_colors}
+              onChange={(v) => set({ ring_colors: v })}
+              brand={f.brand_color}
+            />
+            <FontField
+              id="c-heading-font"
+              kind="heading"
+              label={t("look.headingFont")}
+              value={f.heading_font}
+              onChange={(v) => set({ heading_font: v })}
+            />
+            <FontField
+              id="c-body-font"
+              kind="body"
+              label={t("look.bodyFont")}
+              value={f.body_font}
+              onChange={(v) => set({ body_font: v })}
+            />
+          </div>
+          {/* follows the choices as they are made; above the controls on a phone */}
+          <div className="order-first space-y-2 lg:sticky lg:top-20 lg:order-none lg:self-start">
+            <LookPreview name={f.name} brand={f.brand_color} look={f} />
+            <p className="text-sm text-muted-foreground">
+              {t("look.previewNote")}
+            </p>
           </div>
         </div>
       </Panel>

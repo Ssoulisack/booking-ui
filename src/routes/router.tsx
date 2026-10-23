@@ -118,16 +118,25 @@ export const router = createBrowserRouter([
           {
             path: "account",
             lazy: async () => ({
-              Component: (await import("@/features/account/AccountPage"))
-                .AccountPage,
+              Component: (await import("@/features/account/AccountShell"))
+                .AccountLayout,
             }),
-          },
-          {
-            path: "account/profile",
-            lazy: async () => ({
-              Component: (await import("@/features/account/ProfilePage"))
-                .ProfilePage,
-            }),
+            children: [
+              {
+                index: true,
+                lazy: async () => ({
+                  Component: (await import("@/features/account/AccountPage"))
+                    .AccountPage,
+                }),
+              },
+              {
+                path: "profile",
+                lazy: async () => ({
+                  Component: (await import("@/features/account/ProfilePage"))
+                    .ProfilePage,
+                }),
+              },
+            ],
           },
           {
             path: "company",

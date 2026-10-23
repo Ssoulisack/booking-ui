@@ -138,8 +138,9 @@ export const uploadCompanyImage = (folder: string, file: File) => {
 }
 
 export const useCreateBranch = () =>
-  useCompanyMutation((body: { name: string; slug: string }) =>
-    api<BranchSummary>("/company/branches", { method: "POST", body }),
+  useCompanyMutation(
+    (body: { name: string; slug: string; clone_from?: number }) =>
+      api<BranchSummary>("/company/branches", { method: "POST", body }),
   )
 
 export const useSetClosed = () =>
