@@ -7,6 +7,7 @@ import {
   menuLinks,
   setNationality,
   PASSWORD,
+  publishedClub,
   signInAs,
   uniqueEmail,
   type Club,
@@ -124,4 +125,69 @@ test("a staff member runs the day and a manager reads the month's money", async 
     page.getByText("Lost to no-shows", { exact: true }).locator(".."),
   ).toContainText("₭150,000")
   await expect(page.getByText("Booked and paid per day (LAK)")).toBeVisible()
+})
+
+// A number on the Bookings menu says how many bookings wait for approval, so the team notices them
+test("the Bookings menu counts the bookings waiting for approval", async ({
+  page,
+}) => {
+  const owner = JSON.parse(process.env.E2E_OWNER!) as Session
+  const token = owner.access_token
+  const own = await publishedClub(owner, `E2E Approve ${Date.now()}`)
+
+  // approval on: a customer's booking is a request until the team confirms it
+  const settings = await call<Record<string, unknown>>(
+    `/branches/${own.id}/settings`,
+    { token },
+  )
+  await call(`/branches/${own.id}/settings`, {
+    method: "PUT",
+    token,
+    body: { ...settings, require_approval: true },
+  })
+  const courts = await call<Array<{ id: number; name: string }>>(
+    `/public/branches/${own.slug}/resources`,
+  )
+  const day = new Date(Date.now() + 5 * 86_400_000).toLocaleDateString(
+    "en-CA",
+    {
+      timeZone: "Asia/Vientiane",
+    },
+  )
+  const booked = await call<{ id: number; status: string }>(
+    `/public/branches/${own.slug}/bookings`,
+    {
+      method: "POST",
+      body: {
+        resource_id: courts[0].id,
+        starts_at: `${day}T10:00:00+07:00`,
+        duration_min: 60,
+        guest: { name: "Waiting Guest", phone: "020 5555 0101" },
+      },
+    },
+  )
+  expect(booked.status).toBe("pending")
+
+  await signInAs(page, owner)
+  await page.goto(`/dashboard/${own.id}`)
+  await page.getByRole("button", { name: "Menu" }).click()
+  const bookings = page.getByRole("dialog").getByRole("link", {
+    name: /^Bookings/,
+  })
+  await expect(bookings).toContainText("1")
+  await expect(
+    bookings.getByLabel("1 booking waiting for approval"),
+  ).toBeVisible()
+
+  // confirmed: the number goes away
+  await call(`/branches/${own.id}/bookings/${booked.id}/status`, {
+    method: "POST",
+    token,
+    body: { status: "confirmed", reason: "" },
+  })
+  await page.reload()
+  await page.getByRole("button", { name: "Menu" }).click()
+  await expect(
+    page.getByRole("dialog").getByRole("link", { name: /^Bookings/ }),
+  ).not.toContainText("1")
 })

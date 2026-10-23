@@ -38,6 +38,8 @@ export function UserMenu({ allBranches = false }: { allBranches?: boolean }) {
   const signOut = useSession((s) => s.signOut)
   const branches = useMyBranches()
 
+  const hasDashboard = usableBranches(branches.data).length > 0
+
   if (!user) {
     return (
       <Button asChild variant="outline">
@@ -79,7 +81,7 @@ export function UserMenu({ allBranches = false }: { allBranches?: boolean }) {
             </Link>
           </DropdownMenuItem>
         )}
-        {usableBranches(branches.data).length > 0 && (
+        {hasDashboard && (
           <DropdownMenuItem asChild>
             <Link to="/dashboard">
               <BriefcaseIcon />
@@ -93,7 +95,8 @@ export function UserMenu({ allBranches = false }: { allBranches?: boolean }) {
             {t("nav.myBookings")}
           </Link>
         </DropdownMenuItem>
-        {allBranches && (
+        {/* the home sends the team to their own area, so only customers get this link */}
+        {allBranches && !runsCompany(user) && !hasDashboard && (
           <DropdownMenuItem asChild>
             <Link to="/">
               <LayoutGridIcon />

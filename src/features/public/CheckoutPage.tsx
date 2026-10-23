@@ -13,10 +13,10 @@ import {
 import { z } from "zod"
 
 import { ErrorAlert, TextField } from "@/components/form"
+import HoldButton from "@/components/reactbits/HoldButton"
 import { Button } from "@/components/ui/button"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { ApiError } from "@/lib/api/client"
 import type { CreateBookingInput } from "@/lib/api/types"
@@ -47,6 +47,9 @@ const guestSchema = z.object({
   notes: z.string().max(500, "validation.tooLong"),
 })
 type GuestValues = z.infer<typeof guestSchema>
+
+// how long Confirm is held
+const HOLD_MS = 1000
 
 /** /b/:slug/book?… — check the choice, say who is booking, confirm */
 export function CheckoutPage() {
@@ -154,17 +157,25 @@ export function CheckoutPage() {
       create.error.code,
     )
 
-  // the page sparks wherever it is tapped (PageSpark), this button included
-  const confirmButton = (
-    <Button
-      type="submit"
-      size="lg"
-      className="h-12 w-full text-base"
+  // hold, not tap: a booking is only made on purpose (the page still sparks wherever it is touched)
+  const confirmButton = (onConfirm: () => void) => (
+    <HoldButton
+      className="w-full"
+      backgroundColor="var(--brand-soft)"
+      textColor="var(--brand-ink)"
+      fillColor="var(--brand)"
+      fillTextColor="var(--brand-foreground)"
+      radius={10}
+      holdTime={HOLD_MS}
+      // short: a refused answer (missing details, slot taken) lets them try again at once
+      resetAfter={600}
       disabled={create.isPending}
+      doneLabel={t("public.confirming")}
+      hint={t("public.confirmHint", { seconds: HOLD_MS / 1000 })}
+      onHold={onConfirm}
     >
-      {create.isPending && <Spinner />}
-      {t("public.confirm")}
-    </Button>
+      {t("public.holdToConfirm")}
+    </HoldButton>
   )
 
   return (
@@ -238,7 +249,7 @@ export function CheckoutPage() {
             {t("public.bookingAs", { name: user!.name, email: user!.email })}
           </p>
           <Policy text={business.booking_policy} />
-          {confirmButton}
+          {confirmButton(() => submit())}
         </form>
       ) : (
         <form
@@ -294,7 +305,7 @@ export function CheckoutPage() {
             {t("public.guestLinkNote")}
           </p>
           <Policy text={business.booking_policy} />
-          {confirmButton}
+          {confirmButton(() => void form.handleSubmit(submit)())}
         </form>
       )}
     </main>

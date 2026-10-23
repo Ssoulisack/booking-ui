@@ -1,4 +1,9 @@
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+} from "@tanstack/react-query"
 
 import { api, apiPage } from "@/lib/api/client"
 import type {
@@ -80,15 +85,32 @@ export function useClassesOn(slug: string, date: string) {
 }
 
 /** The next classes, soonest first */
+// classes per request on the branch page
+const CLASS_PAGE = 6
+
 export function useUpcomingClasses(slug: string) {
   return useQuery({
     queryKey: publicKeys.upcomingClasses(slug),
     queryFn: async () =>
       (
         await apiPage<ClassSession>(`${pub(slug)}/class-sessions`, {
-          query: { limit: 6 },
+          query: { limit: CLASS_PAGE },
         })
       ).items,
+  })
+}
+
+/** The classes list on the branch page: six at a time, more as the list is scrolled */
+export function useUpcomingClassPages(slug: string) {
+  return useInfiniteQuery({
+    queryKey: [...publicKeys.upcomingClasses(slug), "pages"],
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) =>
+      apiPage<ClassSession>(`${pub(slug)}/class-sessions`, {
+        query: { limit: CLASS_PAGE, page: pageParam },
+      }),
+    getNextPageParam: (last) =>
+      last.meta.page < last.meta.total_page ? last.meta.page + 1 : undefined,
   })
 }
 

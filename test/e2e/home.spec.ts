@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test"
 
 import {
   atLeastLiveBranches,
+  holdButton,
   call,
   publishedClub,
   signInAs,
@@ -87,7 +88,7 @@ test("a guest opens the brand home, picks a branch and books", async ({
   await page.getByRole("button", { name: "Book", exact: true }).click()
   await page.getByLabel("Full name").fill("Home Guest")
   await page.getByLabel("Phone").fill("020 5555 7788")
-  await page.getByRole("button", { name: "Confirm booking" }).click()
+  await holdButton(page, page.getByRole("button", { name: "Hold to confirm" }))
   await expect(
     page.getByRole("heading", { name: "You're booked" }),
   ).toBeVisible()
@@ -167,12 +168,31 @@ test("a customer sees bookings from two branches in My bookings", async ({
 
   // came from a branch (a scanned QR code or a link): My bookings and My account lead back to it
   await page.goto(`/b/${first.slug}`)
-  await page.getByRole("link", { name: "My bookings" }).click()
+  await top.getByRole("button", { name: "My account" }).click()
+  await page.getByRole("menuitem", { name: "My bookings" }).click()
   await expect(page).toHaveURL("/account")
   await top.getByRole("link", { name: `Back to ${first.name}` }).click()
   await expect(page).toHaveURL(`/b/${first.slug}`)
+  // all branches → My bookings: back is all branches
   await page.goto("/")
-  await expect(page.getByRole("link", { name: /My bookings/ })).toBeVisible()
+  await top.getByRole("button", { name: "My account" }).click()
+  await page.getByRole("menuitem", { name: "My bookings" }).click()
+  await expect(
+    top.getByRole("link", { name: "Back to All branches" }),
+  ).toBeVisible()
+
+  // all branches → a branch → My bookings: back is that branch (the page before)
+  await page.goto("/")
+  await page.goto(`/b/${first.slug}`)
+  await top.getByRole("button", { name: "My account" }).click()
+  await page.getByRole("menuitem", { name: "My bookings" }).click()
+  await expect(
+    top.getByRole("link", { name: `Back to ${first.name}` }),
+  ).toBeVisible()
+
+  await page.goto("/")
+  // logged in: the profile circle replaces the My bookings button
+  await expect(top.getByRole("button", { name: "My account" })).toBeVisible()
   await expect(
     page.getByRole("link", { name: new RegExp(second.name) }),
   ).toBeVisible()

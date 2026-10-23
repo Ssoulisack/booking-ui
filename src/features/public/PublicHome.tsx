@@ -14,15 +14,18 @@ import { Link, useLocation, useNavigate } from "react-router"
 
 import defaultBranchPhoto from "@/assets/default-branch.jpg"
 import BlurText from "@/components/reactbits/BlurText"
-import { dayIn, money, timeIn } from "@/lib/format"
+import AnimatedList from "@/components/reactbits/AnimatedList"
+import { dayIn, money, timeIn, todayIn } from "@/lib/format"
 import { placeTypes } from "@/lib/places"
 import { webUrl } from "@/lib/url"
 import { useLiveBranches } from "@/features/places/api"
 
-import { useCoaches, useUpcomingClasses } from "./api"
+import { useCoaches, useUpcomingClassPages, useUpcomingClasses } from "./api"
 import { BookingPanel } from "./BookingPanel"
 import { MobileNav } from "./MobileNav"
+import { dayColorOf } from "./day-colors"
 import { useScrollSpy } from "./scroll-spy"
+import { useSelection } from "./selection"
 import { usePublic } from "./context"
 import { BrandRings } from "./BrandRings"
 
@@ -228,24 +231,59 @@ function Hero() {
   )
 }
 
+/**
+ * The next classes in React Bits' AnimatedList (rows pop in as they scroll into view, arrow keys
+ * move the highlight). Choosing one picks it in the booking panel above and scrolls there.
+ */
 function UpcomingClasses() {
   const { t } = useTranslation()
   const { slug, business } = usePublic()
-  const classes = useUpcomingClasses(slug)
-  if (!classes.data?.length) return null
+  const classes = useUpcomingClassPages(slug)
+  const [, setSel] = useSelection()
+  const items = classes.data?.pages.flatMap((p) => p.items) ?? []
+  if (items.length === 0) return null
   const tz = business.timezone
   return (
     <section id="classes" className="scroll-mt-20">
       <h2 className="mb-4 display-tight text-3xl">
         {t("public.classesTitle")}
       </h2>
-      <ul className="divide-y divide-black/10 rounded-xl bg-white">
-        {classes.data.map((c) => (
-          <li key={c.id} className="flex items-center gap-4 px-4 py-3">
-            <div className="w-20 shrink-0 text-center">
-              <p className="text-xs text-muted-foreground">
-                {dayIn(c.starts_at, tz)}
-              </p>
+      <AnimatedList
+        items={items}
+        // six at a time: the next six load as the list is scrolled to its end
+        onEndReached={() => {
+          if (classes.hasNextPage && !classes.isFetchingNextPage) {
+            void classes.fetchNextPage({ cancelRefetch: false })
+          }
+        }}
+        maxHeight={340}
+        theme="light"
+        width="100%"
+        accentColor="var(--brand)"
+        animateOnce
+        onItemSelect={(c) => {
+          setSel({
+            sport: c.sport_id,
+            what: "class",
+            date: todayIn(tz, new Date(c.starts_at)),
+            cls: c.id,
+            seats: 1,
+          })
+          document
+            .getElementById("book")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" })
+        }}
+        renderItem={(c) => (
+          <>
+            {/* the colour of the weekday (Monday yellow, Tuesday pink, …) */}
+            <div
+              className="w-20 shrink-0 rounded-xl py-1.5 text-center"
+              style={{
+                background: dayColorOf(c.starts_at, tz).bg,
+                color: dayColorOf(c.starts_at, tz).fg,
+              }}
+            >
+              <p className="text-xs opacity-90">{dayIn(c.starts_at, tz)}</p>
               <p className="display-tight text-xl tabular-nums">
                 {timeIn(c.starts_at, tz)}
               </p>
@@ -262,9 +300,9 @@ function UpcomingClasses() {
             <p className="shrink-0 text-sm font-medium">
               {money(c.price, c.currency)}
             </p>
-          </li>
-        ))}
-      </ul>
+          </>
+        )}
+      />
     </section>
   )
 }

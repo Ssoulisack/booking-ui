@@ -6,6 +6,7 @@ import {
 } from "react-router"
 
 import { CrashScreen, NotFound, PageLoader } from "@/components/page-state"
+import { TrackPage } from "@/features/public/TrackPage"
 
 import { GuestOnly, OldCourtsLink, RequireCompany, RequireUser } from "./guards"
 
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
     // a new page opens at the top; Back returns to where you were
     element: (
       <>
+        <TrackPage />
         <Outlet />
         <ScrollRestoration />
       </>

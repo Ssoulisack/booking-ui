@@ -47,6 +47,25 @@ export function useBookingList(q: BookingFilters) {
   })
 }
 
+/**
+ * How many bookings wait for approval at a branch, for the badge on the Bookings menu. It sits
+ * under the branch's "bookings" cache key, so approving or declining one refreshes it at once; it
+ * is also read again every 30 seconds and when the tab is opened, to catch new requests.
+ */
+export function usePendingBookings(branchId: number | undefined) {
+  return useQuery({
+    queryKey: ["manage", branchId, "bookings", { pending: "count" }],
+    queryFn: () =>
+      apiPage<Booking>(`/branches/${branchId}/bookings`, {
+        query: { status: "pending", limit: 1 },
+      }),
+    select: (page) => page.meta.total,
+    enabled: branchId !== undefined,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  })
+}
+
 export function useBooking(id: number | null) {
   const { base, key } = useBiz()
   return useQuery({

@@ -4,7 +4,6 @@ import {
   MapPinIcon,
   PhoneIcon,
   SearchIcon,
-  TicketIcon,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -149,15 +148,8 @@ function TopBar({ company }: { company: PublicCompany }) {
           <span className="truncate display-tight text-lg">{company.name}</span>
         </Link>
         {user ? (
-          <>
-            <Button asChild variant="ghost" className="h-11 gap-2 px-3">
-              <Link to="/account" aria-label={t("nav.myBookings")}>
-                <TicketIcon />
-                <span className="hidden sm:inline">{t("nav.myBookings")}</span>
-              </Link>
-            </Button>
-            <UserMenu />
-          </>
+          // logged in: the profile circle, whose menu has My bookings and My account
+          <UserMenu />
         ) : (
           <>
             <Button asChild variant="ghost" className="h-11 px-3">

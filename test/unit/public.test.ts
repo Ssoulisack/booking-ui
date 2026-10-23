@@ -2,6 +2,8 @@ import { colord, extend } from "colord"
 import a11yPlugin from "colord/plugins/a11y"
 import { describe, expect, it } from "vitest"
 
+import { dayColorOf } from "@/features/public/day-colors"
+
 import { brandStyle, ringColors } from "@/features/public/brand"
 import {
   bookingTitle,
@@ -235,5 +237,19 @@ describe("price of each bookable length", () => {
     expect(bookableLengths(rule(60, 120, 30))).toEqual([60, 90, 120])
     // many lengths: the first three, a gap, the longest
     expect(bookableLengths(rule(60, 180, 30))).toEqual([60, 90, 120, null, 180])
+  })
+})
+
+describe("colour of the weekday", () => {
+  const tz = "Asia/Vientiane"
+  it("follows the traditional colours: Monday yellow, Friday light blue, Sunday red", () => {
+    expect(dayColorOf("2026-10-26T18:00:00+07:00", tz).bg).toBe("#fef9c3")
+    expect(dayColorOf("2026-10-23T18:00:00+07:00", tz).bg).toBe("#e0f2fe")
+    expect(dayColorOf("2026-10-25T09:00:00+07:00", tz).bg).toBe("#fee2e2")
+  })
+
+  it("uses the day in the business time zone, not the viewer's", () => {
+    // 00:30 Monday in Laos is still Sunday 17:30 in UTC
+    expect(dayColorOf("2026-10-25T17:30:00Z", tz).bg).toBe("#fef9c3")
   })
 })

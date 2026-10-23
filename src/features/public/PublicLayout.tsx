@@ -1,4 +1,3 @@
-import { TicketIcon } from "lucide-react"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, Outlet, useLocation, useParams } from "react-router"
@@ -9,12 +8,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { applyBusinessLanguage } from "@/i18n"
 import { ApiError } from "@/lib/api/client"
 import type { PublicBranch } from "@/lib/api/types"
+import { UserMenu } from "@/layouts/UserMenu"
 import { useSession } from "@/stores/session"
 
 import { usePublicBranch } from "./api"
 import { brandStyle, DEFAULT_BRAND } from "./brand"
 import { BranchSwitcher } from "./BranchSwitcher"
-import { rememberOrigin } from "./origin"
+import { rememberBranchName } from "./origin"
 import { PageSpark } from "./PageSpark"
 import type { PublicContext } from "./context"
 
@@ -27,7 +27,7 @@ export function PublicLayout() {
   useEffect(() => {
     if (!data) return
     applyBusinessLanguage(data.language)
-    rememberOrigin({ slug: data.slug, name: data.name })
+    rememberBranchName(data.slug, data.name)
     document.title = data.name
     return () => {
       document.title = "Booking"
@@ -87,12 +87,8 @@ function PublicTopBar({ business }: { business: PublicBranch }) {
         </nav>
         <div className="ml-auto flex items-center gap-1 lg:ml-2">
           {user ? (
-            <Button asChild variant="ghost" className="h-11 gap-2 px-3">
-              <Link to="/account" aria-label={t("nav.myBookings")}>
-                <TicketIcon />
-                <span className="hidden sm:inline">{t("nav.myBookings")}</span>
-              </Link>
-            </Button>
+            // logged in: the profile circle, whose menu has My bookings, All branches, My account
+            <UserMenu allBranches />
           ) : (
             <Button asChild variant="outline" className="h-11 px-4">
               <Link to={loginLink}>{t("actions.logIn")}</Link>

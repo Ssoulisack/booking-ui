@@ -32,6 +32,8 @@ export interface NavItem {
   label: string
   icon: LucideIcon
   end?: boolean
+  // a number to notice on the item, e.g. bookings waiting for approval (hidden at 0)
+  badge?: number
 }
 
 interface AppShellProps {
@@ -113,10 +115,17 @@ export function AppShell({
                 <Button
                   variant="ghost"
                   size="icon-lg"
-                  className="lg:hidden"
+                  className="relative lg:hidden"
                   aria-label={t("nav.menu")}
                 >
                   <MenuIcon />
+                  {/* something waits (e.g. bookings to approve): seen without opening the menu */}
+                  {nav.some((n) => n.badge) && (
+                    <span
+                      aria-hidden
+                      className="absolute top-1.5 right-1.5 size-2.5 rounded-full bg-red-600 ring-2 ring-background"
+                    />
+                  )}
                 </Button>
               </SheetTrigger>
               <SheetContent
@@ -220,9 +229,10 @@ function NavList({
   animate: boolean
   onNavigate?: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <nav className="flex flex-col gap-1 p-3">
-      {items.map(({ to, label, icon: Icon, end }, i) => (
+      {items.map(({ to, label, icon: Icon, end, badge }, i) => (
         <motion.div
           key={to}
           initial={animate ? { opacity: 0, x: -12 } : false}
@@ -250,6 +260,14 @@ function NavList({
           >
             <Icon className="size-4" />
             {label}
+            {badge ? (
+              <span
+                aria-label={t("nav.pending", { count: badge })}
+                className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs leading-5 font-semibold text-white tabular-nums"
+              >
+                {badge > 99 ? "99+" : badge}
+              </span>
+            ) : null}
           </NavLink>
         </motion.div>
       ))}

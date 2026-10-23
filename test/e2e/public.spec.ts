@@ -46,7 +46,7 @@ test("a customer books a court for 90 minutes and cancels it", async ({
   await pickDay(page, 3)
   await pickFirstTime(page)
   await page
-    .getByRole("radiogroup", { name: "How long?" })
+    .getByRole("radiogroup", { name: "Duration" })
     .getByRole("radio", { name: /1 h 30 min/ })
     .click()
   await page.getByRole("button", { name: "Book", exact: true }).click()
@@ -56,7 +56,7 @@ test("a customer books a court for 90 minutes and cancels it", async ({
   ).toBeVisible()
   await expect(page.getByText("Booking as Cara Customer")).toBeVisible()
   await expect(page.getByText("₭225,000")).toBeVisible() // 1.5 h × ₭150,000
-  await page.getByRole("button", { name: "Confirm booking" }).click()
+  await holdButton(page, page.getByRole("button", { name: "Hold to confirm" }))
 
   await expect(
     page.getByRole("heading", { name: "You're booked" }),
@@ -113,12 +113,12 @@ test("a guest books a court with a coach and cancels from the private link", asy
   ).toBeVisible()
   await expect(page.getByText("Court 2 + Somchai")).toBeVisible()
   await expect(page.getByText("₭350,000")).toBeVisible() // court 150,000 + coach 200,000 for 1 h
-  await page.getByRole("button", { name: "Confirm booking" }).click()
+  await holdButton(page, page.getByRole("button", { name: "Hold to confirm" }))
   await expect(page.getByText("This field is required.")).toBeVisible()
 
   await page.getByLabel("Full name").fill("Noy Guest")
   await page.getByLabel("Phone").fill("020 5555 1234")
-  await page.getByRole("button", { name: "Confirm booking" }).click()
+  await holdButton(page, page.getByRole("button", { name: "Hold to confirm" }))
 
   await expect(
     page.getByRole("heading", { name: "You're booked" }),
@@ -163,7 +163,7 @@ test("a guest books two seats in a group class and the seats left go down", asyn
   await expect(page.getByText("₭100,000")).toBeVisible()
   await page.getByLabel("Full name").fill("Lee Guest")
   await page.getByLabel("Phone").fill("020 5555 9876")
-  await page.getByRole("button", { name: "Confirm booking" }).click()
+  await holdButton(page, page.getByRole("button", { name: "Hold to confirm" }))
   await expect(
     page.getByRole("heading", { name: "You're booked" }),
   ).toBeVisible()
@@ -191,7 +191,8 @@ test("More dates opens a calendar in the middle of the screen", async ({
   expect(Math.abs(box.x + box.width / 2 - view.width / 2)).toBeLessThan(4)
   expect(Math.abs(box.y + box.height / 2 - view.height / 2)).toBeLessThan(4)
 
-  // a day after the 14 in the strip: the dialog closes and the date is shown under the strip
+  // a day after the 14 in the strip: picking only highlights it; Confirm date closes the dialog and
+  // the date is shown under the strip
   const day = new Date(Date.now() + 20 * 86_400_000)
   if (day.getMonth() !== new Date().getMonth())
     await dialog.getByRole("button", { name: /next month/i }).click()
@@ -201,6 +202,8 @@ test("More dates opens a calendar in the middle of the screen", async ({
       name: new RegExp(`${month} ${day.getDate()}(st|nd|rd|th),`),
     })
     .click()
+  await expect(dialog).toBeVisible() // not closed by the pick
+  await dialog.getByRole("button", { name: "Confirm date" }).click()
   await expect(dialog).toBeHidden()
   await expect(
     page.getByText(

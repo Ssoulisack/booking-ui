@@ -66,14 +66,20 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
     booking_mode: settings.booking_mode,
     booking_policy: settings.booking_policy,
     require_approval: settings.require_approval,
-    ring_colors: settings.ring_colors,
-    heading_font: settings.heading_font,
-    body_font: settings.body_font,
+    // null = the company's (also when an older backend does not send them yet)
+    ring_colors: settings.ring_colors ?? null,
+    heading_font: settings.heading_font ?? null,
+    body_font: settings.body_font ?? null,
   }))
   const set = (patch: Partial<SettingsInput>) => setF({ ...f, ...patch })
   const save = useChange(manage.saveSettings, ["settings"])
   const slugLocked = !!settings.published_at
-  const company = settings.in_force
+  const company = {
+    ...settings.in_force,
+    ring_colors: settings.in_force.ring_colors ?? [],
+    heading_font: settings.in_force.heading_font ?? "",
+    body_font: settings.in_force.body_font ?? "",
+  }
   const links = f.social_links ?? {}
   // the saved brand colour and logo (set in Company settings) for the colours and the preview
   const brand = usePublicCompany().data ?? { brand_color: "", logo_url: "" }

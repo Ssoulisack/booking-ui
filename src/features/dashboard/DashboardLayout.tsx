@@ -23,6 +23,7 @@ import { useCurrentBranch } from "@/stores/branch"
 import { runsCompany, useSession } from "@/stores/session"
 
 import { BranchSwitcher } from "./BranchSwitcher"
+import { usePendingBookings } from "./desk/api"
 import { useDashboard, type DashboardContext } from "./context"
 
 /** /dashboard: open the remembered branch, or the first one this person can use */
@@ -118,6 +119,9 @@ export function DashboardLayout() {
     if (branch) setCurrentId(branch.branch_id)
   }, [branch, setCurrentId])
 
+  // bookings waiting for approval: shown on the Bookings menu so the team notices them
+  const pending = usePendingBookings(branch?.branch_id).data
+
   if (branches.isPending) return <PageLoader />
   if (branches.isError) {
     return (
@@ -134,6 +138,7 @@ export function DashboardLayout() {
     label: t(`nav.${key}`),
     icon,
     end,
+    badge: key === "bookings" ? pending : undefined,
   }))
   // the owner and admins start the trail at the company; everyone else at their branch
   const company = runsCompany(user)

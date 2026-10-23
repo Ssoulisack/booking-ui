@@ -1,8 +1,10 @@
-import { CalendarDaysIcon, UsersIcon } from "lucide-react"
-import { lazy, Suspense, useMemo, useState } from "react"
+import { CalendarDaysIcon, UsersIcon, XIcon } from "lucide-react"
+import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router"
 
 import { ErrorAlert } from "@/components/form"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -14,6 +16,7 @@ import type { ClassSession, PublicCoach, PublicResource } from "@/lib/api/types"
 import {
   dayIn,
   duration,
+  longDayIn,
   middayOf,
   money,
   nextDays,
@@ -33,7 +36,13 @@ import { BookingBar } from "./BookingBar"
 import { brandStyle } from "./brand"
 import { kindOf } from "./booking-utils"
 import { usePublic } from "./context"
-import { useSelection, type BookWhat, type Selection } from "./selection"
+import { dayColorOf } from "./day-colors"
+import {
+  selectionQuery,
+  useSelection,
+  type BookWhat,
+  type Selection,
+} from "./selection"
 import { lengthsOf } from "@/components/booking/lengths"
 import { TimePicker } from "@/components/booking/TimePicker"
 
@@ -229,6 +238,7 @@ export function BookingPanel() {
           value={sel.cls}
           seats={sel.seats ?? 1}
           onChange={(cls, seats) => choose({ cls, seats })}
+          onClear={() => choose({ cls: undefined, seats: undefined })}
           onNextDay={() => {
             const next = days[days.indexOf(date) + 1]
             if (next) choose({ date: next, cls: undefined })
@@ -441,7 +451,10 @@ function DateStrip({
   const { t } = useTranslation()
   const { business } = usePublic()
   const [open, setOpen] = useState(false)
+  // the date highlighted in the calendar: only becomes the choice when Confirm is pressed
+  const [draft, setDraft] = useState(value)
   const shown = days.slice(0, 14)
+  const picked = dayColorOf(middayOf(draft, tz), tz)
   const first = new Date(`${days[0]}T00:00:00`)
   const last = new Date(`${days[days.length - 1]}T00:00:00`)
   const toYmd = (d: Date) =>
@@ -457,6 +470,8 @@ function DateStrip({
         {shown.map((d) => {
           const selected = d === value
           const iso = middayOf(d, tz)
+          // the picked day takes the colour of its weekday (Monday yellow, Tuesday pink, …)
+          const color = dayColorOf(iso, tz)
           return (
             <button
               key={d}
@@ -465,11 +480,20 @@ function DateStrip({
               aria-checked={selected}
               aria-label={dayIn(iso, tz)}
               onClick={() => onChange(d)}
+              style={
+                selected
+                  ? {
+                      background: color.bg,
+                      color: color.fg,
+                      borderColor: color.ink,
+                      boxShadow: `inset 0 0 0 1px ${color.ink}`,
+                    }
+                  : undefined
+              }
               className={cn(
                 "flex h-16 w-14 shrink-0 snap-start flex-col items-center justify-center rounded-xl border transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring",
-                selected
-                  ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
-                  : "border-black/10 bg-white active:bg-[var(--brand-soft)]",
+                !selected &&
+                  "border-black/10 bg-white active:bg-[var(--brand-soft)]",
               )}
             >
               <span className="text-xs">{dayIn(iso, tz).split(" ")[0]}</span>
@@ -481,7 +505,10 @@ function DateStrip({
         })}
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setDraft(value)
+            setOpen(true)
+          }}
           className="flex h-16 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-black/20 bg-white px-3 text-xs font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring"
         >
           <CalendarDaysIcon className="size-5" />
@@ -494,8 +521,16 @@ function DateStrip({
       {/* centred on every screen; the dialog sits outside the page, so it takes the brand colour itself */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          style={brandStyle(business.brand_color, business)}
-          className="w-auto max-w-[calc(100%-2rem)] gap-2 p-4 sm:max-w-fit"
+          style={
+            {
+              ...brandStyle(business.brand_color, business),
+              // the picked date takes the colour of its weekday, like the day buttons
+              "--primary": picked.bg,
+              "--primary-foreground": picked.fg,
+              "--day-ink": picked.ink,
+            } as CSSProperties
+          }
+          className="w-auto max-w-[calc(100%-2rem)] gap-2 p-4 sm:max-w-fit [&_[data-selected-single=true]]:shadow-[inset_0_0_0_1px_var(--day-ink)]"
         >
           <DialogHeader>
             <DialogTitle>{t("public.pickDate")}</DialogTitle>
@@ -504,20 +539,32 @@ function DateStrip({
             <Suspense fallback={<Skeleton className="h-80 w-72 rounded-xl" />}>
               <Calendar
                 mode="single"
-                selected={new Date(`${value}T00:00:00`)}
+                selected={new Date(`${draft}T00:00:00`)}
                 defaultMonth={new Date(`${value}T00:00:00`)}
                 startMonth={first}
                 endMonth={last}
                 disabled={[{ before: first }, { after: last }]}
                 onSelect={(d) => {
-                  if (!d) return
-                  onChange(toYmd(d))
-                  setOpen(false)
+                  if (d) setDraft(toYmd(d))
                 }}
                 className="[--cell-size:2.75rem]"
               />
             </Suspense>
           </div>
+          <p className="text-center text-sm font-medium">
+            {dayIn(middayOf(draft, tz), tz)}
+          </p>
+          <Button
+            size="lg"
+            className="h-12 w-full text-base"
+            style={{ background: picked.ink, color: "#ffffff" }}
+            onClick={() => {
+              onChange(draft)
+              setOpen(false)
+            }}
+          >
+            {t("public.confirmDate")}
+          </Button>
         </DialogContent>
       </Dialog>
     </>
@@ -531,6 +578,7 @@ function ClassList({
   value,
   seats,
   onChange,
+  onClear,
   onNextDay,
 }: {
   date: string
@@ -538,6 +586,8 @@ function ClassList({
   value?: number
   seats: number
   onChange: (cls: number, seats: number) => void
+  // drop the choice again (before going on to the booking page)
+  onClear: () => void
   onNextDay: () => void
 }) {
   const { t } = useTranslation()
@@ -545,6 +595,7 @@ function ClassList({
   const tz = business.timezone
   const classes = useClassesOn(slug, date)
   const list = (classes.data ?? []).filter((c) => c.sport_id === sportId)
+  const chosen = list.find((c) => c.id === value)
   const coaches = useCoaches(slug).data ?? []
 
   if (classes.isError) return <ErrorAlert error={classes.error} />
@@ -553,6 +604,10 @@ function ClassList({
 
   return (
     <Step title={t("public.step.class")}>
+      {/* the day these classes are on, so it is clear which date is being looked at */}
+      <p className="-mt-1 text-sm text-muted-foreground">
+        {longDayIn(middayOf(date, tz), tz)}
+      </p>
       <div role="radiogroup" className="grid gap-2 sm:grid-cols-2">
         {list.map((c: ClassSession) => {
           const selected = c.id === value
@@ -610,7 +665,85 @@ function ClassList({
           )
         })}
       </div>
+      {chosen && (
+        <ChosenClass
+          c={chosen}
+          seats={seats}
+          sportId={sportId}
+          date={date}
+          onClear={onClear}
+        />
+      )}
     </Step>
+  )
+}
+
+/** What was picked, with its day and date, and Book right here (the bar at the bottom is easy to miss) */
+function ChosenClass({
+  c,
+  seats,
+  sportId,
+  date,
+  onClear,
+}: {
+  c: ClassSession
+  seats: number
+  sportId: number
+  date: string
+  onClear: () => void
+}) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { slug, business } = usePublic()
+  const tz = business.timezone
+  // the colour of the weekday the class is on (Monday yellow, Tuesday pink, …)
+  const day = dayColorOf(c.starts_at, tz)
+  return (
+    <div
+      style={{
+        background: day.bg,
+        color: day.fg,
+        boxShadow: `inset 0 0 0 1px ${day.ink}33`,
+      }}
+      className="space-y-3 rounded-xl p-4"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold opacity-80">
+          {t("public.yourClass")}
+        </p>
+        {/* not wanted after all: remove it here, before the booking page */}
+        <button
+          type="button"
+          onClick={onClear}
+          className="-my-2 -mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium opacity-90 hover:bg-black/5 hover:opacity-100 focus-visible:ring-3 focus-visible:ring-black/30 focus-visible:outline-none"
+        >
+          <XIcon className="size-4" />
+          {t("public.removeClass")}
+        </button>
+      </div>
+      <div>
+        <p className="display-tight text-2xl">{longDayIn(c.starts_at, tz)}</p>
+        <p className="display-tight text-xl tabular-nums">
+          {timeIn(c.starts_at, tz)}–{timeIn(c.ends_at, tz)}
+        </p>
+        <p className="mt-1 font-medium">{c.title}</p>
+        <p className="text-sm opacity-80">
+          {t("public.seats")}: {seats} · {money(c.price * seats, c.currency)}
+        </p>
+      </div>
+      <Button
+        size="lg"
+        style={{ background: day.ink, color: "#ffffff" }}
+        className="h-12 w-full text-base hover:opacity-90"
+        onClick={() =>
+          navigate(
+            `/b/${slug}/book?${selectionQuery({ sport: sportId, what: "class", date, cls: c.id, seats })}`,
+          )
+        }
+      >
+        {t("public.bookClass")}
+      </Button>
+    </div>
   )
 }
 

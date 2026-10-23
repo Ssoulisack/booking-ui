@@ -85,6 +85,8 @@
   "nav": {
     "menu": "Menu",
     "backTo": "Back to {{name}}",
+    "pending_one": "{{count}} booking waiting for approval",
+    "pending_other": "{{count}} bookings waiting for approval",
     "account": "My account",
     "myBookings": "My bookings",
     "dashboard": "Branch dashboard",
@@ -209,6 +211,10 @@
       "policy": "Policy"
     },
     "bookTitle": "Book a time",
+    "yourClass": "Your class",
+    "bookClass": "Book this class",
+    "removeClass": "Remove",
+    "confirmDate": "Confirm date",
     "nothingToBook": "Nothing can be booked online yet. Please contact the branch.",
     "step": {
       "sport": "Sport",
@@ -217,7 +223,7 @@
       "coach": "Choose a coach",
       "day": "Day",
       "time": "Start time",
-      "length": "How long?",
+      "length": "Duration",
       "class": "Choose a class"
     },
     "what": {
@@ -257,6 +263,9 @@
     "notes": "Note for the branch (optional)",
     "guestLinkNote": "After booking you get a private link to see or cancel it.",
     "confirm": "Confirm booking",
+    "holdToConfirm": "Hold to confirm",
+    "confirming": "Confirming…",
+    "confirmHint": "Press and hold for {{seconds}} seconds to confirm your booking",
     "pickAnother": "Pick another time",
     "bookedTitle": "You're booked",
     "bookedLead": "See you there. Show this code at the counter.",
@@ -511,7 +520,7 @@
     "fields": {
       "min_duration_min": "Shortest booking",
       "max_duration_min": "Longest booking",
-      "duration_step_min": "Length steps",
+      "duration_step_min": "Duration steps",
       "start_step_min": "Start every",
       "cancel_before_hours": "Cancel online until",
       "max_days_ahead": "Book up to",
