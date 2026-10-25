@@ -29,3 +29,6 @@ playwright-report
 
 # Local env
 .env
+
+# tests stay local
+test/
