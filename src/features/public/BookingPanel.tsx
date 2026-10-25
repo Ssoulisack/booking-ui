@@ -1,5 +1,12 @@
 import { CalendarDaysIcon, UsersIcon, XIcon } from "lucide-react"
-import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react"
+import {
+  lazy,
+  Suspense,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router"
 
@@ -23,6 +30,7 @@ import {
   timeIn,
 } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { releaseBooking, useUnsaved } from "@/stores/unsaved"
 
 import {
   useAvailability,
@@ -37,6 +45,7 @@ import { brandStyle } from "./brand"
 import { kindOf } from "./booking-utils"
 import { usePublic } from "./context"
 import { dayColorOf } from "./day-colors"
+import { PinnedBar, useScrolledPast } from "./PinnedBar"
 import {
   selectionQuery,
   useSelection,
@@ -273,6 +282,34 @@ export function BookingPanel() {
         </section>
       )}
 
+      {what !== "class" && slot && length && (
+        <ChosenSlot
+          title={t(
+            what === "coach" ? "public.yourLesson" : "public.yourBooking",
+          )}
+          startsAt={slot.starts_at}
+          minutes={length}
+          name={[
+            court?.name,
+            what === "court" && coach ? coach.name : undefined,
+            what === "coach" ? coach?.name : undefined,
+          ]
+            .filter(Boolean)
+            .join(" + ")}
+          price={price}
+          currency={availability.data?.currency ?? business.currency}
+          onClear={() => choose({ start: undefined, length: undefined })}
+          checkout={{
+            sport: sport.id,
+            what,
+            court: court?.id,
+            coach: coach?.id,
+            date,
+            start: slot.starts_at,
+            length,
+          }}
+        />
+      )}
       {what !== "class" && slot && length && (
         <BookingBar
           summary={[
@@ -698,52 +735,180 @@ function ChosenClass({
   const tz = business.timezone
   // the colour of the weekday the class is on (Monday yellow, Tuesday pink, …)
   const day = dayColorOf(c.starts_at, tz)
+  const card = useRef<HTMLDivElement>(null)
+  const scrolledAway = useScrolledPast(card)
+  // a class is picked but not booked yet: leaving the page asks first
+  useUnsaved(true, "booking")
+  const book = () => {
+    releaseBooking()
+    navigate(
+      `/b/${slug}/book?${selectionQuery({ sport: sportId, what: "class", date, cls: c.id, seats })}`,
+    )
+  }
   return (
-    <div
-      style={{
-        background: day.bg,
-        color: day.fg,
-        boxShadow: `inset 0 0 0 1px ${day.ink}33`,
-      }}
-      className="space-y-3 rounded-xl p-4"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold opacity-80">
-          {t("public.yourClass")}
-        </p>
-        {/* not wanted after all: remove it here, before the booking page */}
-        <button
-          type="button"
-          onClick={onClear}
-          className="-my-2 -mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium opacity-90 hover:bg-black/5 hover:opacity-100 focus-visible:ring-3 focus-visible:ring-black/30 focus-visible:outline-none"
-        >
-          <XIcon className="size-4" />
-          {t("public.removeClass")}
-        </button>
-      </div>
-      <div>
-        <p className="display-tight text-2xl">{longDayIn(c.starts_at, tz)}</p>
-        <p className="display-tight text-xl tabular-nums">
-          {timeIn(c.starts_at, tz)}–{timeIn(c.ends_at, tz)}
-        </p>
-        <p className="mt-1 font-medium">{c.title}</p>
-        <p className="text-sm opacity-80">
-          {t("public.seats")}: {seats} · {money(c.price * seats, c.currency)}
-        </p>
-      </div>
-      <Button
-        size="lg"
-        style={{ background: day.ink, color: "#ffffff" }}
-        className="h-12 w-full text-base hover:opacity-90"
-        onClick={() =>
-          navigate(
-            `/b/${slug}/book?${selectionQuery({ sport: sportId, what: "class", date, cls: c.id, seats })}`,
-          )
-        }
+    <>
+      {scrolledAway && (
+        <PinnedBar
+          day={day}
+          title={t("public.yourClass")}
+          when={`${dayIn(c.starts_at, tz)} · ${timeIn(c.starts_at, tz)}–${timeIn(c.ends_at, tz)}`}
+          detail={`${c.title} · ${t("public.seats")}: ${seats} · ${money(c.price * seats, c.currency)}`}
+          bookLabel={t("public.book")}
+          onBook={book}
+          onClear={onClear}
+        />
+      )}
+      <div
+        ref={card}
+        style={{
+          background: day.bg,
+          color: day.fg,
+          boxShadow: `inset 0 0 0 1px ${day.ink}33`,
+        }}
+        className="space-y-3 rounded-xl p-4"
       >
-        {t("public.bookClass")}
-      </Button>
-    </div>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold opacity-80">
+            {t("public.yourClass")}
+          </p>
+          {/* not wanted after all: remove it here, before the booking page */}
+          <button
+            type="button"
+            onClick={onClear}
+            className="-my-2 -mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium opacity-90 hover:bg-black/5 hover:opacity-100 focus-visible:ring-3 focus-visible:ring-black/30 focus-visible:outline-none"
+          >
+            <XIcon className="size-4" />
+            {t("public.removeClass")}
+          </button>
+        </div>
+        <div>
+          <p className="display-tight text-2xl">{longDayIn(c.starts_at, tz)}</p>
+          <p className="display-tight text-xl tabular-nums">
+            {timeIn(c.starts_at, tz)}–{timeIn(c.ends_at, tz)}
+          </p>
+          <p className="mt-1 font-medium">{c.title}</p>
+          <p className="text-sm opacity-80">
+            {t("public.seats")}: {seats} · {money(c.price * seats, c.currency)}
+          </p>
+        </div>
+        <Button
+          size="lg"
+          style={{ background: day.ink, color: "#ffffff" }}
+          className="h-12 w-full text-base hover:opacity-90"
+          onClick={book}
+        >
+          {t("public.bookClass")}
+        </Button>
+      </div>
+    </>
+  )
+}
+
+/**
+ * A space or a lesson, once a time is picked: the same card as a chosen group class (weekday
+ * colour, date, time, name, price, Remove and Book) so every kind of booking reads the same.
+ */
+function ChosenSlot({
+  title,
+  startsAt,
+  minutes,
+  name,
+  price,
+  currency,
+  checkout,
+  onClear,
+}: {
+  title: string
+  startsAt: string
+  minutes: number
+  name: string
+  price?: number
+  currency: string
+  checkout: Selection
+  onClear: () => void
+}) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { slug, business } = usePublic()
+  const tz = business.timezone
+  const endsAt = new Date(
+    new Date(startsAt).getTime() + minutes * 60_000,
+  ).toISOString()
+  const day = dayColorOf(startsAt, tz)
+  const card = useRef<HTMLDivElement>(null)
+  const scrolledAway = useScrolledPast(card)
+  // a time is picked but not booked yet: leaving the page asks first
+  useUnsaved(true, "booking")
+  const book = () => {
+    releaseBooking()
+    navigate(`/b/${slug}/book?${selectionQuery(checkout)}`)
+  }
+  const detail = [
+    name,
+    duration(minutes),
+    price !== undefined ? money(price, currency) : undefined,
+  ]
+    .filter(Boolean)
+    .join(" · ")
+  return (
+    <>
+      {scrolledAway && (
+        <PinnedBar
+          day={day}
+          title={title}
+          when={`${dayIn(startsAt, tz)} · ${timeIn(startsAt, tz)}–${timeIn(endsAt, tz)}`}
+          detail={detail}
+          bookLabel={t("public.book")}
+          onBook={book}
+          onClear={onClear}
+        />
+      )}
+      <div
+        ref={card}
+        style={{
+          background: day.bg,
+          color: day.fg,
+          boxShadow: `inset 0 0 0 1px ${day.ink}33`,
+        }}
+        className="space-y-3 rounded-xl p-4"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold opacity-80">{title}</p>
+          {/* not wanted after all: remove it here, then pick another time */}
+          <button
+            type="button"
+            onClick={onClear}
+            className="-my-2 -mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium opacity-90 hover:bg-black/5 hover:opacity-100 focus-visible:ring-3 focus-visible:ring-black/30 focus-visible:outline-none"
+          >
+            <XIcon className="size-4" />
+            {t("public.removeBooking")}
+          </button>
+        </div>
+        <div>
+          <p className="display-tight text-2xl">{longDayIn(startsAt, tz)}</p>
+          <p className="display-tight text-xl tabular-nums">
+            {timeIn(startsAt, tz)}–{timeIn(endsAt, tz)}
+          </p>
+          <p className="mt-1 font-medium">{name}</p>
+          <p className="text-sm opacity-80">
+            {[
+              duration(minutes),
+              price !== undefined ? money(price, currency) : undefined,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
+        <Button
+          size="lg"
+          style={{ background: day.ink, color: "#ffffff" }}
+          className="h-12 w-full text-base hover:opacity-90"
+          onClick={book}
+        >
+          {t("public.bookThisTime")}
+        </Button>
+      </div>
+    </>
   )
 }
 

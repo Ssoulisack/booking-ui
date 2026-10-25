@@ -2,6 +2,7 @@ import {
   BarChart3Icon,
   Building2Icon,
   CalendarRangeIcon,
+  ImagesIcon,
   KeyRoundIcon,
   LayoutDashboardIcon,
   SettingsIcon,
@@ -35,6 +36,7 @@ const COMPANY_CRUMBS: Record<string, string> = {
   reports: "nav.reports",
   users: "nav.users",
   rules: "nav.bookingRules",
+  media: "nav.media",
   settings: "nav.companySettings",
 }
 
@@ -67,6 +69,7 @@ export function CompanyLayout() {
       label: t("nav.bookingRules"),
       icon: CalendarRangeIcon,
     },
+    { to: "/company/media", label: t("nav.media"), icon: ImagesIcon },
     {
       to: "/company/settings",
       label: t("nav.companySettings"),

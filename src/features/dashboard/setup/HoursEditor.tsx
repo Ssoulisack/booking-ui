@@ -11,6 +11,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import type { OpeningHour, ScheduleOwner } from "@/lib/api/types"
 
+import { useUnsaved } from "@/stores/unsaved"
 import { manage, useChange, useOpeningHours } from "../api"
 import { Panel } from "../ui"
 import { WEEK } from "./shared"
@@ -53,6 +54,7 @@ function WeekForm({
   const { t } = useTranslation()
   const [week, setWeek] = useState<Week>(initial)
   const [dirty, setDirty] = useState(false)
+  useUnsaved(dirty)
   const save = useChange(manage.saveHours, ["hours"])
 
   const update = (fn: (w: Week) => void) => {

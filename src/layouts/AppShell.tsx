@@ -4,6 +4,7 @@ import {
   MenuIcon,
   type LucideIcon,
 } from "lucide-react"
+import { UnsavedGuard } from "@/components/UnsavedGuard"
 import { motion, MotionConfig } from "motion/react"
 import { useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
@@ -96,6 +97,7 @@ export function AppShell({
 
   return (
     <MotionConfig reducedMotion="user">
+      <UnsavedGuard />
       <div className="min-h-dvh bg-muted/30">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background px-3 sm:px-4">
           {area && (

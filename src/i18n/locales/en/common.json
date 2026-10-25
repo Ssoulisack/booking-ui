@@ -83,6 +83,7 @@
     "everyBranch": "every branch"
   },
   "nav": {
+    "media": "Media",
     "menu": "Menu",
     "backTo": "Back to {{name}}",
     "pending_one": "{{count}} booking waiting for approval",
@@ -212,6 +213,10 @@
     },
     "bookTitle": "Book a time",
     "yourClass": "Your class",
+    "yourBooking": "Your booking",
+    "yourLesson": "Your lesson",
+    "removeBooking": "Remove",
+    "bookThisTime": "Book this time",
     "bookClass": "Book this class",
     "removeClass": "Remove",
     "confirmDate": "Confirm date",
@@ -328,6 +333,35 @@
     "5": "Fri",
     "6": "Sat"
   },
+  "unsaved": {
+    "title": "You have changes that are not saved",
+    "lead": "If you leave this page now, they will be lost.",
+    "stay": "Stay on this page",
+    "leave": "Leave without saving",
+    "bookingTitle": "Your booking is not complete yet",
+    "bookingLead": "You picked a time but have not booked it. If you leave now, it will not be booked.",
+    "bookingStay": "Keep booking",
+    "bookingLeave": "Leave"
+  },
+  "media": {
+    "lead": "Every picture uploaded here. Upload new ones, see where each is used, and delete the ones nothing uses.",
+    "upload": "Upload a picture",
+    "empty": "No pictures yet.",
+    "unused": "Not used",
+    "inUse": "In use",
+    "fromLibrary": "Choose from library",
+    "pickTitle": "Choose a picture",
+    "pickLead": "Pick one you already uploaded, or upload a new one.",
+    "thisPicture": "this picture",
+    "deleteTitle": "Delete this picture?",
+    "deleteLead": "The file is removed for good. You cannot undo this.",
+    "use": {
+      "sport": "Sport: {{name}}",
+      "coach": "Coach: {{name}}",
+      "cover": "Cover: {{name}}",
+      "logo": "Logo: {{name}}"
+    }
+  },
   "dash": {
     "cancel": "Cancel",
     "save": "Save",
@@ -386,6 +420,7 @@
       "title": "Spaces",
       "lead": "Courts, pitches, rings, lanes, bays, tables or rooms: each is booked on its own. Open one to set its opening hours, price and rules.",
       "add": "Add space",
+      "details": "Details",
       "edit": "Edit space",
       "empty": "No spaces yet.",
       "needSport": "Add a sport first, then its spaces.",
@@ -398,6 +433,7 @@
       "title": "Coaches",
       "lead": "Coaches can be booked for lessons, alone or together with a space.",
       "add": "Add coach",
+      "details": "Details",
       "edit": "Edit coach",
       "empty": "No coaches yet.",
       "teaches": "Teaches",
@@ -653,6 +689,66 @@
       "sport": "Add a sport",
       "court": "Add a space (court, pitch, ring…)",
       "hoursPrice": "Give a space opening hours and a price"
+    },
+    "guide": {
+      "open": "Show me how",
+      "progress": "Step {{n}} of {{total}}",
+      "done": "Done: this step is complete.",
+      "ownerOnly": "Only the owner or an admin can do this step.",
+      "back": "Back",
+      "next": "Next",
+      "close": "Got it",
+      "goThere": "Take me there",
+      "steps": {
+        "profile": {
+          "title": "Add the branch's address and description",
+          "why": "Customers see these first on your booking page.",
+          "lines": [
+            "Open Branch settings in the left menu.",
+            "Fill in the address and province, and write a short description.",
+            "Add a phone number and a map link if you like, and choose a branch photo.",
+            "Press Save."
+          ]
+        },
+        "sport": {
+          "title": "Add a sport",
+          "why": "Every space, coach and class belongs to a sport.",
+          "lines": [
+            "Open Setup in the left menu, then the Sports tab.",
+            "Press Add sport.",
+            "Type a name such as Tennis, and choose the type of sport.",
+            "Press Save."
+          ]
+        },
+        "court": {
+          "title": "Add a space (court, pitch, ring…)",
+          "why": "A space is the thing customers book. Each one is booked on its own.",
+          "lines": [
+            "Open Setup, then the Spaces tab.",
+            "Press Add space.",
+            "Choose the sport and the type, and name it, for example Court 1.",
+            "Press Save."
+          ]
+        },
+        "hoursPrice": {
+          "title": "Give a space opening hours and a price",
+          "why": "Without both, nobody can book the space yet.",
+          "lines": [
+            "Open Setup, then Spaces, and open the space you just added.",
+            "In Opening hours, set when it is open each day and press Save opening hours. Copy Monday to every day saves time.",
+            "In Price, enter the price per hour and press Save price."
+          ]
+        },
+        "publish": {
+          "title": "Publish and share",
+          "why": "Your booking page goes live and you get one link to share.",
+          "lines": [
+            "Go back to Overview once the four steps are done.",
+            "Press Publish booking page. Only the owner or an admin can.",
+            "Share the link or the QR code on Facebook, WhatsApp or LINE. Bookings appear in your dashboard."
+          ]
+        }
+      }
     },
     "publish": "Publish booking page",
     "publishNeeds": "Steps 2 to 4 are needed before publishing.",
@@ -1007,6 +1103,12 @@
     "name": "Company name",
     "regionHint": "Every branch uses this currency and language; a branch may use another time zone.",
     "bookingLead": "Every branch follows these unless its own settings change them.",
+    "contactLead": "Shown in the Contact section at the bottom of the home page. Branch pages use their own phone and links.",
+    "scope": {
+      "all": "Every branch",
+      "default": "Default for every branch",
+      "home": "Home page only"
+    },
     "rulesLead": "The booking rule every branch starts from. A branch changes only what is different there.",
     "ruleTitle": "Company booking rule",
     "ruleLead": "Every field is needed.",

@@ -162,6 +162,7 @@ export const router = createBrowserRouter([
                   companyPage("reports", "ReportsPage"),
                   companyPage("users", "UsersPage"),
                   companyPage("rules", "CompanyRulesPage"),
+                  companyPage("media", "CompanyMediaPage"),
                   companyPage("settings", "CompanySettingsPage"),
                   { path: "*", element: <NotFound /> },
                 ],
@@ -218,6 +219,7 @@ export const router = createBrowserRouter([
                       page("rules", "RulesPage"),
                     ],
                   },
+                  page("media", "MediaPage"),
                   {
                     path: "reports",
                     // its own download: the chart library is only needed here

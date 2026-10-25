@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 
 import { usePublic } from "./context"
 import { selectionQuery, type Selection } from "./selection"
+import { releaseBooking } from "@/stores/unsaved"
 
 /** The currency symbol and where it goes, e.g. LAK → { before: "₭", after: "" } */
 function currencyAffix(currency: string) {
@@ -83,9 +84,10 @@ export function BookingBar({
         <Button
           size="lg"
           className="h-12 px-6 text-base"
-          onClick={() =>
+          onClick={() => {
+            releaseBooking()
             navigate(`/b/${slug}/book?${selectionQuery(checkout)}`)
-          }
+          }}
         >
           {t("public.book")}
         </Button>

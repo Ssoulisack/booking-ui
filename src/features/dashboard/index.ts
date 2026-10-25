@@ -1,5 +1,6 @@
 export { DashboardHome } from "./DashboardHome"
 export { DashboardIndex, DashboardLayout, RequireRole } from "./DashboardLayout"
+export { MediaPage } from "./MediaPage"
 export { SettingsPage } from "./SettingsPage"
 export { ClassesPage } from "./setup/ClassesPage"
 export { ClosuresPage } from "./setup/ClosuresPage"

@@ -1,12 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeftIcon, ChevronRightIcon, PlusIcon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, type UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router"
+import { toast } from "sonner"
 import { z } from "zod"
 
-import { TextField } from "@/components/form"
+import { ErrorAlert, TextField } from "@/components/form"
 import { PageError } from "@/components/page-state"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,7 +24,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { ManagedResource, ResourceKind } from "@/lib/api/types"
+import { Spinner } from "@/components/ui/spinner"
+import type {
+  ManagedResource,
+  ManagedSport,
+  ResourceKind,
+} from "@/lib/api/types"
 
 import {
   manage,
@@ -33,6 +39,7 @@ import {
   useSportsList,
   useDelete,
 } from "../api"
+import { useUnsaved } from "@/stores/unsaved"
 import { useDashboard } from "../context"
 import {
   ActiveSwitch,
@@ -40,6 +47,7 @@ import {
   EmptyState,
   FormDialog,
   PageHeader,
+  Panel,
 } from "../ui"
 import { HoursEditor } from "./HoursEditor"
 import { PriceEditor } from "./PriceEditor"
@@ -78,14 +86,14 @@ export function CourtsPage() {
   const { t } = useTranslation()
   const sports = useSportsList()
   const courts = useResourcesList()
-  const [editing, setEditing] = useState<ManagedResource | "new" | null>(null)
+  const [adding, setAdding] = useState(false)
   const noSports = sports.data?.length === 0
 
   const add = (
     <Button
       className="h-11 lg:h-9"
       disabled={noSports}
-      onClick={() => setEditing("new")}
+      onClick={() => setAdding(true)}
     >
       <PlusIcon />
       {t("setup.courts.add")}
@@ -127,34 +135,19 @@ export function CourtsPage() {
                   {courts.data
                     .filter((c) => c.sport_id === sport.id)
                     .map((c) => (
-                      <CourtRow
-                        key={c.id}
-                        court={c}
-                        onEdit={() => setEditing(c)}
-                      />
+                      <CourtRow key={c.id} court={c} />
                     ))}
                 </ul>
               </section>
             ))}
         </div>
       )}
-      {editing && (
-        <CourtDialog
-          court={editing === "new" ? undefined : editing}
-          onClose={() => setEditing(null)}
-        />
-      )}
+      {adding && <CourtDialog onClose={() => setAdding(false)} />}
     </>
   )
 }
 
-function CourtRow({
-  court,
-  onEdit,
-}: {
-  court: ManagedResource
-  onEdit: () => void
-}) {
+function CourtRow({ court }: { court: ManagedResource }) {
   const { t } = useTranslation()
   const invalidate = useInvalidate(["resources"])
   const [open, setOpen] = useState(false)
@@ -176,8 +169,8 @@ function CourtRow({
         </span>
         <ReadyBadges owner="resource" id={court.id} active={court.active} />
       </Link>
-      <Button variant="outline" className="h-11 lg:h-9" onClick={onEdit}>
-        {t("dash.edit")}
+      <Button asChild variant="outline" className="h-11 lg:h-9">
+        <Link to={String(court.id)}>{t("dash.edit")}</Link>
       </Button>
       <DeleteButton
         what={court.name}
@@ -198,17 +191,34 @@ function CourtRow({
   )
 }
 
-function CourtDialog({
-  court,
-  onClose,
-}: {
-  court?: ManagedResource
-  onClose: () => void
-}) {
+/** Add a space: a dialog. Changing one later happens on its own page (CourtDetails). */
+function CourtDialog({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
   const sports = useSportsList().data ?? []
   const save = useChange(manage.saveResource, ["resources"])
-  const form = useForm<Values>({
+  const form = useCourtForm()
+
+  return (
+    <FormDialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={t("setup.courts.add")}
+      description={t("setup.courts.afterAdd")}
+      submitLabel={t("dash.save")}
+      pending={save.isPending}
+      error={save.error}
+      onSubmit={form.handleSubmit((v) =>
+        save.mutate(v, { onSuccess: onClose }),
+      )}
+    >
+      <CourtFields form={form} sports={sports} />
+    </FormDialog>
+  )
+}
+
+function useCourtForm(court?: ManagedResource) {
+  const sports = useSportsList().data ?? []
+  return useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       sport_id: court?.sport_id ?? sports[0]?.id,
@@ -217,92 +227,129 @@ function CourtDialog({
       active: court?.active ?? true,
     },
   })
+}
+
+/** The details of a space (sport, name, type, bookable): on its own page, saved with one button */
+function CourtDetails({ court }: { court: ManagedResource }) {
+  const { t } = useTranslation()
+  const sports = useSportsList().data ?? []
+  const save = useChange(manage.saveResource, ["resources"])
+  const form = useCourtForm(court)
+  useUnsaved(form.formState.isDirty)
 
   return (
-    <FormDialog
-      open
-      onOpenChange={(o) => !o && onClose()}
-      title={court ? t("setup.courts.edit") : t("setup.courts.add")}
-      description={court ? undefined : t("setup.courts.afterAdd")}
-      submitLabel={t("dash.save")}
-      pending={save.isPending}
-      error={save.error}
+    <form
+      noValidate
       onSubmit={form.handleSubmit((v) =>
-        save.mutate({ id: court?.id, ...v }, { onSuccess: onClose }),
+        save.mutate(
+          { id: court.id, ...v },
+          {
+            onSuccess: () => {
+              form.reset(v)
+              toast.success(t("settings.saved"))
+            },
+          },
+        ),
       )}
     >
-      <FieldGroup>
-        <Controller
-          control={form.control}
-          name="sport_id"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={!!fieldState.error || undefined}>
-              <FieldLabel htmlFor="court-sport">{t("setup.sport")}</FieldLabel>
-              <Select
-                value={field.value ? String(field.value) : ""}
-                onValueChange={(v) => field.onChange(Number(v))}
-              >
-                <SelectTrigger id="court-sport" className="h-11 w-full lg:h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {sports.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {fieldState.error?.message && (
-                <FieldError>{t(fieldState.error.message)}</FieldError>
-              )}
-            </Field>
-          )}
-        />
-        <TextField
-          label={t("setup.name")}
-          placeholder={t("setup.courts.namePlaceholder")}
-          registration={form.register("name")}
-          error={form.formState.errors.name}
-        />
-        <Controller
-          control={form.control}
-          name="kind"
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="court-kind">
-                {t("setup.courts.kind")}
-              </FieldLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger id="court-kind" className="h-11 w-full lg:h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {KINDS.map((k) => (
-                    <SelectItem key={k} value={k}>
-                      {t(`setup.kinds.${k}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          )}
-        />
-        <Controller
-          control={form.control}
-          name="active"
-          render={({ field }) => (
-            <ActiveSwitch
-              id="court-active"
-              label={t("setup.bookable")}
-              hint={t("setup.bookableHint")}
-              checked={field.value}
-              onChange={field.onChange}
-            />
-          )}
-        />
-      </FieldGroup>
-    </FormDialog>
+      <Panel title={t("setup.courts.details")}>
+        <div className="space-y-5">
+          <ErrorAlert error={save.error} />
+          <CourtFields form={form} sports={sports} />
+          <Button
+            type="submit"
+            className="h-11 lg:h-9"
+            disabled={save.isPending || !form.formState.isDirty}
+          >
+            {save.isPending && <Spinner />}
+            {t("dash.save")}
+          </Button>
+        </div>
+      </Panel>
+    </form>
+  )
+}
+
+function CourtFields({
+  form,
+  sports,
+}: {
+  form: UseFormReturn<Values>
+  sports: ManagedSport[]
+}) {
+  const { t } = useTranslation()
+  return (
+    <FieldGroup>
+      <Controller
+        control={form.control}
+        name="sport_id"
+        render={({ field, fieldState }) => (
+          <Field data-invalid={!!fieldState.error || undefined}>
+            <FieldLabel htmlFor="court-sport">{t("setup.sport")}</FieldLabel>
+            <Select
+              value={field.value ? String(field.value) : ""}
+              onValueChange={(v) => field.onChange(Number(v))}
+            >
+              <SelectTrigger id="court-sport" className="h-11 w-full lg:h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sports.map((s) => (
+                  <SelectItem key={s.id} value={String(s.id)}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {fieldState.error?.message && (
+              <FieldError>{t(fieldState.error.message)}</FieldError>
+            )}
+          </Field>
+        )}
+      />
+      <TextField
+        label={t("setup.name")}
+        placeholder={t("setup.courts.namePlaceholder")}
+        registration={form.register("name")}
+        error={form.formState.errors.name}
+      />
+      <Controller
+        control={form.control}
+        name="kind"
+        render={({ field }) => (
+          <Field>
+            <FieldLabel htmlFor="court-kind">
+              {t("setup.courts.kind")}
+            </FieldLabel>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger id="court-kind" className="h-11 w-full lg:h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {KINDS.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {t(`setup.kinds.${k}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+        )}
+      />
+      <Controller
+        control={form.control}
+        name="active"
+        render={({ field }) => (
+          <ActiveSwitch
+            id="court-active"
+            label={t("setup.bookable")}
+            hint={t("setup.bookableHint")}
+            checked={field.value}
+            onChange={field.onChange}
+          />
+        )}
+      />
+    </FieldGroup>
   )
 }
 
@@ -339,6 +386,7 @@ export function CourtDetailPage() {
             .join(" · ")}
         />
       </div>
+      <CourtDetails key={court.id} court={court} />
       <div className="grid gap-6 xl:grid-cols-2">
         <HoursEditor owner="resource" id={court.id} />
         <div className="space-y-6">

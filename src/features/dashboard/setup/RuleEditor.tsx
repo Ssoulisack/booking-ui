@@ -19,6 +19,7 @@ import {
   useEffectiveRule,
   useRules,
 } from "../api"
+import { useUnsaved } from "@/stores/unsaved"
 import { Panel } from "../ui"
 import { numberOrNull, useInvalidate } from "./shared"
 
@@ -161,6 +162,10 @@ export function RuleForm({
       ]),
     ),
   )
+  // the form is rebuilt from the saved rule after a save, so its starting values are the saved ones
+  const [start] = useState(() => JSON.stringify(values))
+  const dirty = JSON.stringify(values) !== start
+  useUnsaved(dirty)
   const save = useMutation({
     mutationFn: onSave,
     onSuccess: () => toast.success(t("rules.saved")),
@@ -235,7 +240,7 @@ export function RuleForm({
           <Button
             type="submit"
             className="h-11 lg:h-9"
-            disabled={save.isPending}
+            disabled={save.isPending || !dirty}
           >
             {save.isPending && <Spinner />}
             {t("rules.save")}

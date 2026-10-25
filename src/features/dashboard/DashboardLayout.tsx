@@ -3,6 +3,7 @@ import {
   CalendarDaysIcon,
   ClipboardListIcon,
   HandCoinsIcon,
+  ImagesIcon,
   LayoutDashboardIcon,
   SettingsIcon,
   UsersRoundIcon,
@@ -72,6 +73,7 @@ const NAV: Array<
   { path: "cash-up", key: "cashUp", icon: HandCoinsIcon, min: "staff" },
   { path: "setup", key: "setup", icon: WrenchIcon, min: "manager" },
   { path: "reports", key: "reports", icon: BarChart3Icon, min: "manager" },
+  { path: "media", key: "media", icon: ImagesIcon, min: "manager" },
   { path: "settings", key: "branchSettings", icon: SettingsIcon, min: "admin" },
 ]
 
@@ -83,6 +85,7 @@ const DASHBOARD_CRUMBS: Record<string, string> = {
   "cash-up": "nav.cashUp",
   setup: "nav.setup",
   reports: "nav.reports",
+  media: "nav.media",
   settings: "nav.branchSettings",
   sports: "setup.tabs.sports",
   spaces: "setup.tabs.spaces",

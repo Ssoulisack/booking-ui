@@ -47,6 +47,8 @@ export function useSettings() {
   return useQuery({
     queryKey: key("settings"),
     queryFn: () => api<BranchSettings>(`${base}/settings`),
+    // the page remounts its form when this data changes: a refocus (e.g. after the file picker) must not wipe unsaved edits
+    refetchOnWindowFocus: false,
   })
 }
 

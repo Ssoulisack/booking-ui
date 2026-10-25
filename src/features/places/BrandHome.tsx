@@ -28,8 +28,6 @@ import { cn } from "@/lib/utils"
 import { UserMenu } from "@/layouts/UserMenu"
 import { useSession } from "@/stores/session"
 
-import defaultBranchPhoto from "@/assets/default-branch.jpg"
-
 import { useLiveBranches, usePublicCompany } from "./api"
 import { BrandRings } from "@/features/public/BrandRings"
 
@@ -405,31 +403,30 @@ function BranchCard({
       className="group block overflow-hidden rounded-2xl bg-white ring-1 ring-black/5 transition-shadow focus-visible:ring-3 focus-visible:ring-ring/50 active:shadow-sm"
     >
       <div className="relative h-28 bg-[var(--brand)]">
-        {b.cover_url ? (
+        {b.cover_url && (
           <img
             src={b.cover_url}
             alt=""
             loading="lazy"
             className="size-full object-cover"
           />
-        ) : (
-          // no photo of its own: the project's default one, whole, on its own light background
-          <img
-            src={defaultBranchPhoto}
-            alt=""
-            loading="lazy"
-            className="size-full bg-[#f7f7f7] object-contain"
-          />
         )}
-        <span className="absolute -bottom-6 left-4 rounded-xl ring-4 ring-white">
-          <BrandMark
-            name={company.name}
-            logo={company.logo_url}
-            className="size-14"
-          />
-        </span>
+        {company.logo_url && (
+          <span className="absolute -bottom-6 left-4 rounded-xl ring-4 ring-white">
+            <BrandMark
+              name={company.name}
+              logo={company.logo_url}
+              className="size-14"
+            />
+          </span>
+        )}
       </div>
-      <div className="space-y-2 px-4 pt-8 pb-4">
+      <div
+        className={cn(
+          "space-y-2 px-4 pb-4",
+          company.logo_url ? "pt-8" : "pt-4",
+        )}
+      >
         <h3 className="display-tight text-xl leading-tight">{b.name}</h3>
         {types.length > 0 && (
           <p className="flex flex-wrap gap-1.5">

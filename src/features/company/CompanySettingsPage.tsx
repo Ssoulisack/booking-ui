@@ -34,6 +34,8 @@ import { FontField, RingColorsField } from "@/features/settings/look-fields"
 import { LookPreview } from "@/features/settings/LookPreview"
 import type { Company, CompanyInput, EffectiveRule } from "@/lib/api/types"
 
+import { useUnsaved } from "@/stores/unsaved"
+
 import {
   useCompany,
   useCompanyRule,
@@ -48,6 +50,16 @@ export function CompanySettingsPage() {
   if (company.isError)
     return <PageError error={company.error} onRetry={() => company.refetch()} />
   return <CompanyForm key={company.dataUpdatedAt} company={company.data} />
+}
+
+/** Says who a settings block reaches: every branch, every branch unless it overrides, or the brand home only */
+function ScopeTag({ kind }: { kind: "all" | "default" | "home" }) {
+  const { t } = useTranslation()
+  return (
+    <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+      {t(`company.scope.${kind}`)}
+    </span>
+  )
 }
 
 function CompanyForm({ company }: { company: Company }) {
@@ -72,8 +84,20 @@ function CompanyForm({ company }: { company: Company }) {
     require_approval: company.require_approval,
   }))
   const set = (patch: Partial<CompanyInput>) => setF({ ...f, ...patch })
+  const [start] = useState(() => JSON.stringify(f))
+  const dirty = JSON.stringify(f) !== start
+  useUnsaved(dirty)
   const save = useUpdateCompany()
   const links = f.social_links ?? {}
+  // a picture is saved the moment it is chosen or removed (with the rest of the form), so it is still there after a reload
+  const savePicture = (patch: Partial<CompanyInput>) => {
+    const next = { ...f, ...patch }
+    setF(next)
+    save.mutate(
+      { ...next, social_links: filledLinks(next.social_links ?? {}) },
+      { onSuccess: () => toast.success(t("settings.saved")) },
+    )
+  }
 
   return (
     <form
@@ -91,7 +115,11 @@ function CompanyForm({ company }: { company: Company }) {
         title={t("nav.companySettings")}
         lead={t("company.settingsLead")}
       />
-      <Panel title={t("company.brand")} lead={t("settings.brandingLead")}>
+      <Panel
+        title={t("company.brand")}
+        lead={t("settings.brandingLead")}
+        actions={<ScopeTag kind="all" />}
+      >
         <div className="grid gap-5 md:grid-cols-2">
           <div className="md:col-span-2">
             <Text
@@ -114,7 +142,7 @@ function CompanyForm({ company }: { company: Company }) {
             folder="branding"
             base="/company"
             url={company.logo_url}
-            onChange={(key) => set({ logo_key: key })}
+            onChange={(key) => savePicture({ logo_key: key })}
           />
           <ImageField
             label={t("settings.cover")}
@@ -122,7 +150,7 @@ function CompanyForm({ company }: { company: Company }) {
             base="/company"
             url={company.cover_url}
             wide
-            onChange={(key) => set({ cover_key: key })}
+            onChange={(key) => savePicture({ cover_key: key })}
           />
           <div className="md:col-span-2">
             <BrandColor
@@ -132,7 +160,11 @@ function CompanyForm({ company }: { company: Company }) {
           </div>
         </div>
       </Panel>
-      <Panel title={t("look.appearance")} lead={t("look.appearanceLead")}>
+      <Panel
+        title={t("look.appearance")}
+        lead={t("look.appearanceLead")}
+        actions={<ScopeTag kind="default" />}
+      >
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
           <div className="space-y-5">
             <RingColorsField
@@ -164,7 +196,11 @@ function CompanyForm({ company }: { company: Company }) {
           </div>
         </div>
       </Panel>
-      <Panel title={t("settings.region")}>
+      <Panel
+        title={t("settings.region")}
+        lead={t("company.regionHint")}
+        actions={<ScopeTag kind="all" />}
+      >
         <div className="grid gap-4 sm:grid-cols-3">
           <Choice
             id="c-tz"
@@ -201,7 +237,38 @@ function CompanyForm({ company }: { company: Company }) {
           {t("company.regionHint")}
         </p>
       </Panel>
-      <Panel title={t("settings.contact")}>
+      <Panel
+        title={t("settings.booking")}
+        lead={t("company.bookingLead")}
+        actions={<ScopeTag kind="default" />}
+      >
+        <div className="space-y-4">
+          <ModePicker
+            name="booking_mode"
+            value={f.booking_mode}
+            onChange={(m) => set({ booking_mode: m })}
+          />
+          <ActiveSwitch
+            id="c-approval"
+            label={t("settings.approval")}
+            hint={t("settings.approvalHint")}
+            checked={f.require_approval}
+            onChange={(v) => set({ require_approval: v })}
+          />
+          <Area
+            id="c-policy"
+            label={t("settings.policy")}
+            value={f.booking_policy}
+            onChange={(v) => set({ booking_policy: v })}
+            hint={t("settings.policyHint")}
+          />
+        </div>
+      </Panel>
+      <Panel
+        title={t("settings.contact")}
+        lead={t("company.contactLead")}
+        actions={<ScopeTag kind="home" />}
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <Text
             id="c-phone"
@@ -230,32 +297,13 @@ function CompanyForm({ company }: { company: Company }) {
           ))}
         </div>
       </Panel>
-      <Panel title={t("settings.booking")} lead={t("company.bookingLead")}>
-        <div className="space-y-4">
-          <ModePicker
-            name="booking_mode"
-            value={f.booking_mode}
-            onChange={(m) => set({ booking_mode: m })}
-          />
-          <ActiveSwitch
-            id="c-approval"
-            label={t("settings.approval")}
-            hint={t("settings.approvalHint")}
-            checked={f.require_approval}
-            onChange={(v) => set({ require_approval: v })}
-          />
-          <Area
-            id="c-policy"
-            label={t("settings.policy")}
-            value={f.booking_policy}
-            onChange={(v) => set({ booking_policy: v })}
-            hint={t("settings.policyHint")}
-          />
-        </div>
-      </Panel>
       <div className="space-y-3">
         <ErrorAlert error={save.error} />
-        <Button type="submit" className="h-11 lg:h-9" disabled={save.isPending}>
+        <Button
+          type="submit"
+          className="h-11 lg:h-9"
+          disabled={save.isPending || !dirty}
+        >
           {save.isPending && <Spinner />}
           {t("settings.save")}
         </Button>

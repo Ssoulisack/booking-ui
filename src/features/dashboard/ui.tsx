@@ -1,5 +1,5 @@
-import { useMutation } from "@tanstack/react-query"
-import { ImagePlusIcon, Trash2Icon, XIcon } from "lucide-react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { ImagePlusIcon, ImagesIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useRef, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -26,6 +26,8 @@ import {
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
+import { refreshMedia } from "@/features/media/api"
+import { MediaPicker } from "@/features/media/Picker"
 
 import { useOutletContext } from "react-router"
 
@@ -272,11 +274,17 @@ export function ImageField({
     uploadTo ?? (dashboard ? `/branches/${dashboard.branch.branch_id}` : "")
   const input = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState(url)
+  const [picking, setPicking] = useState(false)
+  const queryClient = useQueryClient()
+  const choose = (media: { key: string; url: string }) => {
+    setPreview(media.url)
+    onChange(media.key, media.url)
+  }
   const upload = useMutation({
     mutationFn: (file: File) => manage.upload(base, folder, file),
     onSuccess: (media) => {
-      setPreview(media.url)
-      onChange(media.key, media.url)
+      choose(media)
+      void refreshMedia(queryClient, base) // the new file shows in the Media page and the picker
     },
   })
 
@@ -298,29 +306,40 @@ export function ImageField({
             <ImagePlusIcon className="size-6" />
           )}
         </button>
-        <div className="space-y-1 text-sm">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 lg:h-9"
-            onClick={() => input.current?.click()}
-          >
-            {preview ? t("dash.changeImage") : t("dash.chooseImage")}
-          </Button>
-          {preview && (
+        <div className="space-y-2 text-sm">
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               className="h-11 lg:h-9"
-              onClick={() => {
-                setPreview("")
-                onChange("", "")
-              }}
+              onClick={() => input.current?.click()}
             >
-              <XIcon />
-              {t("dash.removeImage")}
+              {preview ? t("dash.changeImage") : t("dash.chooseImage")}
             </Button>
-          )}
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 lg:h-9"
+              onClick={() => setPicking(true)}
+            >
+              <ImagesIcon />
+              {t("media.fromLibrary")}
+            </Button>
+            {preview && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-11 lg:h-9"
+                onClick={() => {
+                  setPreview("")
+                  onChange("", "")
+                }}
+              >
+                <XIcon />
+                {t("dash.removeImage")}
+              </Button>
+            )}
+          </div>
           <p className="text-muted-foreground">{t("dash.imageHint")}</p>
         </div>
       </div>
@@ -337,6 +356,15 @@ export function ImageField({
         }}
       />
       <ErrorAlert error={upload.error} />
+      <MediaPicker
+        base={base}
+        open={picking}
+        onOpenChange={setPicking}
+        onPick={(media) => {
+          choose(media)
+          setPicking(false)
+        }}
+      />
     </div>
   )
 }

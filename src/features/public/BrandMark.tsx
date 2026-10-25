@@ -1,6 +1,4 @@
-import defaultLogo from "@/assets/default-logo.png"
-
-/** The company logo, or the project's default logo (transparent, no background) when none was uploaded */
+/** The company logo; nothing at all when none was uploaded */
 export function BrandMark({
   logo,
   className = "size-9",
@@ -10,20 +8,12 @@ export function BrandMark({
   logo: string
   className?: string
 }) {
-  if (logo) {
-    return (
-      <img
-        src={logo}
-        alt=""
-        className={`${className} shrink-0 rounded-lg object-cover`}
-      />
-    )
-  }
+  if (!logo) return null
   return (
     <img
-      src={defaultLogo}
+      src={logo}
       alt=""
-      className={`${className} shrink-0 object-contain`}
+      className={`${className} shrink-0 rounded-lg object-cover`}
     />
   )
 }

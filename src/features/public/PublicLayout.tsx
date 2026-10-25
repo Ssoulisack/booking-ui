@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Link, Outlet, useLocation, useParams } from "react-router"
 
 import { PageError } from "@/components/page-state"
+import { UnsavedGuard } from "@/components/UnsavedGuard"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { applyBusinessLanguage } from "@/i18n"
@@ -49,6 +50,7 @@ export function PublicLayout() {
       className="min-h-dvh bg-[#f3f5f4] text-[#141a17]"
     >
       <PageSpark>
+        <UnsavedGuard />
         <PublicTopBar business={business.data} />
         <Outlet
           context={{ slug, business: business.data } satisfies PublicContext}

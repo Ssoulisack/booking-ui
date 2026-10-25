@@ -33,6 +33,7 @@ import type {
 } from "@/lib/api/types"
 import { PROVINCES, type Province } from "@/lib/places"
 
+import { useUnsaved } from "@/stores/unsaved"
 import { manage, useChange, useSettings } from "./api"
 import { ActiveSwitch, ImageField, PageHeader, Panel } from "./ui"
 
@@ -72,6 +73,9 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
     body_font: settings.body_font ?? null,
   }))
   const set = (patch: Partial<SettingsInput>) => setF({ ...f, ...patch })
+  const [start] = useState(() => JSON.stringify(f))
+  const dirty = JSON.stringify(f) !== start
+  useUnsaved(dirty)
   const save = useChange(manage.saveSettings, ["settings"])
   const slugLocked = !!settings.published_at
   const company = {
@@ -88,6 +92,15 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
     e.preventDefault()
     save.mutate(
       { ...f, social_links: filledLinks(links) },
+      { onSuccess: () => toast.success(t("settings.saved")) },
+    )
+  }
+  // the photo is saved the moment it is chosen or removed (with the rest of the form), so it is still there after a reload
+  const savePhoto = (cover_key: string) => {
+    const next = { ...f, cover_key }
+    setF(next)
+    save.mutate(
+      { ...next, social_links: filledLinks(next.social_links ?? {}) },
       { onSuccess: () => toast.success(t("settings.saved")) },
     )
   }
@@ -142,7 +155,7 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
             folder="branding"
             url={settings.cover_key ? settings.cover_url : ""}
             wide
-            onChange={(key) => set({ cover_key: key })}
+            onChange={savePhoto}
           />
           <p className="-mt-2 text-sm text-muted-foreground">
             {t("branchSettings.photoHint")}
@@ -384,7 +397,11 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
 
       <div className="space-y-3">
         <ErrorAlert error={save.error} />
-        <Button type="submit" className="h-11 lg:h-9" disabled={save.isPending}>
+        <Button
+          type="submit"
+          className="h-11 lg:h-9"
+          disabled={save.isPending || !dirty}
+        >
           {save.isPending && <Spinner />}
           {t("settings.save")}
         </Button>

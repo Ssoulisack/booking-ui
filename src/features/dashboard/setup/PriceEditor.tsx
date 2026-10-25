@@ -12,6 +12,7 @@ import { Spinner } from "@/components/ui/spinner"
 import type { ScheduleOwner } from "@/lib/api/types"
 import { duration, money } from "@/lib/format"
 
+import { useUnsaved } from "@/stores/unsaved"
 import { manage, useChange, useEffectiveRule, usePrice } from "../api"
 import { Panel } from "../ui"
 import { bookableLengths, priceFor } from "./shared"
@@ -70,6 +71,7 @@ function PriceForm({
   const lengths = inForce.data ? bookableLengths(inForce.data) : [60]
   const [value, setValue] = useState(initial === null ? "" : String(initial))
   const save = useChange(manage.savePrice, ["price"])
+  useUnsaved(value !== (initial === null ? "" : String(initial)))
   const amount = Number(value)
   const valid = value.trim() !== "" && Number.isInteger(amount) && amount >= 0
 

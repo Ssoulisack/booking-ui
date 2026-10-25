@@ -1,12 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeftIcon, PlusIcon } from "lucide-react"
 import { useState } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, type UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router"
+import { toast } from "sonner"
 import { z } from "zod"
 
-import { TextField } from "@/components/form"
+import { ErrorAlert, TextField } from "@/components/form"
 import { PageError } from "@/components/page-state"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/field"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import type { ManagedCoach } from "@/lib/api/types"
 
@@ -38,7 +40,9 @@ import {
   FormDialog,
   ImageField,
   PageHeader,
+  Panel,
 } from "../ui"
+import { useUnsaved } from "@/stores/unsaved"
 import { HoursEditor } from "./HoursEditor"
 import { PriceEditor } from "./PriceEditor"
 import { ReadyBadges } from "./ReadyBadges"
@@ -63,12 +67,12 @@ export function CoachesPage() {
   const { t } = useTranslation()
   const coaches = useCoachesList()
   const sports = useSportsList()
-  const [editing, setEditing] = useState<ManagedCoach | "new" | null>(null)
+  const [adding, setAdding] = useState(false)
   const add = (
     <Button
       className="h-11 lg:h-9"
       disabled={sports.data?.length === 0}
-      onClick={() => setEditing("new")}
+      onClick={() => setAdding(true)}
     >
       <PlusIcon />
       {t("setup.coaches.add")}
@@ -91,27 +95,16 @@ export function CoachesPage() {
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
           {coaches.data.map((c) => (
-            <CoachRow key={c.id} coach={c} onEdit={() => setEditing(c)} />
+            <CoachRow key={c.id} coach={c} />
           ))}
         </ul>
       )}
-      {editing && (
-        <CoachDialog
-          coach={editing === "new" ? undefined : editing}
-          onClose={() => setEditing(null)}
-        />
-      )}
+      {adding && <CoachDialog onClose={() => setAdding(false)} />}
     </>
   )
 }
 
-function CoachRow({
-  coach,
-  onEdit,
-}: {
-  coach: ManagedCoach
-  onEdit: () => void
-}) {
+function CoachRow({ coach }: { coach: ManagedCoach }) {
   const { t } = useTranslation()
   const invalidate = useInvalidate(["coaches"])
   const [open, setOpen] = useState(false)
@@ -142,8 +135,8 @@ function CoachRow({
         </span>
         <ReadyBadges owner="coach" id={coach.id} active={coach.active} />
       </Link>
-      <Button variant="outline" className="h-11 lg:h-9" onClick={onEdit}>
-        {t("dash.edit")}
+      <Button asChild variant="outline" className="h-11 lg:h-9">
+        <Link to={String(coach.id)}>{t("dash.edit")}</Link>
       </Button>
       <DeleteButton
         what={coach.name}
@@ -157,18 +150,34 @@ function CoachRow({
   )
 }
 
-function CoachDialog({
-  coach,
-  onClose,
-}: {
-  coach?: ManagedCoach
-  onClose: () => void
-}) {
+/** Add a coach: a dialog. Changing one later happens on the coach's own page (CoachDetails). */
+function CoachDialog({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
-  const sports = useSportsList().data ?? []
-  const [imageUrl, setImageUrl] = useState(coach?.image_url ?? "")
   const save = useChange(manage.saveCoach, ["coaches"])
-  const form = useForm<Values>({
+  const form = useCoachForm()
+  const [imageUrl, setImageUrl] = useState("")
+
+  return (
+    <FormDialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={t("setup.coaches.add")}
+      description={t("setup.coaches.afterAdd")}
+      submitLabel={t("dash.save")}
+      pending={save.isPending}
+      error={save.error}
+      onSubmit={form.handleSubmit((v) =>
+        save.mutate(v, { onSuccess: onClose }),
+      )}
+    >
+      <CoachFields form={form} imageUrl={imageUrl} setImageUrl={setImageUrl} />
+    </FormDialog>
+  )
+}
+
+function useCoachForm(coach?: ManagedCoach) {
+  const sports = useSportsList().data ?? []
+  return useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: coach?.name ?? "",
@@ -181,98 +190,142 @@ function CoachDialog({
       active: coach?.active ?? true,
     },
   })
+}
+
+/** The details of a coach (name, sports, phone, bio, photo, bookable): on the coach's page, saved with one button */
+function CoachDetails({ coach }: { coach: ManagedCoach }) {
+  const { t } = useTranslation()
+  const save = useChange(manage.saveCoach, ["coaches"])
+  const form = useCoachForm(coach)
+  useUnsaved(form.formState.isDirty)
+  const [imageUrl, setImageUrl] = useState(coach.image_url ?? "")
 
   return (
-    <FormDialog
-      open
-      onOpenChange={(o) => !o && onClose()}
-      title={coach ? t("setup.coaches.edit") : t("setup.coaches.add")}
-      description={coach ? undefined : t("setup.coaches.afterAdd")}
-      submitLabel={t("dash.save")}
-      pending={save.isPending}
-      error={save.error}
+    <form
+      noValidate
       onSubmit={form.handleSubmit((v) =>
-        save.mutate({ id: coach?.id, ...v }, { onSuccess: onClose }),
+        save.mutate(
+          { id: coach.id, ...v },
+          {
+            onSuccess: () => {
+              form.reset(v)
+              toast.success(t("settings.saved"))
+            },
+          },
+        ),
       )}
     >
-      <FieldGroup>
-        <TextField
-          label={t("setup.name")}
-          registration={form.register("name")}
-          error={form.formState.errors.name}
-        />
-        <Controller
-          control={form.control}
-          name="sport_ids"
-          render={({ field, fieldState }) => (
-            <FieldSet data-invalid={!!fieldState.error || undefined}>
-              <FieldLegend variant="label">
-                {t("setup.coaches.teaches")}
-              </FieldLegend>
-              <div className="grid gap-1 sm:grid-cols-2">
-                {sports.map((s) => {
-                  const checked = field.value.includes(s.id)
-                  return (
-                    <Label
-                      key={s.id}
-                      className="flex min-h-11 items-center gap-3 rounded-lg border px-3 font-normal"
-                    >
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={(on) =>
-                          field.onChange(
-                            on
-                              ? [...field.value, s.id]
-                              : field.value.filter((x) => x !== s.id),
-                          )
-                        }
-                      />
-                      {s.name}
-                    </Label>
-                  )
-                })}
-              </div>
-              {fieldState.error?.message && (
-                <FieldError>{t(fieldState.error.message)}</FieldError>
-              )}
-            </FieldSet>
-          )}
-        />
-        <TextField
-          label={t("setup.coaches.phone")}
-          type="tel"
-          inputMode="tel"
-          registration={form.register("phone")}
-          error={form.formState.errors.phone}
-        />
-        <Field>
-          <FieldLabel htmlFor="coach-bio">{t("setup.coaches.bio")}</FieldLabel>
-          <Textarea id="coach-bio" rows={3} {...form.register("bio")} />
-        </Field>
-        <ImageField
-          label={t("setup.photo")}
-          folder="coaches"
-          url={imageUrl}
-          onChange={(key, url) => {
-            form.setValue("image_key", key)
-            setImageUrl(url)
-          }}
-        />
-        <Controller
-          control={form.control}
-          name="active"
-          render={({ field }) => (
-            <ActiveSwitch
-              id="coach-active"
-              label={t("setup.bookable")}
-              hint={t("setup.bookableHint")}
-              checked={field.value}
-              onChange={field.onChange}
-            />
-          )}
-        />
-      </FieldGroup>
-    </FormDialog>
+      <Panel title={t("setup.coaches.details")}>
+        <div className="space-y-5">
+          <ErrorAlert error={save.error} />
+          <CoachFields
+            form={form}
+            imageUrl={imageUrl}
+            setImageUrl={setImageUrl}
+          />
+          <Button
+            type="submit"
+            className="h-11 lg:h-9"
+            disabled={save.isPending || !form.formState.isDirty}
+          >
+            {save.isPending && <Spinner />}
+            {t("dash.save")}
+          </Button>
+        </div>
+      </Panel>
+    </form>
+  )
+}
+
+function CoachFields({
+  form,
+  imageUrl,
+  setImageUrl,
+}: {
+  form: UseFormReturn<Values>
+  imageUrl: string
+  setImageUrl: (url: string) => void
+}) {
+  const { t } = useTranslation()
+  const sports = useSportsList().data ?? []
+  return (
+    <FieldGroup>
+      <TextField
+        label={t("setup.name")}
+        registration={form.register("name")}
+        error={form.formState.errors.name}
+      />
+      <Controller
+        control={form.control}
+        name="sport_ids"
+        render={({ field, fieldState }) => (
+          <FieldSet data-invalid={!!fieldState.error || undefined}>
+            <FieldLegend variant="label">
+              {t("setup.coaches.teaches")}
+            </FieldLegend>
+            <div className="grid gap-1 sm:grid-cols-2">
+              {sports.map((s) => {
+                const checked = field.value.includes(s.id)
+                return (
+                  <Label
+                    key={s.id}
+                    className="flex min-h-11 items-center gap-3 rounded-lg border px-3 font-normal"
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(on) =>
+                        field.onChange(
+                          on
+                            ? [...field.value, s.id]
+                            : field.value.filter((x) => x !== s.id),
+                        )
+                      }
+                    />
+                    {s.name}
+                  </Label>
+                )
+              })}
+            </div>
+            {fieldState.error?.message && (
+              <FieldError>{t(fieldState.error.message)}</FieldError>
+            )}
+          </FieldSet>
+        )}
+      />
+      <TextField
+        label={t("setup.coaches.phone")}
+        type="tel"
+        inputMode="tel"
+        registration={form.register("phone")}
+        error={form.formState.errors.phone}
+      />
+      <Field>
+        <FieldLabel htmlFor="coach-bio">{t("setup.coaches.bio")}</FieldLabel>
+        <Textarea id="coach-bio" rows={3} {...form.register("bio")} />
+      </Field>
+      <ImageField
+        label={t("setup.photo")}
+        folder="coaches"
+        url={imageUrl}
+        onChange={(key, url) => {
+          form.setValue("image_key", key, { shouldDirty: true })
+          setImageUrl(url)
+        }}
+      />
+      <Controller
+        control={form.control}
+        name="active"
+        render={({ field }) => (
+          <ActiveSwitch
+            id="coach-active"
+            label={t("setup.bookable")}
+            hint={t("setup.bookableHint")}
+            checked={field.value}
+            onChange={field.onChange}
+          />
+        )}
+      />
+    </FieldGroup>
   )
 }
 
@@ -303,6 +356,7 @@ export function CoachDetailPage() {
           lead={coach.sports.map((s) => s.name).join(", ")}
         />
       </div>
+      <CoachDetails key={coach.id} coach={coach} />
       <div className="grid gap-6 xl:grid-cols-2">
         <HoursEditor owner="coach" id={coach.id} />
         <PriceEditor

@@ -127,6 +127,7 @@
   "FILE_IS_EMPTY": "The file is empty.",
   "FILE_TOO_LARGE": "The file is too large.",
   "FILE_NOT_FOUND": "File not found.",
+  "FILE_IN_USE": "This picture is still used. Change it where it is used first.",
   "INVALID_FILE": "This file cannot be used.",
   "INVALID_FILE_KEY": "This file cannot be used.",
   "INVALID_FOLDER": "This file cannot be stored there.",

@@ -1,5 +1,6 @@
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query"
-import { CheckCircle2Icon, CircleIcon } from "lucide-react"
+import { CheckCircle2Icon, CircleIcon, ListChecksIcon } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 import { toast } from "sonner"
@@ -23,6 +24,7 @@ import {
   useSportsList,
 } from "./api"
 import { useDashboard } from "./context"
+import { GoLiveGuide } from "./GoLiveGuide"
 import { ShareBooking } from "./ShareBooking"
 import { PageHeader, Panel } from "./ui"
 
@@ -151,12 +153,38 @@ function Checklist({ isOwner }: { isOwner: boolean }) {
     },
   ]
   const ready = steps.slice(1).every((s) => s.done)
+  const [guideOpen, setGuideOpen] = useState(false)
+  const ids = ["profile", "sport", "court", "hoursPrice"] as const
 
   return (
     <Panel
       title={t("overview.checklistTitle")}
       lead={t("overview.checklistLead")}
+      actions={
+        <Button
+          variant="outline"
+          className="h-11 lg:h-9"
+          onClick={() => setGuideOpen(true)}
+        >
+          <ListChecksIcon />
+          {t("overview.guide.open")}
+        </Button>
+      }
     >
+      <GoLiveGuide
+        open={guideOpen}
+        onOpenChange={setGuideOpen}
+        isOwner={isOwner}
+        steps={[
+          ...steps.map((s, i) => ({
+            id: ids[i],
+            done: s.done,
+            to: s.to,
+            ownerOnly: s.ownerOnly,
+          })),
+          { id: "publish" as const, done: false },
+        ]}
+      />
       <ol className="space-y-1">
         {steps.map((step, i) => {
           const linkable = !step.ownerOnly || isOwner

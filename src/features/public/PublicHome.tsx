@@ -12,7 +12,6 @@ import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useLocation, useNavigate } from "react-router"
 
-import defaultBranchPhoto from "@/assets/default-branch.jpg"
 import BlurText from "@/components/reactbits/BlurText"
 import AnimatedList from "@/components/reactbits/AnimatedList"
 import { dayIn, money, timeIn, todayIn } from "@/lib/format"
@@ -126,16 +125,7 @@ function Hero() {
         />
       )}
       <BrandRings brand={business.brand_color} colors={business.ring_colors} />
-      <div className="relative mx-auto flex max-w-5xl flex-col items-start gap-4 px-4 pt-3 pb-7 sm:pt-5 sm:pr-40 sm:pb-10 lg:pr-56">
-        {!business.cover_url && (
-          // no photo of its own: the project's default one, as a tile on the right: in the corner on a
-          // phone, centred top to bottom (align-items: center, not centred across) from tablet width
-          <img
-            src={defaultBranchPhoto}
-            alt=""
-            className="pointer-events-none absolute top-3 right-4 size-24 rounded-2xl object-cover shadow-lg ring-2 ring-white/70 sm:top-1/2 sm:size-32 sm:-translate-y-1/2 lg:size-44"
-          />
-        )}
+      <div className="relative mx-auto flex max-w-5xl flex-col items-start gap-4 px-4 pt-3 pb-7 sm:pt-5 sm:pb-10">
         <Link
           to="/"
           className="-ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium opacity-90 hover:opacity-100"

@@ -42,6 +42,8 @@ export function useCompany() {
   return useQuery({
     queryKey: companyKeys.company,
     queryFn: () => api<Company>("/company/"),
+    // the page remounts its form when this data changes: a refocus (e.g. after the file picker) must not wipe unsaved edits
+    refetchOnWindowFocus: false,
   })
 }
 
@@ -49,6 +51,8 @@ export function useCompanyRule() {
   return useQuery({
     queryKey: companyKeys.rule,
     queryFn: () => api<Rule>("/company/rules"),
+    // the page remounts its form when this data changes: a refocus (e.g. after the file picker) must not wipe unsaved edits
+    refetchOnWindowFocus: false,
   })
 }
 
