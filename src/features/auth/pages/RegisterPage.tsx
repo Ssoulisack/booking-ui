@@ -10,6 +10,7 @@ import { AuthHeading } from "@/layouts/AuthLayout"
 import { useRegister } from "../api"
 import { IdentityFields } from "../IdentityFields"
 import { safeNext } from "../landing"
+import { SocialButtons } from "../SocialButtons"
 import { registerSchema, type RegisterValues } from "../schemas"
 
 export function RegisterPage() {
@@ -78,6 +79,7 @@ export function RegisterPage() {
           {t("register.submit")}
         </SubmitButton>
       </form>
+      <SocialButtons next={next} />
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {t("register.haveAccount")}{" "}
         <Link

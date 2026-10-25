@@ -504,6 +504,12 @@ export interface TimetableStop {
   kept_booked: number
 }
 
+/** The providers switched on for this install; an empty id means off */
+export interface SocialConfig {
+  google_client_id: string
+  facebook_app_id: string
+}
+
 export interface Media {
   key: string
   url: string

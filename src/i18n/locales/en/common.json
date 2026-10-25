@@ -333,6 +333,11 @@
     "5": "Fri",
     "6": "Sat"
   },
+  "social": {
+    "or": "or",
+    "facebook": "Continue with Facebook",
+    "customersOnly": "Google and Facebook are for customers. The team logs in with a password."
+  },
   "unsaved": {
     "title": "You have changes that are not saved",
     "lead": "If you leave this page now, they will be lost.",

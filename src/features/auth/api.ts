@@ -5,6 +5,7 @@ import type {
   AuthResponse,
   InvitationInfo,
   MyBranch,
+  SocialConfig,
   User,
 } from "@/lib/api/types"
 import { useSession } from "@/stores/session"
@@ -46,6 +47,13 @@ export const authApi = {
     api<AuthResponse>("/auth/login", { method: "POST", body }),
   register: (body: RegisterInput) =>
     api<AuthResponse>("/auth/register", { method: "POST", body }),
+  socialConfig: () => api<SocialConfig>("/auth/social/config"),
+  /** `token` is Google's ID token or Facebook's access token */
+  socialLogin: (provider: "google" | "facebook", token: string) =>
+    api<AuthResponse>(`/auth/social/${provider}`, {
+      method: "POST",
+      body: { token },
+    }),
   forgotPassword: (email: string) =>
     apiMessage("/auth/forgot-password", { method: "POST", body: { email } }),
   resetPassword: (token: string, password: string) =>
@@ -105,6 +113,29 @@ export const usableBranches = (list: MyBranch[] | undefined) =>
 export function useLogin() {
   return useMutation({
     mutationFn: authApi.login,
+    onSuccess: (auth) => useSession.getState().signIn(auth),
+  })
+}
+
+/** Which of Google / Facebook this install offers (none until the backend has their ids) */
+export function useSocialConfig() {
+  return useQuery({
+    queryKey: ["auth", "social"],
+    queryFn: authApi.socialConfig,
+    staleTime: Infinity,
+    retry: false,
+  })
+}
+
+export function useSocialLogin() {
+  return useMutation({
+    mutationFn: ({
+      provider,
+      token,
+    }: {
+      provider: "google" | "facebook"
+      token: string
+    }) => authApi.socialLogin(provider, token),
     onSuccess: (auth) => useSession.getState().signIn(auth),
   })
 }

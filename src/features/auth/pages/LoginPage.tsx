@@ -12,6 +12,7 @@ import { codeMessage } from "@/lib/errors"
 import { useSession } from "@/stores/session"
 
 import { useLogin } from "../api"
+import { SocialButtons } from "../SocialButtons"
 import { safeNext } from "../landing"
 import { loginSchema, type LoginValues } from "../schemas"
 
@@ -75,6 +76,7 @@ export function LoginPage() {
           {t("login.submit")}
         </SubmitButton>
       </form>
+      <SocialButtons next={next} />
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {t("login.noAccount")}{" "}
         <Link
