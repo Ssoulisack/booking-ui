@@ -31,6 +31,22 @@ declare global {
   }
 }
 
+/** Facebook's round blue "f" logo, like the coloured G on Google's button */
+function FacebookLogo() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className="size-5 shrink-0">
+      <path
+        fill="#1877F2"
+        d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.02 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.09 24 18.09 24 12.07z"
+      />
+      <path
+        fill="#fff"
+        d="M16.67 15.56l.53-3.49h-3.33V9.81c0-.95.46-1.88 1.96-1.88h1.52V4.96s-1.38-.24-2.69-.24c-2.74 0-4.53 1.67-4.53 4.69v2.66H7.08v3.49h3.05V24a12.1 12.1 0 003.74 0v-8.44h2.8z"
+      />
+    </svg>
+  )
+}
+
 const loaded = new Map<string, Promise<void>>()
 /** Add a provider's script to the page once */
 function loadScript(src: string): Promise<void> {
@@ -147,7 +163,7 @@ export function SocialButtons({ next }: { next: string | null }) {
             )
           }
         >
-          {social.isPending && <Spinner />}
+          {social.isPending ? <Spinner /> : <FacebookLogo />}
           {t("social.facebook")}
         </Button>
       )}
