@@ -418,10 +418,32 @@ const ClickSpark = forwardRef<ClickSparkHandle, ClickSparkProps>(
         if (!raf) raf = requestAnimationFrame(frame);
       };
 
+      // A finger or pen: the spark comes when it lifts without having moved (a tap, not a scroll).
+      // iOS Safari sends no click for a tap on something that is not clickable, so click alone is not enough.
+      let touch: { id: number; time: number; x: number; y: number } | null = null;
+
       const onPointerDown = (event: PointerEvent) => {
-        if (event.pointerType !== 'mouse' || event.button !== 0) return;
+        if (event.pointerType !== 'mouse') {
+          touch = { id: event.pointerId, time: performance.now(), x: event.clientX, y: event.clientY };
+          return;
+        }
+        if (event.button !== 0) return;
         lastPress = { time: performance.now(), x: event.clientX, y: event.clientY };
         spawn(event.clientX, event.clientY);
+      };
+
+      const onPointerUp = (event: PointerEvent) => {
+        const down = touch;
+        touch = null;
+        if (!down || event.pointerType === 'mouse' || event.pointerId !== down.id) return;
+        const now = performance.now();
+        if (now - down.time > 600 || Math.hypot(event.clientX - down.x, event.clientY - down.y) > 10) return;
+        lastPress = { time: now, x: event.clientX, y: event.clientY };
+        spawn(event.clientX, event.clientY);
+      };
+
+      const onPointerCancel = () => {
+        touch = null;
       };
 
       const onClick = (event: MouseEvent) => {
@@ -439,6 +461,8 @@ const ClickSpark = forwardRef<ClickSparkHandle, ClickSparkProps>(
       };
 
       root.addEventListener('pointerdown', onPointerDown);
+      root.addEventListener('pointerup', onPointerUp);
+      root.addEventListener('pointercancel', onPointerCancel);
       root.addEventListener('click', onClick);
 
       engineRef.current = {
@@ -451,6 +475,8 @@ const ClickSpark = forwardRef<ClickSparkHandle, ClickSparkProps>(
       return () => {
         cancelAnimationFrame(raf);
         root.removeEventListener('pointerdown', onPointerDown);
+        root.removeEventListener('pointerup', onPointerUp);
+        root.removeEventListener('pointercancel', onPointerCancel);
         root.removeEventListener('click', onClick);
         for (const burst of [...bursts]) remove(burst);
         engineRef.current = null;
