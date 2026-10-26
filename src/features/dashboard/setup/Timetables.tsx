@@ -21,7 +21,7 @@ import {
 import { DeleteButton, Panel } from "../ui"
 import { useInvalidate, weekdayText } from "./shared"
 
-/** Setup › Classes: the weekly classes that keep making their classes 60 days ahead */
+/** Setup › Classes: the weekly classes that keep making their classes 30 days ahead */
 export function TimetablePanel({
   tz,
   onEdit,

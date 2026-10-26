@@ -471,7 +471,7 @@ export interface RepeatClassResult {
   skipped: Array<{ date: string; reason: string }>
 }
 
-/** A class that repeats every week; its classes are made automatically 60 days ahead */
+/** A class that repeats every week; its classes are made automatically 30 days ahead */
 export interface Timetable {
   id: number
   sport_id: number

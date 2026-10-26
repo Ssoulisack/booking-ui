@@ -61,7 +61,7 @@ const Calendar = lazy(async () => ({
 }))
 
 const DEFAULT_DAYS = 14
-const MAX_DAYS = 60
+const MAX_DAYS = 30
 
 /**
  * Pick a sport, then a court / coach / class, a day, a free start and a length. Every choice is

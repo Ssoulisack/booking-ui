@@ -38,7 +38,7 @@ import { TimetablePanel } from "./Timetables"
 const RANGE_DAYS = 31
 
 /**
- * /setup/classes — weekly classes (made automatically 60 days ahead) and the classes of the next
+ * /setup/classes — weekly classes (made automatically 30 days ahead) and the classes of the next
  * month: add one, add a weekly class, edit, delete
  */
 export function ClassesPage() {
