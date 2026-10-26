@@ -6,6 +6,7 @@ import {
 } from "react-router"
 
 import { CrashScreen, NotFound, PageLoader } from "@/components/page-state"
+import { LegalPage } from "@/features/legal"
 import { TrackPage } from "@/features/public/TrackPage"
 
 import { GuestOnly, OldCourtsLink, RequireCompany, RequireUser } from "./guards"
@@ -53,6 +54,18 @@ export const router = createBrowserRouter([
         index: true,
         lazy: async () => ({
           Component: (await import("@/features/places/Home")).Home,
+        }),
+      },
+      {
+        path: "privacy",
+        lazy: async () => ({
+          Component: () => <LegalPage page="privacy" />,
+        }),
+      },
+      {
+        path: "data-deletion",
+        lazy: async () => ({
+          Component: () => <LegalPage page="deletion" />,
         }),
       },
       {

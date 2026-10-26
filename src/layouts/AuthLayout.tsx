@@ -18,6 +18,14 @@ export function AuthLayout() {
           <Outlet />
         </div>
       </main>
+      <footer className="flex justify-center gap-4 px-4 pb-6 text-xs text-muted-foreground">
+        <Link to="/privacy" className="underline-offset-4 hover:underline">
+          {t("legal.privacy.title")}
+        </Link>
+        <Link to="/data-deletion" className="underline-offset-4 hover:underline">
+          {t("legal.deletion.title")}
+        </Link>
+      </footer>
     </div>
   )
 }

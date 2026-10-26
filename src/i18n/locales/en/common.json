@@ -284,7 +284,6 @@
     "copied": "Copied",
     "shareLink": "Share",
     "openLink": "Open",
-    "yourBooking": "Your booking",
     "allBranches": "All branches",
     "branch": "Branch",
     "bookAt": "At {{name}}",
@@ -1128,7 +1127,10 @@
     "noBranchMatch": "No branch matches."
   },
   "home": {
-    "nav": { "branches": "Branches", "contact": "Contact" },
+    "nav": {
+      "branches": "Branches",
+      "contact": "Contact"
+    },
     "branchesTitle_one": "Our branch",
     "branchesTitle_other": "Our branches",
     "bookNow": "Book now",
@@ -1140,5 +1142,72 @@
     "showAll": "Show all branches",
     "noBranches": "No branch is open for online booking yet. Please check back soon.",
     "contactTitle": "Contact us"
+  },
+  "legal": {
+    "updated": "Last updated: 26 October 2026",
+    "noEmail": "the branch you booked with",
+    "privacy": {
+      "title": "Privacy policy",
+      "sections": [
+        {
+          "h": "What we collect",
+          "p": [
+            "When you create an account or book, we keep your name, phone number and email address, and the details of your bookings (what, when, where and the price).",
+            "If you sign in with Google or Facebook, we receive your name, email address and profile name from them. We never see your Google or Facebook password and we do not post anything on your behalf."
+          ]
+        },
+        {
+          "h": "How we use it",
+          "p": [
+            "We use it only to run your bookings: to confirm or cancel them, to email you about them and to let the branch you booked with serve you.",
+            "We do not sell your data and we do not use it for advertising."
+          ]
+        },
+        {
+          "h": "Who sees it",
+          "p": [
+            "The managers and staff of the branch you book with, and the company owners and admins, can see your name, contact details and bookings.",
+            "We use an email service to send booking and password emails, and a storage service for uploaded pictures. They receive only what they need to do that."
+          ]
+        },
+        {
+          "h": "How long we keep it",
+          "p": [
+            "We keep your account and bookings while your account is open. When you ask us to delete your data, we remove your personal details; see the data deletion page."
+          ]
+        },
+        {
+          "h": "Your choices",
+          "p": [
+            "You can update your name and contact details in My account. You can ask for a copy of your data or for its deletion at any time by writing to {{email}}."
+          ]
+        },
+        {
+          "h": "Contact",
+          "p": [
+            "Questions about this policy: {{email}}."
+          ]
+        }
+      ]
+    },
+    "deletion": {
+      "title": "Data deletion",
+      "sections": [
+        {
+          "h": "How to delete your data",
+          "p": [
+            "To delete your account and personal data, send us a message at {{email}} from the email address of your account, or tell the branch you booked with. Please write \"Delete my data\" and the phone number or email on your account.",
+            "If you signed up with Facebook or Google, you can also remove this app from your Facebook or Google account settings; then write to us so we delete what we hold."
+          ]
+        },
+        {
+          "h": "What happens next",
+          "p": [
+            "We delete your name, phone number, email address and sign-in links within 30 days and tell you when it is done.",
+            "Past bookings may be kept without your personal details, because the branch needs them for its records and reports."
+          ]
+        }
+      ]
+    }
   }
 }
