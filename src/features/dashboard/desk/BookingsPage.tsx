@@ -32,7 +32,8 @@ const STATUSES = [
   "no_show",
   "cancelled",
 ] as const
-const PERIODS = ["today", "tomorrow", "week", "custom"] as const
+// "pending" is the first view: every booking waiting for approval, whatever its date
+const PERIODS = ["pending", "today", "tomorrow", "week", "custom"] as const
 
 /** /dashboard/:id/bookings — find and handle bookings; filters live in the address */
 export function BookingsPage() {
@@ -44,7 +45,7 @@ export function BookingsPage() {
   const [search, setSearch] = useState(params.get("q") ?? "")
 
   const today = todayIn(tz)
-  const period = (params.get("period") ?? "today") as (typeof PERIODS)[number]
+  const period = (params.get("period") ?? "pending") as (typeof PERIODS)[number]
   const range =
     period === "today"
       ? { from: today, to: today }
@@ -55,14 +56,17 @@ export function BookingsPage() {
           : { from: params.get("from") ?? today, to: params.get("to") ?? today }
   const page = Number(params.get("page") ?? 1)
   const filters: BookingFilters = {
-    // a search or one customer's history looks at every date
-    ...(params.get("q") || params.get("customer") ? {} : range),
+    // a search, one customer's history and the pending list look at every date
+    ...(params.get("q") || params.get("customer") || period === "pending"
+      ? {}
+      : range),
     keyword: params.get("q") || undefined,
-    status: params.get("status") || undefined,
+    status:
+      period === "pending" ? "pending" : params.get("status") || undefined,
     payment_status: params.get("pay") || undefined,
     customer_id: Number(params.get("customer")) || undefined,
     page,
-    limit: 25,
+    limit: 20,
   }
   const list = useBookingList(filters)
   const set = (patch: Record<string, string | undefined>) => {
@@ -144,7 +148,10 @@ export function BookingsPage() {
         )}
         <Filter
           label={t("desk.status")}
-          value={params.get("status") ?? "all"}
+          value={
+            period === "pending" ? "pending" : (params.get("status") ?? "all")
+          }
+          disabled={period === "pending"}
           onChange={(v) => set({ status: v === "all" ? undefined : v })}
           options={[
             { value: "all", label: t("desk.allStatuses") },
@@ -184,7 +191,9 @@ export function BookingsPage() {
         <PageError error={list.error} onRetry={() => list.refetch()} />
       ) : list.data.items.length === 0 ? (
         <p className="rounded-xl bg-background p-6 text-muted-foreground ring-1 ring-border">
-          {t("desk.noBookings")}
+          {period === "pending" && !params.get("q") && !params.get("customer")
+            ? t("desk.noPending")
+            : t("desk.noBookings")}
         </p>
       ) : (
         <ul className="divide-y rounded-xl bg-background ring-1 ring-border">
@@ -276,14 +285,16 @@ function Filter({
   value,
   onChange,
   options,
+  disabled,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   options: Array<{ value: string; label: string }>
+  disabled?: boolean
 }) {
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger aria-label={label} className="h-11 w-40 lg:h-9">
         <SelectValue />
       </SelectTrigger>

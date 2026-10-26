@@ -851,6 +851,7 @@
     "searchAll": "Search results from every date.",
     "period": "Period",
     "periods": {
+      "pending": "Waiting for approval",
       "today": "Today",
       "tomorrow": "Tomorrow",
       "week": "Next 7 days",
@@ -863,6 +864,7 @@
     "oneCustomer": "One customer's bookings",
     "clear": "Show all",
     "noBookings": "No bookings match.",
+    "noPending": "No bookings are waiting for approval.",
     "pageOf": "Page {{page}} of {{pages}} ({{total}} bookings)",
     "customersLead": "People with an account who booked here.",
     "customerSearch": "Name, email or phone",
