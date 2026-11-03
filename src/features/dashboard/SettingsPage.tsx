@@ -17,7 +17,14 @@ import {
   DEFAULT_HEADING_FONT,
   FONTS,
 } from "@/features/public/look"
-import { Area, Choice, ModePicker, Text } from "@/features/settings/fields"
+import { useMyBranches } from "@/features/auth/api"
+import {
+  Area,
+  BranchTypePicker,
+  Choice,
+  ModePicker,
+  Text,
+} from "@/features/settings/fields"
 import { FontField, RingColorsField } from "@/features/settings/look-fields"
 import { LookPreview } from "@/features/settings/LookPreview"
 import {
@@ -56,6 +63,9 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
   const [f, setF] = useState<SettingsInput>(() => ({
     name: settings.name,
     slug: settings.slug,
+    // an older backend does not send them yet
+    type: settings.type ?? "sport",
+    sister_branch_id: settings.sister_branch_id ?? null,
     cover_key: settings.cover_key,
     description: settings.description,
     address: settings.address,
@@ -78,6 +88,10 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
   useUnsaved(dirty)
   const save = useChange(manage.saveSettings, ["settings"])
   const slugLocked = !!settings.published_at
+  // the other branches this person can see, for "Also at this place"
+  const others = (useMyBranches().data ?? []).filter(
+    (b) => b.branch_id !== settings.id,
+  )
   const company = {
     ...settings.in_force,
     ring_colors: settings.in_force.ring_colors ?? [],
@@ -136,12 +150,24 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
                       .replace(/[^a-z0-9-]/g, ""),
                   })
                 }
-                className="h-11 text-base lg:h-9 lg:text-sm"
+                className="h-11 min-w-0 text-base lg:h-9 lg:text-sm"
               />
             </div>
             <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
               {slugLocked && <LockIcon className="size-3.5" />}
               {slugLocked ? t("settings.slugLocked") : t("settings.slugHint")}
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <BranchTypePicker
+              name="s-type"
+              value={f.type}
+              onChange={(v) => set({ type: v })}
+              disabled={slugLocked}
+            />
+            <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              {slugLocked && <LockIcon className="size-3.5" />}
+              {slugLocked ? t("branchType.locked") : t("branchType.hint")}
             </p>
           </div>
           <Area
@@ -189,6 +215,22 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
             type="tel"
             value={f.phone}
             onChange={(v) => set({ phone: v })}
+          />
+          <Choice
+            id="s-sister"
+            label={t("branchSettings.sister")}
+            hint={t("branchSettings.sisterHint")}
+            value={String(f.sister_branch_id ?? 0)}
+            onChange={(v) =>
+              set({ sister_branch_id: Number(v) ? Number(v) : null })
+            }
+            options={[
+              { value: "0", label: t("branchSettings.sisterNone") },
+              ...others.map((b) => ({
+                value: String(b.branch_id),
+                label: `${b.name} · ${t(`branchType.${b.type ?? "sport"}`)}`,
+              })),
+            ]}
           />
           <Text
             id="s-map"

@@ -1,18 +1,10 @@
 import { useTranslation } from "react-i18next"
-import { NavLink, Outlet } from "react-router"
+import { Navigate, NavLink, Outlet } from "react-router"
 
 import { cn } from "@/lib/utils"
 
 import { useDashboard } from "../context"
-
-const TABS = [
-  "sports",
-  "spaces",
-  "coaches",
-  "classes",
-  "closures",
-  "rules",
-] as const
+import { setupTabs } from "./tabs"
 
 /** /dashboard/:id/setup/* — what can be booked, when, and at what price (managers and the owner) */
 export function SetupLayout() {
@@ -24,7 +16,7 @@ export function SetupLayout() {
         aria-label={t("nav.setup")}
         className="-mx-4 mb-6 no-scrollbar flex gap-1 overflow-x-auto border-b px-4 sm:-mx-6 sm:px-6"
       >
-        {TABS.map((tab) => (
+        {setupTabs(context.branch.type).map((tab) => (
           <NavLink
             key={tab}
             to={tab}
@@ -44,4 +36,10 @@ export function SetupLayout() {
       <Outlet context={context} />
     </>
   )
+}
+
+/** /dashboard/:id/setup — the first tab for this kind of branch */
+export function SetupIndex() {
+  const { branch } = useDashboard()
+  return <Navigate to={setupTabs(branch.type)[0]} replace />
 }

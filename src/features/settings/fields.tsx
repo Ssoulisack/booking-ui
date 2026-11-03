@@ -1,3 +1,4 @@
+import { TrophyIcon, UtensilsCrossedIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Input } from "@/components/ui/input"
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { brandStyle } from "@/features/public/brand"
-import type { BookingMode } from "@/lib/api/types"
+import type { BookingMode, BranchType } from "@/lib/api/types"
 
 import { MODES } from "./options"
 
@@ -160,6 +161,60 @@ export function ModePicker({
             </span>
           </label>
         ))}
+      </div>
+    </fieldset>
+  )
+}
+
+const BRANCH_TYPES: BranchType[] = ["sport", "restaurant"]
+const TYPE_ICONS = { sport: TrophyIcon, restaurant: UtensilsCrossedIcon }
+
+/** What the branch takes bookings for: courts (sport) or tables (restaurant / bar) */
+export function BranchTypePicker({
+  name,
+  value,
+  onChange,
+  disabled,
+}: {
+  name: string
+  value: BranchType
+  onChange: (v: BranchType) => void
+  disabled?: boolean
+}) {
+  const { t } = useTranslation()
+  return (
+    <fieldset className="space-y-2" disabled={disabled}>
+      <legend className="mb-2 text-sm font-medium">
+        {t("branchType.question")}
+      </legend>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {BRANCH_TYPES.map((type) => {
+          const Icon = TYPE_ICONS[type]
+          return (
+            <label
+              key={type}
+              className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60"
+            >
+              <input
+                type="radio"
+                name={name}
+                value={type}
+                checked={value === type}
+                onChange={() => onChange(type)}
+                className="mt-1 accent-primary"
+              />
+              <Icon className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+              <span>
+                <span className="block text-sm font-medium">
+                  {t(`branchType.${type}`)}
+                </span>
+                <span className="block text-sm text-muted-foreground">
+                  {t(`branchType.${type}Hint`)}
+                </span>
+              </span>
+            </label>
+          )
+        })}
       </div>
     </fieldset>
   )

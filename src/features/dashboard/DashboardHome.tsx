@@ -24,7 +24,7 @@ import {
   useSportsList,
 } from "./api"
 import { useDashboard } from "./context"
-import { GoLiveGuide } from "./GoLiveGuide"
+import { GoLiveGuide, type GuideStep } from "./GoLiveGuide"
 import { ShareBooking } from "./ShareBooking"
 import { PageHeader, Panel } from "./ui"
 
@@ -109,10 +109,80 @@ function PagePanel() {
   return <Checklist isOwner={isOwner} />
 }
 
+type Step = {
+  id: Exclude<GuideStep["id"], "publish">
+  done: boolean
+  label: string
+  to: string
+  ownerOnly?: boolean
+}
+
 function Checklist({ isOwner }: { isOwner: boolean }) {
-  const { t } = useTranslation()
-  const biz = useBiz()
+  const { branch } = useDashboard()
   const settings = useSettings().data
+  const profile: Step = {
+    id: "profile",
+    done: !!settings?.address || !!settings?.description,
+    label: "overview.steps.profile",
+    to: "settings",
+    ownerOnly: true,
+  }
+  return branch.type === "restaurant" ? (
+    <RestaurantChecklist isOwner={isOwner} profile={profile} />
+  ) : (
+    <SportChecklist isOwner={isOwner} profile={profile} />
+  )
+}
+
+/** A restaurant can go live with its opening hours and one table (with seats) in an active area */
+function RestaurantChecklist({
+  isOwner,
+  profile,
+}: {
+  isOwner: boolean
+  profile: Step
+}) {
+  const biz = useBiz()
+  const areas = useSportsList()
+  const tables = useResourcesList()
+  const [hours] = useQueries({ queries: [hoursQuery(biz, "venue", 0)] })
+  const activeAreas = new Set(
+    (areas.data ?? []).filter((a) => a.active).map((a) => a.id),
+  )
+  const steps: Step[] = [
+    profile,
+    {
+      id: "area",
+      done: activeAreas.size > 0,
+      label: "overview.steps.area",
+      to: "setup/floor-plan",
+    },
+    {
+      id: "table",
+      done: (tables.data ?? []).some(
+        (x) => x.active && (x.seats ?? 0) > 0 && activeAreas.has(x.sport_id),
+      ),
+      label: "overview.steps.table",
+      to: "setup/floor-plan",
+    },
+    {
+      id: "venueHours",
+      done: ((hours.data as unknown[] | undefined)?.length ?? 0) > 0,
+      label: "overview.steps.venueHours",
+      to: "setup/hours",
+    },
+  ]
+  return <StepList isOwner={isOwner} steps={steps} />
+}
+
+function SportChecklist({
+  isOwner,
+  profile,
+}: {
+  isOwner: boolean
+  profile: Step
+}) {
+  const biz = useBiz()
   const sports = useSportsList()
   const courts = useResourcesList()
   const active = (courts.data ?? []).filter((c) => c.active)
@@ -128,33 +198,35 @@ function Checklist({ isOwner }: { isOwner: boolean }) {
     const price = checks[i * 2 + 1]?.data
     return (hours?.length ?? 0) > 0 && !!price
   })
-
-  const steps = [
+  const steps: Step[] = [
+    profile,
     {
-      done: !!settings?.address || !!settings?.description,
-      label: t("overview.steps.profile"),
-      to: "settings",
-      ownerOnly: true,
-    },
-    {
+      id: "sport",
       done: (sports.data?.length ?? 0) > 0,
-      label: t("overview.steps.sport"),
+      label: "overview.steps.sport",
       to: "setup/sports",
     },
     {
+      id: "court",
       done: active.length > 0,
-      label: t("overview.steps.court"),
+      label: "overview.steps.court",
       to: "setup/spaces",
     },
     {
+      id: "hoursPrice",
       done: bookable,
-      label: t("overview.steps.hoursPrice"),
+      label: "overview.steps.hoursPrice",
       to: "setup/spaces",
     },
   ]
+  return <StepList isOwner={isOwner} steps={steps} />
+}
+
+/** The steps to go live, the step-by-step guide, and Publish */
+function StepList({ isOwner, steps }: { isOwner: boolean; steps: Step[] }) {
+  const { t } = useTranslation()
   const ready = steps.slice(1).every((s) => s.done)
   const [guideOpen, setGuideOpen] = useState(false)
-  const ids = ["profile", "sport", "court", "hoursPrice"] as const
 
   return (
     <Panel
@@ -176,8 +248,8 @@ function Checklist({ isOwner }: { isOwner: boolean }) {
         onOpenChange={setGuideOpen}
         isOwner={isOwner}
         steps={[
-          ...steps.map((s, i) => ({
-            id: ids[i],
+          ...steps.map((s) => ({
+            id: s.id,
             done: s.done,
             to: s.to,
             ownerOnly: s.ownerOnly,
@@ -189,7 +261,7 @@ function Checklist({ isOwner }: { isOwner: boolean }) {
         {steps.map((step, i) => {
           const linkable = !step.ownerOnly || isOwner
           return (
-            <li key={step.label}>
+            <li key={step.id}>
               <Link
                 to={linkable ? step.to : "."}
                 className={cn(
@@ -208,7 +280,7 @@ function Checklist({ isOwner }: { isOwner: boolean }) {
                     step.done && "text-muted-foreground line-through",
                   )}
                 >
-                  {i + 1}. {step.label}
+                  {i + 1}. {t(step.label)}
                 </span>
               </Link>
             </li>

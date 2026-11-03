@@ -20,7 +20,15 @@ import { cn } from "@/lib/utils"
 
 export interface GuideStep {
   /** key under overview.guide.steps */
-  id: "profile" | "sport" | "court" | "hoursPrice" | "publish"
+  id:
+    | "profile"
+    | "sport"
+    | "court"
+    | "hoursPrice"
+    | "area"
+    | "table"
+    | "venueHours"
+    | "publish"
   done: boolean
   /** where the step is done (relative to the branch); none for the last step */
   to?: string

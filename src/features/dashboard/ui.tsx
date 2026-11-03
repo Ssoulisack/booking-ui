@@ -289,7 +289,7 @@ export function ImageField({
   })
 
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 space-y-2">
       <Label>{label}</Label>
       <div className="flex items-center gap-3">
         <button
@@ -306,7 +306,8 @@ export function ImageField({
             <ImagePlusIcon className="size-6" />
           )}
         </button>
-        <div className="space-y-2 text-sm">
+        {/* min-w-0: lets the buttons wrap on a phone instead of widening the whole form */}
+        <div className="min-w-0 space-y-2 text-sm">
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"

@@ -52,8 +52,12 @@ export type BranchRole = "owner" | "admin" | MemberRole
 
 export type BranchStatus = "draft" | "published" | "closed"
 
+/** What a branch takes bookings for: courts (sport) or tables (restaurant, bar, café) */
+export type BranchType = "sport" | "restaurant"
+
 export interface MyBranch {
   branch_id: number
+  type: BranchType
   name: string
   slug: string
   status: BranchStatus
@@ -100,6 +104,7 @@ export interface Company extends CompanyInput {
 
 export interface BranchSummary {
   id: number
+  type: BranchType
   name: string
   slug: string
   status: BranchStatus
@@ -181,6 +186,7 @@ export interface PublicCompany {
 }
 
 export interface PublicBranch {
+  type: BranchType
   name: string
   slug: string
   company_name: string
@@ -202,6 +208,15 @@ export interface PublicBranch {
   booking_policy: string
   booking_mode: BookingMode
   require_approval: boolean
+  /** the other branch at the same place ("Also at this place"); null when none is live */
+  sister: SisterBranch | null
+}
+
+export interface SisterBranch {
+  type: BranchType
+  name: string
+  slug: string
+  cover_url: string
 }
 
 export interface Sport {
@@ -345,6 +360,8 @@ export interface CreateBookingInput {
 export interface SettingsInput {
   name: string
   slug: string
+  /** can change only until the first publish */
+  type: BranchType
   cover_key: string
   description: string
   address: string
@@ -352,6 +369,8 @@ export interface SettingsInput {
   phone: string
   map_url: string
   social_links: Record<string, string> | null
+  /** "Also at this place": another branch of the company; null = none */
+  sister_branch_id: number | null
   timezone: string | null
   booking_mode: BookingMode | null
   booking_policy: string | null
@@ -392,18 +411,86 @@ export interface ManagedSport {
   image_url: string
   active: boolean
   type: SportType
+  /** restaurant areas: floor plan size in grid squares (0 at sport branches) */
+  plan_width: number
+  plan_height: number
+  /** restaurant areas: 0 = ground floor, 1 = first floor, -1 = basement */
+  floor: number
 }
 
 /** what a bookable space is; the team calls them all "spaces", customers see the kind */
 export type ResourceKind =
   "court" | "pitch" | "ring" | "lane" | "bay" | "table" | "room" | "other"
 
-export interface ManagedResource {
+export interface ManagedResource extends Partial<TableFields> {
   id: number
   sport_id: number
   name: string
   kind: ResourceKind
   active: boolean
+}
+
+export type TableShape = "round" | "square" | "long"
+
+/** A restaurant table's seats and place on its area's floor plan (grid squares) */
+export interface TableFields {
+  seats: number
+  /** counted only when no real-seat choice is left */
+  extra_chairs: number
+  shape: TableShape
+  plan_x: number
+  plan_y: number
+  plan_w: number
+  plan_h: number
+  rotation: 0 | 90 | 180 | 270
+}
+
+export type ManagedTable = ManagedResource & TableFields
+
+export type FloorItemKind =
+  "bar" | "pole" | "stage" | "toilet" | "entry" | "label" | "zone" | "stairs"
+
+export type ZoneColor = "green" | "blue" | "amber" | "rose" | "violet" | "slate"
+
+/** Something drawn on the floor plan that is not booked (customers see it too) */
+export interface FloorItem {
+  /** new, not yet saved objects have a negative id */
+  id: number
+  kind: FloorItemKind
+  label: string
+  /** zones only */
+  color: ZoneColor | ""
+  plan_x: number
+  plan_y: number
+  plan_w: number
+  plan_h: number
+  rotation: 0 | 90 | 180 | 270
+  /** stairs only: the floor they lead to */
+  target_floor: number | null
+}
+
+/** An area with every table and object on its floor plan */
+export interface FloorPlan {
+  area: ManagedSport
+  tables: ManagedTable[]
+  items: FloorItem[]
+}
+
+export type TableMode = "one_at_a_time" | "hold"
+
+/** How a restaurant branch takes table bookings */
+export interface TableSettings {
+  table_mode: TableMode
+  /** hold: how long a booking keeps its table for online booking */
+  hold_minutes: number
+  /** not arrived this long after the booking time: no-show, table free */
+  late_minutes: number
+  walkin_before_booking: boolean
+  max_guests_online: number
+  /** bigger groups wait for staff approval; null = never */
+  approval_above_guests: number | null
+  /** the last online booking this long before closing */
+  last_call_minutes: number
 }
 
 export interface ManagedCoach {
@@ -418,6 +505,9 @@ export interface ManagedCoach {
 }
 
 export type ScheduleOwner = "resource" | "coach"
+
+/** Whose opening hours: a court, a coach, or (restaurants) the whole place, id 0 */
+export type HoursOwner = ScheduleOwner | "venue"
 
 export interface OpeningHour {
   weekday: number // 0 = Sunday
@@ -681,6 +771,7 @@ export interface CashUp {
 // ---------- public home: the live branches ----------
 
 export interface DirectoryBranch {
+  type: BranchType
   name: string
   slug: string
   cover_url: string

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
-import type { OpeningHour, ScheduleOwner } from "@/lib/api/types"
+import type { HoursOwner, OpeningHour } from "@/lib/api/types"
 
 import { useUnsaved } from "@/stores/unsaved"
 import { manage, useChange, useOpeningHours } from "../api"
@@ -29,13 +29,7 @@ const toHours = (week: Week): OpeningHour[] =>
   WEEK.flatMap((weekday) => week[weekday].map((i) => ({ weekday, ...i })))
 
 /** Weekly opening hours of a court or coach: one or more open times per day */
-export function HoursEditor({
-  owner,
-  id,
-}: {
-  owner: ScheduleOwner
-  id: number
-}) {
+export function HoursEditor({ owner, id }: { owner: HoursOwner; id: number }) {
   const hours = useOpeningHours(owner, id)
   if (hours.isPending) return <Skeleton className="h-80 rounded-xl" />
   if (hours.isError) return <ErrorAlert error={hours.error} />
@@ -47,7 +41,7 @@ function WeekForm({
   id,
   initial,
 }: {
-  owner: ScheduleOwner
+  owner: HoursOwner
   id: number
   initial: Week
 }) {

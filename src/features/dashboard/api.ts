@@ -13,6 +13,11 @@ import type {
   ManagedCoach,
   ManagedResource,
   ManagedSport,
+  ManagedTable,
+  FloorItem,
+  FloorPlan,
+  HoursOwner,
+  TableSettings,
   Media,
   OpeningHour,
   Price,
@@ -82,7 +87,7 @@ export function useCoachesList() {
 /** Query options shared by the single hooks and by lists that check every court at once */
 export function hoursQuery(
   biz: ReturnType<typeof useBiz>,
-  owner: ScheduleOwner,
+  owner: HoursOwner,
   id: number,
 ) {
   return {
@@ -111,12 +116,33 @@ export function priceQuery(
   }
 }
 
-export function useOpeningHours(owner: ScheduleOwner, id: number) {
+export function useOpeningHours(owner: HoursOwner, id: number) {
   return useQuery(hoursQuery(useBiz(), owner, id))
 }
 
 export function usePrice(owner: ScheduleOwner, id: number) {
   return useQuery(priceQuery(useBiz(), owner, id))
+}
+
+/** A restaurant area with its tables, for the floor plan editor */
+export function useFloorPlan(areaId: number) {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("plan", areaId),
+    queryFn: () => api<FloorPlan>(`${base}/sports/${areaId}/plan`),
+    enabled: areaId > 0,
+    // the editor keeps unsaved moves in its own state: a refocus must not reset them
+    refetchOnWindowFocus: false,
+  })
+}
+
+export function useTableSettings() {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("table-settings"),
+    queryFn: () => api<TableSettings>(`${base}/table-settings`),
+    refetchOnWindowFocus: false,
+  })
 }
 
 export function useClosures() {
@@ -225,7 +251,11 @@ export const manage = {
 
   saveSport: (
     base: string,
-    s: { id?: number } & Omit<ManagedSport, "id" | "slug" | "image_url">,
+    s: { id?: number } & Omit<
+      ManagedSport,
+      "id" | "slug" | "image_url" | "plan_width" | "plan_height" | "floor"
+    > &
+      Partial<Pick<ManagedSport, "plan_width" | "plan_height" | "floor">>,
   ) =>
     s.id
       ? api<ManagedSport>(`${base}/sports/${s.id}`, { method: "PUT", body: s })
@@ -246,6 +276,41 @@ export const manage = {
   deleteResource: (base: string, id: number) =>
     apiMessage(`${base}/resources/${id}`, { method: "DELETE" }),
 
+  /** Saves an area's plan size and where every table stands, at once */
+  saveFloorPlan: (
+    base: string,
+    p: {
+      areaId: number
+      plan_width: number
+      plan_height: number
+      tables: Array<
+        Pick<
+          ManagedTable,
+          | "id"
+          | "plan_x"
+          | "plan_y"
+          | "plan_w"
+          | "plan_h"
+          | "rotation"
+          | "shape"
+        >
+      >
+      items: FloorItem[]
+    },
+  ) =>
+    api<FloorPlan>(`${base}/sports/${p.areaId}/plan`, {
+      method: "PUT",
+      body: {
+        plan_width: p.plan_width,
+        plan_height: p.plan_height,
+        tables: p.tables,
+        // the whole list replaces the area's objects (new ones have no id yet)
+        items: p.items.map((i) => ({ ...i, id: i.id > 0 ? i.id : 0 })),
+      },
+    }),
+  saveTableSettings: (base: string, body: TableSettings) =>
+    api<TableSettings>(`${base}/table-settings`, { method: "PUT", body }),
+
   saveCoach: (
     base: string,
     c: { id?: number; sport_ids: number[] } & Omit<
@@ -261,7 +326,7 @@ export const manage = {
 
   saveHours: (
     base: string,
-    p: { owner: ScheduleOwner; id: number; hours: OpeningHour[] },
+    p: { owner: HoursOwner; id: number; hours: OpeningHour[] },
   ) =>
     api<OpeningHour[]>(`${base}/opening-hours/${p.owner}/${p.id}`, {
       method: "PUT",

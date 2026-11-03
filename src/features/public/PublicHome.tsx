@@ -1,12 +1,15 @@
 import {
   ArrowLeftIcon,
+  ArrowRightIcon,
   CalendarCheckIcon,
   MapIcon,
   MapPinIcon,
   PhoneIcon,
   StoreIcon,
   TicketIcon,
+  TrophyIcon,
   UsersIcon,
+  UtensilsCrossedIcon,
 } from "lucide-react"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
@@ -18,6 +21,7 @@ import { dayIn, money, timeIn, todayIn } from "@/lib/format"
 import { placeTypes } from "@/lib/places"
 import { webUrl } from "@/lib/url"
 import { useLiveBranches } from "@/features/places/api"
+import type { SisterBranch } from "@/lib/api/types"
 
 import { useCoaches, useUpcomingClassPages, useUpcomingClasses } from "./api"
 import { BookingPanel } from "./BookingPanel"
@@ -216,8 +220,44 @@ function Hero() {
             )}
           </p>
         )}
+        {business.sister && <SisterLink sister={business.sister} />}
       </div>
     </header>
+  )
+}
+
+/** "Also at this place": the other branch at the same address (e.g. the bar next to the courts) */
+function SisterLink({ sister }: { sister: SisterBranch }) {
+  const { t } = useTranslation()
+  const Icon = sister.type === "restaurant" ? UtensilsCrossedIcon : TrophyIcon
+  return (
+    <Link
+      to={`/b/${sister.slug}`}
+      className="inline-flex min-h-11 max-w-full items-center gap-3 rounded-xl bg-black/20 py-2 pr-4 pl-2 ring-1 ring-white/25 backdrop-blur-sm hover:bg-black/30"
+    >
+      {sister.cover_url ? (
+        <img
+          src={sister.cover_url}
+          alt=""
+          className="size-9 shrink-0 rounded-lg object-cover"
+        />
+      ) : (
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/15">
+          <Icon className="size-5" />
+        </span>
+      )}
+      <span className="min-w-0 text-left">
+        <span className="block text-xs opacity-80">{t("public.alsoHere")}</span>
+        <span className="block truncate font-semibold">
+          {sister.name}
+          <span className="font-normal opacity-80">
+            {" "}
+            · {t(`branchType.${sister.type}`)}
+          </span>
+        </span>
+      </span>
+      <ArrowRightIcon className="size-4 shrink-0" />
+    </Link>
   )
 }
 

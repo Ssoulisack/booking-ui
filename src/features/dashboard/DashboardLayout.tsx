@@ -93,6 +93,9 @@ const DASHBOARD_CRUMBS: Record<string, string> = {
   classes: "setup.tabs.classes",
   closures: "setup.tabs.closures",
   rules: "setup.tabs.rules",
+  "floor-plan": "setup.tabs.floor-plan",
+  hours: "setup.tabs.hours",
+  "table-settings": "setup.tabs.table-settings",
 }
 
 /**

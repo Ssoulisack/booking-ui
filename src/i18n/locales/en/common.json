@@ -312,7 +312,8 @@
       "table": "Table",
       "room": "Room",
       "space": "Space"
-    }
+    },
+    "alsoHere": "Also at this place"
   },
   "weekday": {
     "0": "Sunday",
@@ -387,7 +388,10 @@
       "coaches": "Coaches",
       "classes": "Classes",
       "closures": "Closed days",
-      "rules": "Booking rules"
+      "rules": "Booking rules",
+      "floor-plan": "Floor plan",
+      "hours": "Opening hours",
+      "table-settings": "Table bookings"
     },
     "name": "Name",
     "descriptionOptional": "Description (optional)",
@@ -692,7 +696,10 @@
       "profile": "Add the branch's address and description",
       "sport": "Add a sport",
       "court": "Add a space (court, pitch, ring…)",
-      "hoursPrice": "Give a space opening hours and a price"
+      "hoursPrice": "Give a space opening hours and a price",
+      "area": "Add an area (Indoor, Terrace…)",
+      "table": "Add a table and place it on the floor plan",
+      "venueHours": "Set the opening hours"
     },
     "guide": {
       "open": "Show me how",
@@ -750,6 +757,35 @@
             "Go back to Overview once the four steps are done.",
             "Press Publish booking page. Only the owner or an admin can.",
             "Share the link or the QR code on Facebook, WhatsApp or LINE. Bookings appear in your dashboard."
+          ]
+        },
+        "area": {
+          "title": "Add an area",
+          "why": "An area is a part of the place with its own floor plan, for example Indoor or Terrace.",
+          "lines": [
+            "Open Setup, then the Floor plan tab.",
+            "Press Add area.",
+            "Name it, for example Indoor, and keep the size 20 × 12 unless the room is very big.",
+            "Press Save."
+          ]
+        },
+        "table": {
+          "title": "Add your tables",
+          "why": "Customers choose a table on the floor plan, so each table needs its seats and its place.",
+          "lines": [
+            "On the Floor plan tab, press Add table.",
+            "Give it a name (T1) and its seats, then press Add table.",
+            "Drag it to where it stands. Repeat for every table.",
+            "Press Save floor plan."
+          ]
+        },
+        "venueHours": {
+          "title": "Set the opening hours",
+          "why": "Customers can book a table only while the place is open.",
+          "lines": [
+            "Open Setup, then the Opening hours tab.",
+            "Set the hours of each day, for example 17:00 to 24:00.",
+            "Press Save opening hours."
           ]
         }
       }
@@ -1031,7 +1067,10 @@
     "ownValue": "Own setting",
     "yes": "yes",
     "no": "no",
-    "none": "none"
+    "none": "none",
+    "sister": "Also at this place",
+    "sisterHint": "Another branch at the same address (for example the bar next to the courts). Its page is linked from this one once both are live.",
+    "sisterNone": "None"
   },
   "company": {
     "pageOf": "Page {{page}} of {{pages}}",
@@ -1124,7 +1163,11 @@
     "homeLinkLead": "The home page shows your brand and every live branch. Put this QR code at the entrance, on flyers or on social media.",
     "searchBranches": "Search branches",
     "searchBranchesPlaceholder": "Name, address or link",
-    "noBranchMatch": "No branch matches."
+    "noBranchMatch": "No branch matches.",
+    "types": {
+      "sport": "Sport",
+      "restaurant": "Restaurant"
+    }
   },
   "home": {
     "nav": {
@@ -1184,9 +1227,7 @@
         },
         {
           "h": "Contact",
-          "p": [
-            "Questions about this policy: {{email}}."
-          ]
+          "p": ["Questions about this policy: {{email}}."]
         }
       ]
     },
@@ -1208,6 +1249,160 @@
           ]
         }
       ]
+    }
+  },
+  "branchType": {
+    "question": "What does this branch take bookings for?",
+    "sport": "Sport place",
+    "sportHint": "Courts, pitches, rings, classes and coaches.",
+    "restaurant": "Restaurant or bar",
+    "restaurantHint": "Tables: guests book a table for their group.",
+    "hint": "You can change this until the branch goes live.",
+    "locked": "Fixed once the branch has gone live."
+  },
+  "restaurant": {
+    "guests": "guests",
+    "minutes": "minutes",
+    "less": "Less: {{what}}",
+    "more": "More: {{what}}",
+    "plan": {
+      "title": "Floor plan",
+      "lead": "Draw each area as it is: drag the tables where they stand, then set their seats. Customers will see this plan when they choose a table.",
+      "areaInfo_one": "{{w}} × {{h}} squares · {{count}} table · {{seats}} seats",
+      "areaInfo_other": "{{w}} × {{h}} squares · {{count}} tables · {{seats}} seats",
+      "canvas": "Floor plan: drag a table to move it, or select it and use the arrow keys",
+      "problems": "Some tables are on top of each other, on a bar, pole, stage or toilet, or outside the plan (shown in red). Move them before saving.",
+      "saveFirst": "You have changes that are not saved yet. Save them before adding a table or changing the area.",
+      "save": "Save floor plan",
+      "undo": "Undo changes",
+      "saved": "Floor plan saved.",
+      "resize": "Drag to make it bigger or smaller"
+    },
+    "area": {
+      "areas": "Areas",
+      "add": "Add area",
+      "edit": "Edit area",
+      "delete": "Delete area",
+      "lead": "A part of the place with its own floor plan, for example Indoor, Terrace or VIP room. Areas on other floors get floor tabs.",
+      "empty": "No areas yet. Add the first part of your place, for example Indoor.",
+      "namePlaceholder": "Indoor",
+      "size": "Plan size",
+      "width": "Width in squares",
+      "height": "Depth in squares",
+      "squares": "squares",
+      "sizeHint": "One square is about one chair's space. 20 × 12 suits most rooms; you can change it later.",
+      "activeHint": "Turn off to hide every table of this area from customers.",
+      "saved": "{{name}} saved."
+    },
+    "table": {
+      "title": "Table",
+      "add": "Add table",
+      "addLead": "It appears in the first free spot of {{area}}; drag it to its place afterwards.",
+      "defaultName": "T{{n}}",
+      "label": "{{name}}, {{seats}} seats",
+      "none": "No tables in this area yet. Press Add table.",
+      "pick": "Tap a table on the plan or in the list to change it.",
+      "seats": "Seats",
+      "extra": "Extra chairs",
+      "extraHint": "Only offered when no table with enough real seats is left, for example 8 guests at a 6-seat table with 2 extra chairs.",
+      "shape": "Shape",
+      "width": "Width",
+      "depth": "Depth",
+      "turn": "Turn 90°",
+      "activeHint": "Turn off for a broken or reserved table: customers cannot pick it.",
+      "moveHint": "Drag the table on the plan to move it, or select it and use the arrow keys. Drag the small squares on its edges to change its size.",
+      "seatsShort_one": "{{count}} seat",
+      "seatsShort_other": "{{count}} seats",
+      "extraShort": "+{{count}} chairs",
+      "off": "off"
+    },
+    "shapes": {
+      "square": "Square",
+      "round": "Round",
+      "long": "Long"
+    },
+    "hours": {
+      "title": "Opening hours",
+      "lead": "One set of hours for the whole place: every table follows it. Closed days are set in the Closed days tab.",
+      "midnight": "Open past midnight? Close the day at 24:00 and open the next day at 00:00."
+    },
+    "settings": {
+      "title": "Table bookings",
+      "lead": "How long a booking keeps its table, when late guests lose it, and how big groups can book online.",
+      "modeTitle": "How long a booking keeps its table",
+      "modes": {
+        "one_at_a_time": "One booking at a time",
+        "hold": "Several bookings a day"
+      },
+      "modeHints": {
+        "one_at_a_time": "A booked table stays taken until staff close the bill (or closing time). Good for bars and one sitting a night.",
+        "hold": "Each booking keeps its table for a set time, so the same table can be booked for lunch and dinner."
+      },
+      "hold": "Keep the table for",
+      "holdHint": "Online bookings for the same table must start at least this long apart.",
+      "timesTitle": "Times",
+      "late": "Late guests lose the table after",
+      "lateHint": "Booked for 19:00 and not here by {{n}} minutes past: the booking becomes no-show and the table is free.",
+      "lastCall": "Last online booking before closing",
+      "lastCallHint": "For example 60: a bar closing at midnight takes online bookings until 23:00.",
+      "groupsTitle": "Groups",
+      "maxGuests": "Most guests in one online booking",
+      "maxGuestsHint": "Bigger groups are asked to call you.",
+      "approval": "Big groups wait for your OK",
+      "approvalHint": "Bookings above the number below stay pending until staff confirm them.",
+      "approvalAbove": "Need an OK above",
+      "walkinTitle": "Walk-ins",
+      "walkin": "Seat walk-ins at a table booked later tonight",
+      "walkinHint": "Off: a table booked later tonight cannot be given to a walk-in. On: it can, and staff see when the walk-in must leave.",
+      "save": "Save table bookings",
+      "saved": "Table bookings saved."
+    },
+    "items": {
+      "add": "Add object",
+      "remove": "Remove this object",
+      "text": "Text shown on the plan",
+      "color": "Colour",
+      "kinds": {
+        "bar": "Bar counter",
+        "pole": "Pole or pillar",
+        "stage": "Stage",
+        "toilet": "Toilet",
+        "entry": "Entrance",
+        "label": "Text label",
+        "zone": "Zone",
+        "stairs": "Stairs"
+      },
+      "default": {
+        "bar": "Bar",
+        "pole": "",
+        "stage": "Stage",
+        "toilet": "WC",
+        "entry": "Entrance",
+        "label": "Window",
+        "zone": "Smoking",
+        "stairs": "Stairs"
+      },
+      "colors": {
+        "green": "Green",
+        "blue": "Blue",
+        "amber": "Yellow",
+        "rose": "Red",
+        "violet": "Purple",
+        "slate": "Grey"
+      },
+      "blocksHint": "Takes floor space: no table can stand on it. Customers see it on the plan.",
+      "freeHint": "Only a mark on the plan: tables can stand on it or inside it. Customers see it too."
+    },
+    "floors": {
+      "floors": "Floors",
+      "ground": "Ground floor",
+      "up": "Floor {{n}}",
+      "basement": "Basement {{n}}",
+      "which": "Floor",
+      "leadsTo": "Leads to",
+      "notSet": "Not set",
+      "open": "Open {{floor}}",
+      "saveFirst": "Save your changes first, then open the other floor."
     }
   }
 }

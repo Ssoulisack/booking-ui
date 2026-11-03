@@ -13,7 +13,7 @@ React app of the booking system, **client edition**: one install = one company w
 | `/reset-password/{token}`, `/invite/{token}`              | From emails                      | Choose a new password, join the team                             |
 
 The backend is `../booking-system-backend` (Go Fiber). The plan and progress of both are in
-`../timeline-client-edition/` (the SaaS history is in `../timeline/`).
+`../timeline-client-edition/`.
 
 ## Run locally
 

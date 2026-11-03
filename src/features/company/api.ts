@@ -8,6 +8,7 @@ import {
 import { api, apiMessage, apiPage } from "@/lib/api/client"
 import type {
   BranchSummary,
+  BranchType,
   Company,
   CompanyInput,
   CompanyReport,
@@ -143,8 +144,12 @@ export const uploadCompanyImage = (folder: string, file: File) => {
 
 export const useCreateBranch = () =>
   useCompanyMutation(
-    (body: { name: string; slug: string; clone_from?: number }) =>
-      api<BranchSummary>("/company/branches", { method: "POST", body }),
+    (body: {
+      name: string
+      slug: string
+      type?: BranchType
+      clone_from?: number
+    }) => api<BranchSummary>("/company/branches", { method: "POST", body }),
   )
 
 export const useSetClosed = () =>

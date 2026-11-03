@@ -1,4 +1,11 @@
-import { CopyIcon, PlusIcon, QrCodeIcon, SearchIcon } from "lucide-react"
+import {
+  CopyIcon,
+  PlusIcon,
+  QrCodeIcon,
+  SearchIcon,
+  TrophyIcon,
+  UtensilsCrossedIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useSearchParams } from "react-router"
@@ -31,7 +38,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { ShareBooking } from "@/features/dashboard/ShareBooking"
 import { EmptyState, FormDialog, PageHeader } from "@/features/dashboard/ui"
-import type { BranchSummary } from "@/lib/api/types"
+import { BranchTypePicker } from "@/features/settings/fields"
+import type { BranchSummary, BranchType } from "@/lib/api/types"
 
 import { slugify, useBranches, useCreateBranch, useSetClosed } from "./api"
 import { paginate } from "./paging"
@@ -138,6 +146,14 @@ function BranchRow({
         <p className="flex flex-wrap items-center gap-2 font-medium">
           {b.name}
           <StatusBadge status={b.status} />
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
+            {b.type === "restaurant" ? (
+              <UtensilsCrossedIcon className="size-3" />
+            ) : (
+              <TrophyIcon className="size-3" />
+            )}
+            {t(`company.types.${b.type ?? "sport"}`)}
+          </span>
         </p>
         <p className="text-sm text-muted-foreground">
           {[b.address, `/b/${b.slug}`].filter(Boolean).join(" · ")}
@@ -252,6 +268,7 @@ function NewBranchDialog({
   const create = useCreateBranch()
   const branches = useBranches().data ?? []
   const [source, setSource] = useState(from?.id ?? 0)
+  const [type, setType] = useState<BranchType>("sport")
   const [name, setName] = useState(() =>
     from ? copyName(from.name, branches) : "",
   )
@@ -292,7 +309,8 @@ function NewBranchDialog({
           {
             name: name.trim(),
             slug: slug.trim(),
-            ...(source ? { clone_from: source } : {}),
+            // a copy keeps the type of the branch it copies
+            ...(source ? { clone_from: source } : { type }),
           },
           {
             onSuccess: (b) => {
@@ -331,10 +349,12 @@ function NewBranchDialog({
           </select>
         </Field>
       )}
-      {source > 0 && (
+      {source > 0 ? (
         <p className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">
           {t("company.cloneCopies")}
         </p>
+      ) : (
+        <BranchTypePicker name="branch-type" value={type} onChange={setType} />
       )}
       <Field>
         <FieldLabel htmlFor="branch-name">{t("company.branchName")}</FieldLabel>

@@ -1,9 +1,4 @@
-import {
-  createBrowserRouter,
-  Navigate,
-  Outlet,
-  ScrollRestoration,
-} from "react-router"
+import { createBrowserRouter, Outlet, ScrollRestoration } from "react-router"
 
 import { CrashScreen, NotFound, PageLoader } from "@/components/page-state"
 import { LegalPage } from "@/features/legal"
@@ -218,7 +213,9 @@ export const router = createBrowserRouter([
                     children: [
                       {
                         index: true,
-                        element: <Navigate to="sports" replace />,
+                        lazy: async () => ({
+                          Component: (await dashboard()).SetupIndex,
+                        }),
                       },
                       page("sports", "SportsPage"),
                       page("spaces", "CourtsPage"),
@@ -230,6 +227,10 @@ export const router = createBrowserRouter([
                       page("classes", "ClassesPage"),
                       page("closures", "ClosuresPage"),
                       page("rules", "RulesPage"),
+                      // restaurant branches
+                      page("floor-plan", "FloorPlanPage"),
+                      page("hours", "VenueHoursPage"),
+                      page("table-settings", "TableSettingsPage"),
                     ],
                   },
                   page("media", "MediaPage"),
