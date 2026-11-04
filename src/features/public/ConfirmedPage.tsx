@@ -11,6 +11,7 @@ import { useSession } from "@/stores/session"
 import { BookingCard } from "./BookingCard"
 import { CopyCode } from "./CopyCode"
 import { EventPayPanel, recallPay } from "./EventPay"
+import { PayOnline, payableOnline } from "./PayOnline"
 import { usePublic } from "./context"
 
 /** /b/:slug/confirmed — shown once after booking (the booking comes from the checkout) */
@@ -78,6 +79,14 @@ export function ConfirmedPage() {
                 }
               : recallPay(slug, booking.id)
           }
+        />
+      )}
+
+      {!booking.event_id && payableOnline(booking) && (
+        <PayOnline
+          slug={slug}
+          booking={booking}
+          guestToken={booking.guest_token}
         />
       )}
 

@@ -983,3 +983,48 @@ export interface BuyEventTablesInput {
   guest?: { name: string; phone: string; email?: string }
   notes?: string
 }
+
+// ---------- online payment (PhaJay) ----------
+
+/** A gateway the customer can pay through, with its ways to pay (a bank's QR, a payment page) */
+export interface PaymentOption {
+  provider: string
+  label: string
+  methods: Array<{ key: string; label: string }>
+}
+
+export type OnlinePaymentStatus =
+  | "pending"
+  | "paid"
+  | "expired"
+  | "failed"
+  | "mismatch"
+  | "refund_due"
+  | "disputed"
+  | "refund_requested"
+  | "refunded"
+
+/** One attempt to pay a booking online: what to scan or open, and where it stands */
+export interface OnlinePayment {
+  id: number
+  provider: string
+  method: string
+  status: OnlinePaymentStatus
+  amount: number
+  currency: string
+  qr_code?: string
+  deeplink?: string
+  redirect_url?: string
+  expires_at: string
+}
+
+/** A payment as the team sees it */
+export interface StaffPayment extends OnlinePayment {
+  booking_id: number
+  order_no: string
+  provider_ref: string
+  paid_at?: string
+  refund_ref?: string
+  note?: string
+  created_at: string
+}

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import {
   CheckCircle2Icon,
   ClockIcon,
@@ -14,6 +15,7 @@ import type { Booking, EventPay } from "@/lib/api/types"
 import { dayIn, money, timeIn } from "@/lib/format"
 
 import { publicKeys, slipApi } from "./api"
+import { PayOnline } from "./PayOnline"
 
 /** What a buyer needs after buying: remembered on this device, so the booking page can show it again */
 interface Remembered {
@@ -64,6 +66,7 @@ export function EventPayPanel({
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const [paidOnline, setPaidOnline] = useState(false)
   const slip = useMutation({
     mutationFn: () =>
       guestToken ? slipApi.guest(slug, guestToken) : slipApi.mine(booking.id),
@@ -84,7 +87,7 @@ export function EventPayPanel({
         {t("public.events.pay.cancelled")}
       </p>
     )
-  if (booking.payment_status === "paid")
+  if (booking.payment_status === "paid" || paidOnline)
     return (
       <p className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 font-medium text-emerald-900 ring-1 ring-emerald-200 dark:bg-emerald-400/15 dark:text-emerald-200">
         <CheckCircle2Icon className="size-5 shrink-0" />
@@ -140,6 +143,13 @@ export function EventPayPanel({
           )}
         </p>
       )}
+      {/* online first: the booking confirms itself; the QR / transfer way below stays for those who prefer it */}
+      <PayOnline
+        slug={slug}
+        booking={booking}
+        guestToken={guestToken}
+        onPaid={() => setPaidOnline(true)}
+      />
       {info ? (
         <>
           {pay?.qr_url && (

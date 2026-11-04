@@ -29,6 +29,7 @@ import { TonightPlan } from "./TonightPlan"
 import { UpcomingBookings } from "./UpcomingBookings"
 import { LiveStrip } from "./LiveStrip"
 import { EventPayments } from "./EventPayments"
+import { PaymentsAttention } from "./PaymentsAttention"
 import { PageHeader, Panel } from "./ui"
 
 /** /dashboard/:id — what to do next: get the booking page live, then share it */
@@ -121,6 +122,7 @@ function PagePanel() {
       <div className="space-y-6">
         <LiveStrip url={url} to="share" />
         {branch.type === "restaurant" && <EventPayments />}
+        {roleAtLeast(branch.role, "manager") && <PaymentsAttention />}
         {branch.type === "restaurant" ? <OverviewTabs /> : <UpcomingBookings />}
       </div>
     )

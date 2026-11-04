@@ -12,6 +12,7 @@ import { BookingCard } from "./BookingCard"
 import { canCancel } from "./booking-utils"
 import { CancelDialog } from "./CancelDialog"
 import { EventPayPanel, recallPay } from "./EventPay"
+import { PayOnline, payableOnline } from "./PayOnline"
 import { usePublic } from "./context"
 import { dayIn, timeIn } from "@/lib/format"
 
@@ -50,6 +51,9 @@ export function GuestBookingPage() {
               guestToken={token}
               info={recallPay(slug, booking.data.id)}
             />
+          )}
+          {!booking.data.event_id && payableOnline(booking.data) && (
+            <PayOnline slug={slug} booking={booking.data} guestToken={token} />
           )}
           <BookingCard booking={booking.data} tz={business.timezone}>
             <div className="mt-4 border-t pt-4">

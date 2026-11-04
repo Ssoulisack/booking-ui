@@ -13,6 +13,8 @@ import type {
   CreateBookingInput,
   BuyEventTablesInput,
   CreatedBooking,
+  OnlinePayment,
+  PaymentOption,
   PublicArea,
   PublicBranch,
   PublicCoach,
@@ -257,4 +259,41 @@ export const slipApi = {
     }),
   mine: (id: number) =>
     api<Booking>(`/me/bookings/${id}/slip-sent`, { method: "POST" }),
+}
+
+/** The ways to pay online at this branch (empty: online payment is off, pay at the place or by QR / transfer) */
+export function usePaymentOptions(slug: string) {
+  return useQuery({
+    queryKey: ["public", slug, "payment-options"] as const,
+    queryFn: () => api<PaymentOption[]>(`${pub(slug)}/payment-options`),
+    staleTime: 5 * 60_000,
+  })
+}
+
+/** Online payment of a booking, by its private link (guest) or as the logged-in customer */
+export const payApi = {
+  start: (
+    slug: string,
+    who: { token: string } | { bookingId: number },
+    body: { provider: string; method: string },
+  ) =>
+    "token" in who
+      ? api<OnlinePayment>(
+          `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/pay`,
+          { method: "POST", body },
+        )
+      : api<OnlinePayment>(`/me/bookings/${who.bookingId}/pay`, {
+          method: "POST",
+          body,
+        }),
+  check: (
+    slug: string,
+    who: { token: string } | { bookingId: number },
+    id: number,
+  ) =>
+    "token" in who
+      ? api<OnlinePayment>(
+          `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/payments/${id}`,
+        )
+      : api<OnlinePayment>(`/me/bookings/${who.bookingId}/payments/${id}`),
 }

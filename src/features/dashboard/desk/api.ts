@@ -17,6 +17,7 @@ import type {
   CustomerMatch,
   Finance,
   PaymentMethod,
+  StaffPayment,
   StaffBookingInput,
   UnpaidRow,
   Utilisation,
@@ -257,4 +258,39 @@ export function useWalkIn() {
   return useDeskChange((base, body: WalkInInput) =>
     api<Booking>(`${base}/walk-ins`, { method: "POST", body }),
   )
+}
+
+// ---------- online payments (PhaJay): what was tried, what needs a person, refunds ----------
+
+/** The online payment attempts of one booking */
+export function useBookingPayments(bookingId: number) {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("payments", bookingId),
+    queryFn: () =>
+      api<StaffPayment[]>(`${base}/bookings/${bookingId}/payments`),
+  })
+}
+
+/** Money to give back, amounts that did not match, disputes and refunds in progress (managers) */
+export function usePaymentsAttention() {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("payments", "attention"),
+    queryFn: () => api<StaffPayment[]>(`${base}/payments/attention`),
+    refetchInterval: 60_000,
+  })
+}
+
+export function useRefundPayment() {
+  const { base, key } = useBiz()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) =>
+      api<StaffPayment>(`${base}/payments/${id}/refund`, { method: "POST" }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: key("payments") })
+      void queryClient.invalidateQueries({ queryKey: key("bookings") })
+    },
+  })
 }

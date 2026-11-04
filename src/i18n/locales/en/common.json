@@ -1762,5 +1762,43 @@
     "noSlipLong": "No slip yet. The tables go back on sale by themselves when the time is up.",
     "release": "Release tables",
     "releaseHint": "Release: the booking is cancelled and the tables go back on sale at once."
+  },
+  "payOnline": {
+    "title": "Pay online",
+    "lead": "Pay {{total}} in your bank app. The booking confirms itself once the payment arrives.",
+    "choose": "Choose your bank",
+    "otherBank": "Other bank",
+    "otherBankHint": "Opens a page where you choose the bank",
+    "amount": "Amount to pay",
+    "scan": "Scan with your bank app",
+    "openApp": "Open my bank app",
+    "openPage": "Open the payment page",
+    "waiting": "Waiting for your payment · {{time}} left",
+    "timeUp": "Time is up — checking one last time…",
+    "changeBank": "Choose another bank",
+    "paid": "Paid — thank you! Your booking is confirmed.",
+    "ended": {
+      "expired": "That payment ran out of time. Choose a bank to try again.",
+      "failed": "The bank could not start that payment. Try another bank.",
+      "review": "We received a payment that needs the team to look at it. Please contact the branch."
+    }
+  },
+  "payStatus": {
+    "title": "Online payments",
+    "pending": "Waiting",
+    "paid": "Paid",
+    "expired": "Ran out",
+    "failed": "Failed",
+    "mismatch": "Wrong amount",
+    "refund_due": "Give back",
+    "disputed": "Disputed",
+    "refund_requested": "Refund asked",
+    "refunded": "Refunded",
+    "refund": "Refund",
+    "refundConfirm": "The bank is asked to give the money back to the customer. This cannot be undone. The booking is not cancelled by this.",
+    "refundAsked": "Refund asked. It shows as refunded when the bank confirms.",
+    "attentionTitle": "Online payments to look at",
+    "attentionLead": "Money to give back, amounts that did not match, disputes and refunds in progress. Tap the code to open the booking.",
+    "refundTitle": "Refund {{amount}}?"
   }
 }

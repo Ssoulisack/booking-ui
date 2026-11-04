@@ -30,6 +30,7 @@ import {
   useMarkArrived,
   useSetPayment,
 } from "./api"
+import { BookingPayments } from "./BookingPayments"
 import { MoveTablesDialog } from "./TableDesk"
 
 const METHODS: PaymentMethod[] = ["cash", "transfer", "qr", "other"]
@@ -304,6 +305,8 @@ function Details({ booking: b }: { booking: Booking }) {
           <ErrorAlert error={payment.error} />
         </section>
       )}
+
+      <BookingPayments bookingId={b.id} />
 
       {active && (
         <section className="space-y-3">
