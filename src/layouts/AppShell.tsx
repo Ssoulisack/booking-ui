@@ -24,6 +24,11 @@ import { MobileNav } from "@/features/public/MobileNav"
 
 import { AreaSwitch, AreaTag } from "./area"
 import { usePreviousArea, type Area } from "./area-state"
+import { ModeToggle } from "@/components/ModeToggle"
+import { usePublicCompany } from "@/features/places/api"
+import { CustomerTheme } from "@/features/public/CustomerTheme"
+import { ThemeToggle } from "@/features/public/ThemeToggle"
+import { dashMode, useHtmlMode } from "@/lib/color-mode"
 import { Breadcrumbs } from "./Breadcrumbs"
 import type { Crumb } from "./crumbs"
 import { UserMenu } from "./UserMenu"
@@ -50,6 +55,9 @@ interface AppShellProps {
   crumbs?: Crumb[]
   // tablets and phones get the Gooey Nav at the bottom instead of the side sheet (customer pages)
   gooey?: boolean
+  // a customer page (My bookings, My account): the customer theme and its dark / light switch,
+  // not the back office's
+  customer?: boolean
   // top left: an arrow back to where the person came from, instead of the logo (customer pages)
   back?: { to: string; label: string }
   children: ReactNode
@@ -74,12 +82,15 @@ export function AppShell({
   areaSwitch,
   crumbs,
   gooey,
+  customer,
   back,
   children,
 }: AppShellProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const from = usePreviousArea(area)
+  // the back office's own dark / light choice (light by default)
+  useHtmlMode(dashMode.use(), [], !customer)
   // company sits left of branch in the switch: slide in from that side
   const dir = area === "company" ? -1 : 1
 
@@ -98,8 +109,13 @@ export function AppShell({
   return (
     <MotionConfig reducedMotion="user">
       <UnsavedGuard />
-      <div className="min-h-dvh bg-muted/30">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background px-3 sm:px-4">
+      <Frame customer={customer}>
+        <header
+          className={cn(
+            "sticky top-0 z-30 flex h-14 items-center gap-2 bg-background px-3 sm:px-4",
+            customer ? "pub-rainbow" : "border-b",
+          )}
+        >
           {area && (
             <span
               aria-hidden
@@ -164,12 +180,13 @@ export function AppShell({
               to="/"
               className="flex shrink-0 items-center gap-2 font-semibold"
             >
-              <CalendarCheckIcon className="size-5 text-primary" />
+              <CalendarCheckIcon className="size-5 text-[var(--primary-ink)]" />
               <span className="hidden sm:inline">{t("app.name")}</span>
             </Link>
           )}
           {area && <AreaTag area={area} />}
           <div className="min-w-0 flex-1">{context}</div>
+          {customer ? <ThemeToggle /> : <ModeToggle store={dashMode} />}
           <UserMenu allBranches={!!back} />
         </header>
         {banner}
@@ -215,8 +232,23 @@ export function AppShell({
           </main>
         </div>
         {gooey && <AccountNav nav={nav} />}
-      </div>
+      </Frame>
     </MotionConfig>
+  )
+}
+
+/** The page's outer box: a customer page wears the customer theme, the back office its plain background */
+function Frame({
+  customer,
+  children,
+}: {
+  customer?: boolean
+  children: ReactNode
+}) {
+  return customer ? (
+    <CustomerTheme>{children}</CustomerTheme>
+  ) : (
+    <div className="min-h-dvh bg-muted/30">{children}</div>
   )
 }
 
@@ -255,7 +287,7 @@ function NavList({
                   (area === "company"
                     ? "bg-white/15 text-white before:absolute before:inset-y-1.5 before:left-0 before:w-1 before:rounded-full before:bg-[var(--area-company-glow)]"
                     : area === "branch"
-                      ? "bg-[var(--area-branch-soft)] text-[var(--area-branch-ink)] hover:bg-[var(--area-branch-soft)] hover:text-[var(--area-branch-ink)]"
+                      ? "bg-[var(--area-branch-soft)] text-[var(--area-branch-ink)] before:absolute before:inset-y-1.5 before:left-0 before:w-1 before:rounded-full before:bg-[var(--area-company-glow)] hover:bg-[var(--area-branch-soft)] hover:text-[var(--area-branch-ink)]"
                       : "bg-muted text-foreground"),
               )
             }
@@ -280,6 +312,7 @@ function NavList({
 /** The nav items as the Gooey Nav: the longest address that matches this page is the active one */
 function AccountNav({ nav }: { nav: NavItem[] }) {
   const { pathname } = useLocation()
+  const color = usePublicCompany().data?.brand_color
   const navigate = useNavigate()
   let active = 0
   let best = -1
@@ -294,6 +327,8 @@ function AccountNav({ nav }: { nav: NavItem[] }) {
   })
   return (
     <MobileNav
+      themed
+      color={color}
       active={active}
       items={nav.map((item) => ({
         label: item.label,

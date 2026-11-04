@@ -3,9 +3,10 @@ import { create } from "zustand"
 
 /**
  * "changes": a form with edits not saved yet. "booking": a time the customer picked but has not
- * booked. See UnsavedGuard.
+ * booked. "tables": tables chosen on a restaurant's table step (going back a step clears them).
+ * See UnsavedGuard.
  */
-export type UnsavedKind = "changes" | "booking"
+export type UnsavedKind = "changes" | "booking" | "tables"
 
 interface UnsavedState {
   entries: Array<{ id: string; kind: UnsavedKind }>
@@ -43,3 +44,6 @@ export function useUnsaved(dirty: boolean, kind: UnsavedKind = "changes") {
 /** The customer pressed Book: going on to the booking page is not leaving it unfinished */
 export const releaseBooking = () =>
   useUnsavedStore.getState().release("booking")
+
+/** The customer pressed Continue on the table step: their tables go on to the Confirm page */
+export const releaseTables = () => useUnsavedStore.getState().release("tables")

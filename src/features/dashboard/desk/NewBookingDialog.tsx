@@ -44,6 +44,8 @@ export interface NewBookingStart {
   date: string
   resource_id?: number
   coach_id?: number
+  /** "18:30": the free start picked on the calendar, chosen at once when it is free */
+  time?: string
 }
 
 /** Walk-in or phone booking: who, what, when — staff rules apply (earlier today is allowed) */
@@ -114,8 +116,16 @@ export function NewBookingDialog({
   // length first (the shortest by default), then a start that allows it
   const lengths = availability.data ? lengthsOf(availability.data) : []
   const len = length && lengths.includes(length) ? length : lengths[0]
+  // the time tapped on the calendar counts as the pick until another time is chosen
+  const picked =
+    slot ??
+    (start.time && date === start.date
+      ? availability.data?.slots.find(
+          (s) => timeIn(s.starts_at, tz) === start.time,
+        )?.starts_at
+      : undefined)
   const chosen = availability.data?.slots.find(
-    (s) => s.starts_at === slot && s.durations_min.includes(len),
+    (s) => s.starts_at === picked && s.durations_min.includes(len),
   )
 
   const submit = (e: React.FormEvent) => {
@@ -232,8 +242,8 @@ export function NewBookingDialog({
               </div>
             </Field>
             {account ? (
-              <div className="flex items-center gap-3 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm">
-                <CheckCircle2Icon className="size-5 shrink-0 text-emerald-600" />
+              <div className="flex items-center gap-3 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm dark:border-emerald-400/50 dark:bg-emerald-400/15">
+                <CheckCircle2Icon className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <span>
                   <span className="block font-medium">{account.name}</span>
                   <span className="text-muted-foreground">
@@ -421,7 +431,7 @@ export function NewBookingDialog({
               tone="primary"
               availability={availability.data}
               tz={tz}
-              start={slot}
+              start={picked}
               length={length}
               disabled={availability.isPlaceholderData}
               onChange={(start, l) => {

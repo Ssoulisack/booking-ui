@@ -69,23 +69,26 @@
 }
 
 :root {
-  /* dashboard areas: Company (deep teal menu, #0D9276) and Branch (light menu, green marks) */
-  --area-company: #0d9276;
-  --area-company-soft: oklch(0.95 0.035 172);
-  --area-company-ink: oklch(0.44 0.09 172);
-  --area-company-menu: oklch(0.27 0.05 172);
-  --area-company-glow: oklch(0.8 0.12 172);
-  --area-branch: oklch(0.6 0.13 163);
-  --area-branch-soft: oklch(0.95 0.04 163);
-  --area-branch-ink: oklch(0.42 0.1 163);
+  /* back office: navy + candy yellow (both areas). Company = navy menu with yellow marks;
+     Branch = light menu with yellow highlights and navy text */
+  --area-company: #fbbf24;
+  --area-company-soft: #fff4cc;
+  --area-company-ink: #6b4500;
+  --area-company-menu: #121838;
+  --area-company-glow: #fbbf24;
+  --area-branch: #24306e;
+  --area-branch-soft: #fff4cc;
+  --area-branch-ink: #1c2350;
+  /* --primary used as text (links): a readable shade of the button colour */
+  --primary-ink: #8a5a00;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #fbbf24;
+  --primary-foreground: #10142c;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -95,7 +98,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: rgb(251 191 36 / 0.6);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -113,37 +116,147 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --area-company-soft: rgb(251 191 36 / 0.16);
+  --area-company-ink: #fcd34d;
+  --area-company-menu: #0b1027;
+  --area-branch: #fcd34d;
+  --area-branch-soft: rgb(251 191 36 / 0.14);
+  --area-branch-ink: #fde68a;
+  --primary-ink: #fcd34d;
+  --background: #0e1330;
+  --foreground: #eef1ff;
+  --card: #161d42;
+  --card-foreground: #eef1ff;
+  --popover: #18204a;
+  --popover-foreground: #eef1ff;
+  --primary: #fbbf24;
+  --primary-foreground: #10142c;
+  --secondary: #1d2654;
+  --secondary-foreground: #eef1ff;
+  --muted: #1d2654;
+  --muted-foreground: #a3acd6;
+  --accent: #26306a;
+  --accent-foreground: #eef1ff;
+  --destructive: #f87171;
+  --border: rgb(255 255 255 / 0.1);
+  --input: rgb(255 255 255 / 0.16);
+  --ring: rgb(251 191 36 / 0.55);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #121838;
+  --sidebar-foreground: #eef1ff;
+  --sidebar-primary: #fbbf24;
+  --sidebar-primary-foreground: #10142c;
+  --sidebar-accent: #1d2654;
+  --sidebar-accent-foreground: #eef1ff;
+  --sidebar-border: rgb(255 255 255 / 0.1);
+  --sidebar-ring: rgb(251 191 36 / 0.55);
+  color-scheme: dark;
+}
+
+/*
+ * Customer pages (html.pub, see features/public/theme.tsx): a light day or a navy night with a
+ * faint dot grid, and fixed bright "candy" accents for section labels and badges. The dashboard
+ * never carries .pub.
+ */
+html.pub,
+.pub-preview {
+  --candy-yellow: #fbbf24;
+  --candy-sky: #38bdf8;
+  --candy-purple: #a78bfa;
+  --candy-orange: #fb923c;
+  --candy-pink: #f472b6;
+  --candy-green: #34d399;
+  --candy-ink: #10142c;
+  --candy-cream: #fbbf24;
+  --background: #f6f4ee;
+  --foreground: #161a2e;
+  --card: #ffffff;
+  --card-foreground: #161a2e;
+  --popover: #ffffff;
+  --popover-foreground: #161a2e;
+  --muted: #ece8de;
+  --muted-foreground: #5c6280;
+  --secondary: #ece8de;
+  --secondary-foreground: #161a2e;
+  --accent: #e4dfd2;
+  --accent-foreground: #161a2e;
+  --border: rgb(22 26 46 / 0.12);
+  --input: rgb(22 26 46 / 0.18);
+}
+
+html.pub.dark,
+.pub-preview.dark {
+  --background: #0e1330;
+  --foreground: #eef1ff;
+  --card: #161d42;
+  --card-foreground: #eef1ff;
+  --popover: #18204a;
+  --popover-foreground: #eef1ff;
+  --muted: #1d2654;
+  --muted-foreground: #a3acd6;
+  --secondary: #1d2654;
+  --secondary-foreground: #eef1ff;
+  --accent: #26306a;
+  --accent-foreground: #eef1ff;
+  --border: rgb(255 255 255 / 0.1);
+  --input: rgb(255 255 255 / 0.16);
+  --destructive: #f87171;
+  color-scheme: dark;
+}
+
+html.pub body {
+  background-color: var(--background);
+}
+
+html.pub.dark body {
+  background-image: radial-gradient(
+    rgb(255 255 255 / 0.07) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+}
+
+/* the thin rainbow line under the customer top bar */
+@utility pub-rainbow {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 -1px 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      var(--candy-yellow),
+      var(--candy-orange),
+      #ef4444,
+      var(--candy-purple),
+      var(--candy-sky)
+    );
+  }
+}
+
+/* a chunky section label on a candy colour: "Book a time", "Coming up" */
+@utility candy-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.25rem 0.875rem 0.35rem;
+  background: var(--candy, var(--candy-yellow));
+  color: var(--candy-ink);
+  box-shadow: 0 3px 0 rgb(0 0 0 / 0.25);
+}
+
+/* a card in a thick cream frame (branch cards, the chosen booking) */
+@utility candy-card {
+  border-radius: 1.25rem;
+  box-shadow:
+    0 0 0 4px var(--candy-cream),
+    0 10px 30px rgb(0 0 0 / 0.18);
 }
 
 @layer base {

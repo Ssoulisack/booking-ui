@@ -1,6 +1,12 @@
 import { addDays } from "date-fns"
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "lucide-react"
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  PlusIcon,
+  SearchIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router"
@@ -21,9 +27,20 @@ import { dayIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 import { useSettings } from "../api"
+import { useDashboard } from "../context"
 import { useCalendar } from "./api"
 import { BookingSheet } from "./BookingSheet"
 import { NewBookingDialog, type NewBookingStart } from "./NewBookingDialog"
+import { WalkInDialog } from "./TableDesk"
+import {
+  groupLanes,
+  matches,
+  minuteOf,
+  STATUS_COLOR,
+  useWide,
+  type Density,
+} from "./lanes"
+import { AgendaList, Timeline } from "./Timeline"
 
 const HOUR_PX = 56
 
@@ -34,15 +51,6 @@ const shiftDay = (ymd: string, days: number, tz: string) =>
     "yyyy-MM-dd",
   )
 
-/** Minutes after midnight of `ymd`, in the business time zone (clamped to that day) */
-function minuteOf(iso: string, ymd: string, tz: string) {
-  const day = formatInTimeZone(iso, tz, "yyyy-MM-dd")
-  if (day < ymd) return 0
-  if (day > ymd) return 24 * 60
-  const [h, m] = formatInTimeZone(iso, tz, "HH:mm").split(":").map(Number)
-  return h * 60 + m
-}
-
 interface Column {
   key: string
   label: string
@@ -50,17 +58,39 @@ interface Column {
   lane: CalendarLane
 }
 
-/** /dashboard/:id/calendar — the day per court and coach, or one court's week */
+const DENSITY_KEY = "calendar-density"
+const readDensity = (): Density => {
+  try {
+    return localStorage.getItem(DENSITY_KEY) === "roomy" ? "roomy" : "compact"
+  } catch {
+    return "compact"
+  }
+}
+
+/**
+ * /dashboard/:id/calendar — the day as a timeline (one row per court, coach or table, grouped by
+ * sport or area; a list by time on phones), or one court's week (sport branches)
+ */
 export function CalendarPage() {
   const { t } = useTranslation()
   const settings = useSettings()
   const tz = settings.data?.in_force.timezone ?? "Asia/Vientiane"
   const [params, setParams] = useSearchParams()
   const date = params.get("date") ?? todayIn(tz)
-  const view = params.get("view") === "week" ? "week" : "day"
+  const { branch } = useDashboard()
+  const restaurant = branch.type === "restaurant"
+  const wide = useWide()
+  // restaurants have no week view: a table's week says little
+  const view = !restaurant && params.get("view") === "week" ? "week" : "day"
+  const group = params.get("group") ?? "all"
+  const freeNow = params.get("free") === "1"
+  const [search, setSearch] = useState("")
+  const [density, setDensity] = useState<Density>(readDensity)
+  const [nowTick, setNowTick] = useState(0)
   const calendar = useCalendar(date, view === "week" ? 7 : 1)
   const [open, setOpen] = useState<number | null>(null)
   const [newBooking, setNewBooking] = useState<NewBookingStart | null>(null)
+  const [walkIn, setWalkIn] = useState<{ tableId?: number } | null>(null)
 
   const set = (patch: Record<string, string>) =>
     setParams({ ...Object.fromEntries(params), ...patch }, { replace: true })
@@ -71,14 +101,35 @@ export function CalendarPage() {
   const lane =
     lanes.find((l) => `${l.owner_type}:${l.owner_id}` === laneKey) ?? lanes[0]
 
+  const isToday = date === todayIn(tz)
+  const allGroups = groupLanes(lanes, restaurant, t)
+  // filters: one sport / area, free right now, and a name or code typed in the search
+  const [now] = useState(() => new Date().toISOString())
+  const groups = allGroups
+    .filter((g) => group === "all" || g.key === group)
+    .map((g) => ({
+      ...g,
+      lanes: g.lanes.filter(
+        (l) =>
+          (!freeNow ||
+            !isToday ||
+            !l.entries.some(
+              (e) =>
+                e.kind !== "class" &&
+                e.status !== "completed" &&
+                e.status !== "no_show" &&
+                e.starts_at <= now &&
+                e.ends_at > now,
+            )) &&
+          (!search ||
+            l.entries.some((e) => e.kind === "booking" && matches(e, search))),
+      ),
+    }))
+    .filter((g) => g.lanes.length > 0)
+
   const columns: Column[] =
     view === "day"
-      ? lanes.map((l) => ({
-          key: `${l.owner_type}:${l.owner_id}`,
-          label: l.name,
-          date,
-          lane: l,
-        }))
+      ? []
       : lane
         ? Array.from({ length: 7 }, (_, i) => {
             const d = shiftDay(date, i, tz)
@@ -114,10 +165,20 @@ export function CalendarPage() {
         <h1 className="mr-auto text-2xl font-semibold tracking-tight">
           {t("nav.calendar")}
         </h1>
-        <Button className="h-11 lg:h-9" onClick={() => setNewBooking({ date })}>
-          <PlusIcon />
-          {t("desk.newBooking")}
-        </Button>
+        {restaurant ? (
+          <Button className="h-11 lg:h-9" onClick={() => setWalkIn({})}>
+            <PlusIcon />
+            {t("desk.walkInTitle")}
+          </Button>
+        ) : (
+          <Button
+            className="h-11 lg:h-9"
+            onClick={() => setNewBooking({ date })}
+          >
+            <PlusIcon />
+            {t("desk.newBooking")}
+          </Button>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -157,29 +218,31 @@ export function CalendarPage() {
           className="h-11 w-40 lg:h-9"
         />
         <span className="font-medium">{dayIn(`${date}T12:00:00Z`, "UTC")}</span>
-        <div
-          role="radiogroup"
-          aria-label={t("desk.view")}
-          className="ml-auto flex rounded-lg bg-muted p-1"
-        >
-          {(["day", "week"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              role="radio"
-              aria-checked={view === v}
-              onClick={() => set({ view: v })}
-              className={cn(
-                "h-9 rounded-md px-3 text-sm font-medium lg:h-7",
-                view === v
-                  ? "bg-background shadow-sm"
-                  : "text-muted-foreground",
-              )}
-            >
-              {t(`desk.views.${v}`)}
-            </button>
-          ))}
-        </div>
+        {!restaurant && (
+          <div
+            role="radiogroup"
+            aria-label={t("desk.view")}
+            className="ml-auto flex rounded-lg bg-muted p-1"
+          >
+            {(["day", "week"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                role="radio"
+                aria-checked={view === v}
+                onClick={() => set({ view: v })}
+                className={cn(
+                  "h-9 rounded-md px-3 text-sm font-medium lg:h-7",
+                  view === v
+                    ? "bg-background shadow-sm"
+                    : "text-muted-foreground",
+                )}
+              >
+                {t(`desk.views.${v}`)}
+              </button>
+            ))}
+          </div>
+        )}
         {view === "week" && lanes.length > 0 && (
           <Select value={laneKey} onValueChange={(v) => set({ lane: v })}>
             <SelectTrigger
@@ -202,14 +265,143 @@ export function CalendarPage() {
         )}
       </div>
 
+      {view === "day" && lanes.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {allGroups.length > 1 && (
+            <div
+              role="radiogroup"
+              aria-label={t(restaurant ? "desk.area" : "desk.sport")}
+              className="-mx-4 no-scrollbar flex max-w-[calc(100%+2rem)] gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+            >
+              {[{ key: "all", label: t("desk.groupAll") }, ...allGroups].map(
+                (g) => (
+                  <Chip
+                    key={g.key}
+                    on={group === g.key}
+                    onClick={() => set({ group: g.key })}
+                  >
+                    {g.label}
+                  </Chip>
+                ),
+              )}
+            </div>
+          )}
+          {isToday && (
+            <Chip
+              on={freeNow}
+              onClick={() => set({ free: freeNow ? "" : "1" })}
+            >
+              {t("desk.freeNow")}
+            </Chip>
+          )}
+          <div className="relative w-full sm:ml-auto sm:w-56">
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              aria-label={t("desk.calendarSearch")}
+              placeholder={t("desk.calendarSearch")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-11 pl-8 lg:h-9"
+            />
+          </div>
+          {wide && isToday && (
+            <Button
+              variant="outline"
+              className="h-11 lg:h-9"
+              onClick={() => setNowTick((n) => n + 1)}
+            >
+              <ClockIcon />
+              {t("desk.jumpNow")}
+            </Button>
+          )}
+          {wide && (
+            <div
+              role="radiogroup"
+              aria-label={t("desk.density.label")}
+              className="flex rounded-lg bg-muted p-1"
+            >
+              {(["compact", "roomy"] as const).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  role="radio"
+                  aria-checked={density === d}
+                  onClick={() => {
+                    setDensity(d)
+                    try {
+                      localStorage.setItem(DENSITY_KEY, d)
+                    } catch {
+                      // private mode: the choice lasts until the page is left
+                    }
+                  }}
+                  className={cn(
+                    "h-9 rounded-md px-3 text-sm font-medium lg:h-7",
+                    density === d
+                      ? "bg-background shadow-sm"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {t(`desk.density.${d}`)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {calendar.isPending || settings.isPending ? (
         <Skeleton className="h-[60dvh] rounded-xl" />
       ) : calendar.isError ? (
         <PageError error={calendar.error} onRetry={() => calendar.refetch()} />
-      ) : columns.length === 0 ? (
+      ) : lanes.length === 0 ? (
         <p className="rounded-xl bg-background p-6 text-muted-foreground ring-1 ring-border">
           {t("desk.noLanes")}
         </p>
+      ) : view === "day" ? (
+        groups.length === 0 ? (
+          <p className="rounded-xl bg-background p-6 text-center text-muted-foreground ring-1 ring-border">
+            {t("desk.noMatch")}
+          </p>
+        ) : wide ? (
+          <div className={cn(calendar.isPlaceholderData && "opacity-60")}>
+            <Timeline
+              groups={groups}
+              date={date}
+              tz={tz}
+              today={isToday}
+              density={density}
+              search={search}
+              scrollToNow={nowTick}
+              onOpen={setOpen}
+              // restaurants: a free table today seats a walk-in; other days have nothing to tap
+              onNew={
+                restaurant
+                  ? isToday
+                    ? (l) =>
+                        l.owner_type === "resource" &&
+                        setWalkIn({ tableId: l.owner_id })
+                    : undefined
+                  : (l, time) =>
+                      setNewBooking({
+                        date,
+                        time,
+                        resource_id:
+                          l.owner_type === "resource" ? l.owner_id : undefined,
+                        coach_id:
+                          l.owner_type === "coach" ? l.owner_id : undefined,
+                      })
+              }
+            />
+          </div>
+        ) : (
+          <AgendaList
+            groups={groups}
+            tz={tz}
+            search={search}
+            onOpen={setOpen}
+          />
+        )
       ) : (
         <div
           className={cn(
@@ -259,6 +451,16 @@ export function CalendarPage() {
       )}
       <Legend />
       <BookingSheet id={open} onClose={() => setOpen(null)} />
+      {walkIn && (
+        <WalkInDialog
+          tableId={walkIn.tableId}
+          onClose={() => setWalkIn(null)}
+          onDone={(b) => {
+            setWalkIn(null)
+            setOpen(b.id)
+          }}
+        />
+      )}
       {newBooking && (
         <NewBookingDialog
           start={newBooking}
@@ -304,7 +506,7 @@ function LaneColumn({
       <div
         className={cn(
           "flex h-12 items-center justify-center border-b px-2 text-center text-sm font-medium",
-          today && "text-primary",
+          today && "text-[var(--primary-ink)]",
         )}
       >
         <span className="truncate">{column.label}</span>
@@ -343,13 +545,6 @@ function LaneColumn({
       </div>
     </div>
   )
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  pending: "border-amber-400 bg-amber-50 text-amber-950",
-  confirmed: "border-sky-500 bg-sky-50 text-sky-950",
-  completed: "border-zinc-400 bg-zinc-100 text-zinc-700",
-  no_show: "border-rose-400 bg-rose-50 text-rose-900",
 }
 
 function Block({
@@ -400,7 +595,10 @@ function Block({
     return (
       <div
         style={{ top, height }}
-        className={cn(box, "border-violet-500 bg-violet-50 text-violet-950")}
+        className={cn(
+          box,
+          "border-violet-500 bg-violet-50 text-violet-950 dark:bg-violet-400/15 dark:text-violet-200",
+        )}
       >
         <span className="block truncate font-medium">{e.title}</span>
         <span className="block tabular-nums opacity-80">
@@ -418,7 +616,7 @@ function Block({
       style={{ top, height }}
       className={cn(
         box,
-        "border-zinc-400 bg-[repeating-linear-gradient(45deg,var(--color-muted),var(--color-muted)_6px,transparent_6px,transparent_12px)] text-zinc-700",
+        "border-zinc-400 bg-[repeating-linear-gradient(45deg,var(--color-muted),var(--color-muted)_6px,transparent_6px,transparent_12px)] text-zinc-700 dark:border-zinc-400/50 dark:text-zinc-300",
       )}
     >
       <span className="block truncate font-medium">
@@ -428,14 +626,56 @@ function Block({
   )
 }
 
+function Chip({
+  on,
+  onClick,
+  children,
+}: {
+  on: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={on}
+      onClick={onClick}
+      className={cn(
+        "h-11 shrink-0 rounded-full border px-4 text-sm font-medium lg:h-8",
+        on
+          ? "border-primary bg-primary text-primary-foreground"
+          : "bg-background text-foreground hover:bg-muted",
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
 function Legend() {
   const { t } = useTranslation()
   const items = [
-    ["border-sky-500 bg-sky-50", t("booking.status.confirmed")],
-    ["border-amber-400 bg-amber-50", t("booking.status.pending")],
-    ["border-zinc-400 bg-zinc-100", t("booking.status.completed")],
-    ["border-rose-400 bg-rose-50", t("booking.status.no_show")],
-    ["border-violet-500 bg-violet-50", t("desk.legendClass")],
+    [
+      "border-sky-500 bg-sky-50 dark:bg-sky-400/15",
+      t("booking.status.confirmed"),
+    ],
+    [
+      "border-amber-400 dark:border-amber-400/50 bg-amber-50 dark:bg-amber-400/15",
+      t("booking.status.pending"),
+    ],
+    [
+      "border-zinc-400 dark:border-zinc-400/50 bg-zinc-100 dark:bg-zinc-400/20",
+      t("booking.status.completed"),
+    ],
+    [
+      "border-rose-400 dark:border-rose-400/50 bg-rose-50 dark:bg-rose-400/15",
+      t("booking.status.no_show"),
+    ],
+    [
+      "border-violet-500 bg-violet-50 dark:bg-violet-400/15",
+      t("desk.legendClass"),
+    ],
   ]
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">

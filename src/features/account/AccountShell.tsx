@@ -16,6 +16,7 @@ export function AccountLayout() {
   return (
     <AppShell
       gooey
+      customer
       back={
         before?.name
           ? { to: before.to, label: before.name }

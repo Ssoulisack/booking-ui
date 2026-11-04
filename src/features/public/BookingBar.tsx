@@ -40,12 +40,15 @@ export function BookingBar({
   price,
   currency,
   checkout,
+  color,
 }: {
   summary: string
   when: string
   price?: number
   currency: string
   checkout: Selection
+  /** the Book button's colour (white text); the default button colour without it */
+  color?: string
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -61,7 +64,7 @@ export function BookingBar({
   }, [])
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-black/10 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-white/85">
+    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-card/85">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{summary}</p>
@@ -83,7 +86,8 @@ export function BookingBar({
         )}
         <Button
           size="lg"
-          className="h-12 px-6 text-base"
+          style={color ? { background: color, color: "#ffffff" } : undefined}
+          className="h-12 px-6 text-base hover:opacity-90"
           onClick={() => {
             releaseBooking()
             navigate(`/b/${slug}/book?${selectionQuery(checkout)}`)

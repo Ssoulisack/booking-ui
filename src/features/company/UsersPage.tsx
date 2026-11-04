@@ -128,7 +128,7 @@ function UserRow({ user: u, onReset }: { user: User; onReset: () => void }) {
             <Badge variant="secondary">{t(`roles.${u.company_role}`)}</Badge>
           )}
           {!u.status && (
-            <Badge className="border-0 bg-rose-100 text-rose-900">
+            <Badge className="border-0 bg-rose-100 text-rose-900 dark:bg-rose-400/20 dark:text-rose-200">
               {t("company.switchedOff")}
             </Badge>
           )}

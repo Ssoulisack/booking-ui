@@ -68,9 +68,7 @@ export function AreaSwitch({
               className={cn(
                 "relative flex h-11 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none lg:h-9",
                 on
-                  ? a === "company"
-                    ? "text-[var(--area-company-ink)]"
-                    : "text-[var(--area-branch)]"
+                  ? "text-[var(--primary-foreground)]"
                   : area === "company"
                     ? "text-white/70 hover:text-white"
                     : "text-muted-foreground hover:text-foreground",
@@ -80,7 +78,7 @@ export function AreaSwitch({
                 <motion.span
                   layoutId="area-pill"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                  className="absolute inset-0 rounded-lg bg-white shadow-sm"
+                  className="absolute inset-0 rounded-lg bg-[var(--primary)] shadow-sm"
                 />
               )}
               <Icon className="relative size-4" />

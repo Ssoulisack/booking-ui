@@ -1,21 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   AlertTriangleIcon,
-  CircleDotIcon,
-  DoorOpenIcon,
-  FootprintsIcon,
+  BoxSelectIcon,
+  CopyIcon,
+  KeyboardIcon,
   LayersIcon,
-  MartiniIcon,
-  MicVocalIcon,
   MinusIcon,
   PencilIcon,
   PlusIcon,
+  Redo2Icon,
   RotateCwIcon,
-  SquareDashedIcon,
-  ToiletIcon,
   Trash2Icon,
-  TypeIcon,
-  type LucideIcon,
+  Undo2Icon,
+  XIcon,
 } from "lucide-react"
 import { useEffect, useRef, useState, type PointerEvent } from "react"
 import { useTranslation } from "react-i18next"
@@ -41,7 +38,6 @@ import type {
   ManagedSport,
   ManagedTable,
   TableShape,
-  ZoneColor,
 } from "@/lib/api/types"
 import { cn } from "@/lib/utils"
 import {
@@ -54,7 +50,28 @@ import {
   ITEM_SIZES,
   overlaps,
 } from "@/lib/floor-plan"
+import {
+  ITEM_ICONS,
+  itemLook,
+  ZONE_COLORS,
+  ZONE_STYLES,
+} from "@/components/floor-plan/look"
 import { useUnsaved } from "@/stores/unsaved"
+
+import {
+  clamp,
+  copyName,
+  copyOffset,
+  isMac,
+  keyOf,
+  moveLimits,
+  parseKey,
+  typingOrDialog,
+  type Clip,
+  type PieceKey,
+  type PieceType,
+  type Snap,
+} from "./plan-edit"
 
 import {
   manage,
@@ -134,55 +151,58 @@ export function FloorPlanPage() {
         />
       ) : (
         <>
-          {floors.length > 1 && (
+          {/* floors, then that floor's areas: one block, so they read as one choice */}
+          <div className="space-y-3">
+            {floors.length > 1 && (
+              <div
+                role="tablist"
+                aria-label={t("restaurant.floors.floors")}
+                className="no-scrollbar flex gap-1 overflow-x-auto border-b"
+              >
+                {floors.map((f) => (
+                  <button
+                    key={f}
+                    role="tab"
+                    type="button"
+                    aria-selected={f === floor}
+                    onClick={() => goFloor(f)}
+                    className={cn(
+                      "flex h-11 shrink-0 items-center gap-1.5 border-b-2 px-3 text-sm font-medium",
+                      f === floor
+                        ? "border-primary text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <LayersIcon className="size-4" />
+                    {floorName(t, f)}
+                  </button>
+                ))}
+              </div>
+            )}
             <div
               role="tablist"
-              aria-label={t("restaurant.floors.floors")}
-              className="-mb-2 no-scrollbar flex gap-1 overflow-x-auto border-b"
+              aria-label={t("restaurant.area.areas")}
+              className="no-scrollbar flex gap-2 overflow-x-auto px-0.5 py-1"
             >
-              {floors.map((f) => (
+              {onFloor.map((a) => (
                 <button
-                  key={f}
+                  key={a.id}
                   role="tab"
                   type="button"
-                  aria-selected={f === floor}
-                  onClick={() => goFloor(f)}
+                  aria-selected={a.id === area.id}
+                  onClick={() => choose(a.id)}
                   className={cn(
-                    "flex h-11 shrink-0 items-center gap-1.5 border-b-2 px-3 text-sm font-medium",
-                    f === floor
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground",
+                    "h-11 shrink-0 rounded-full px-4 text-sm font-medium ring-1 ring-border lg:h-9",
+                    a.id === area.id
+                      ? "bg-primary text-primary-foreground ring-primary"
+                      : "bg-background hover:bg-muted",
+                    !a.active && "opacity-60",
                   )}
                 >
-                  <LayersIcon className="size-4" />
-                  {floorName(t, f)}
+                  {a.name}
                 </button>
               ))}
             </div>
-          )}
-          <div
-            role="tablist"
-            aria-label={t("restaurant.area.areas")}
-            className="no-scrollbar flex gap-2 overflow-x-auto"
-          >
-            {onFloor.map((a) => (
-              <button
-                key={a.id}
-                role="tab"
-                type="button"
-                aria-selected={a.id === area.id}
-                onClick={() => choose(a.id)}
-                className={cn(
-                  "h-11 shrink-0 rounded-full px-4 text-sm font-medium ring-1 ring-border lg:h-9",
-                  a.id === area.id
-                    ? "bg-primary text-primary-foreground ring-primary"
-                    : "bg-background hover:bg-muted",
-                  !a.active && "opacity-60",
-                )}
-              >
-                {a.name}
-              </button>
-            ))}
           </div>
           <PlanEditor
             key={area.id}
@@ -416,10 +436,38 @@ function Editor({
   const queryClient = useQueryClient()
   const [tables, setTables] = useState(initial)
   const [items, setItems] = useState(initialItems)
-  const [picked, setPicked] = useState<Pick_>(
-    initial[0] ? { type: "table", id: initial[0].id } : null,
+  // what is selected: one piece (its panel opens) or several (move, copy and delete them together)
+  const [sel, setSel] = useState<PieceKey[]>(
+    initial[0] ? [keyOf("table", initial[0].id)] : [],
   )
+  const [selectMode, setSelectMode] = useState(false)
   const [adding, setAdding] = useState(false)
+  const picked: Pick_ = sel.length === 1 ? parseKey(sel[0]) : null
+  const setPicked = (p: Pick_) => setSel(p ? [keyOf(p.type, p.id)] : [])
+  const root = useRef<HTMLDivElement>(null)
+  const latest = useRef<Snap>({ tables, items })
+  useEffect(() => {
+    latest.current = { tables, items }
+  })
+  // Undo / Redo: a snapshot before each change; quick arrow presses count as one
+  const history = useRef<{
+    past: Snap[]
+    future: Snap[]
+    at: number
+    kind: string
+  }>({
+    past: [],
+    future: [],
+    at: 0,
+    kind: "",
+  })
+  const [steps, setSteps] = useState({ undo: 0, redo: 0 })
+  const syncSteps = () =>
+    setSteps({
+      undo: history.current.past.length,
+      redo: history.current.future.length,
+    })
+  const clip = useRef<{ data: Clip } | null>(null)
   const W = area.plan_width
   const H = area.plan_height
   const dirty =
@@ -479,6 +527,177 @@ function Editor({
     setPicked({ type: "item", id: item.id })
   }
 
+  const remember = (kind = "edit") => {
+    const h = history.current
+    const now = Date.now()
+    if (kind === "nudge" && h.kind === "nudge" && now - h.at < 700) {
+      h.at = now
+      return
+    }
+    h.past.push(latest.current)
+    if (h.past.length > 100) h.past.shift()
+    h.future = []
+    h.kind = kind
+    h.at = now
+    syncSteps()
+  }
+  const restore = (snap: Snap) => {
+    setTables(snap.tables)
+    setItems(snap.items)
+    const alive = new Set<PieceKey>([
+      ...snap.tables.map((x) => keyOf("table", x.id)),
+      ...snap.items.map((x) => keyOf("item", x.id)),
+    ])
+    setSel((list) => list.filter((k) => alive.has(k)))
+  }
+  const undo = () => {
+    const h = history.current
+    const snap = h.past.pop()
+    if (!snap) return
+    h.future.push(latest.current)
+    h.kind = ""
+    restore(snap)
+    syncSteps()
+  }
+  const redo = () => {
+    const h = history.current
+    const snap = h.future.pop()
+    if (!snap) return
+    h.past.push(latest.current)
+    h.kind = ""
+    restore(snap)
+    syncSteps()
+  }
+  /** The selected tables and objects, as they are now */
+  const selected = (): Clip => {
+    const keys = new Set(sel)
+    return {
+      tables: latest.current.tables.filter((x) =>
+        keys.has(keyOf("table", x.id)),
+      ),
+      items: latest.current.items.filter((x) => keys.has(keyOf("item", x.id))),
+    }
+  }
+  const moveMany = (
+    moves: Array<{ type: PieceType; id: number; x: number; y: number }>,
+  ) => {
+    const to = new Map(moves.map((m) => [keyOf(m.type, m.id), m]))
+    setTables((list) =>
+      list.map((x) => {
+        const m = to.get(keyOf("table", x.id))
+        return m ? { ...x, plan_x: m.x, plan_y: m.y } : x
+      }),
+    )
+    setItems((list) =>
+      list.map((x) => {
+        const m = to.get(keyOf("item", x.id))
+        return m ? { ...x, plan_x: m.x, plan_y: m.y } : x
+      }),
+    )
+  }
+  /** Arrow keys: the whole selection one square (Shift: five), staying on the plan */
+  const nudge = (dx: number, dy: number) => {
+    const c = selected()
+    const pieces = [...c.tables, ...c.items]
+    if (pieces.length === 0) return
+    const lim = moveLimits(pieces, W, H)
+    const mx = clamp(dx, lim.minDx, lim.maxDx)
+    const my = clamp(dy, lim.minDy, lim.maxDy)
+    if (mx === 0 && my === 0) return
+    remember("nudge")
+    moveMany([
+      ...c.tables.map((x) => ({
+        type: "table" as const,
+        id: x.id,
+        x: x.plan_x + mx,
+        y: x.plan_y + my,
+      })),
+      ...c.items.map((x) => ({
+        type: "item" as const,
+        id: x.id,
+        x: x.plan_x + mx,
+        y: x.plan_y + my,
+      })),
+    ])
+  }
+  /** Copies of tables and objects, a little to the side of the originals; they become the selection */
+  const paste = (data: Clip) => {
+    if (data.tables.length + data.items.length === 0) return
+    const { dx, dy } = copyOffset(
+      data,
+      latest.current.tables,
+      latest.current.items.filter(blocks),
+      W,
+      H,
+    )
+    remember("paste")
+    const taken = new Set(latest.current.tables.map((x) => x.name))
+    const madeTables = data.tables.map((x) => {
+      const name = copyName(x.name, taken)
+      taken.add(name)
+      return {
+        ...x,
+        id: nextNewId--,
+        name,
+        plan_x: x.plan_x + dx,
+        plan_y: x.plan_y + dy,
+      }
+    })
+    const madeItems = data.items.map((x) => ({
+      ...x,
+      id: nextNewId--,
+      plan_x: x.plan_x + dx,
+      plan_y: x.plan_y + dy,
+    }))
+    setTables((list) => [...list, ...madeTables])
+    setItems((list) => [...list, ...madeItems])
+    setSel([
+      ...madeTables.map((x) => keyOf("table", x.id)),
+      ...madeItems.map((x) => keyOf("item", x.id)),
+    ])
+  }
+  const duplicate = () => paste(selected())
+  const copy = () => {
+    const data = selected()
+    if (data.tables.length + data.items.length === 0) return
+    clip.current = { data }
+    toast.success(
+      t("restaurant.plan.copied", {
+        count: data.tables.length + data.items.length,
+      }),
+    )
+  }
+  const pasteCopied = () => {
+    const c = clip.current
+    if (!c) return
+    paste(c.data)
+  }
+  // objects and copies that are not saved yet can be removed here; saved tables are deleted one by one
+  const canRemove = (k: PieceKey) => {
+    const { type, id } = parseKey(k)
+    return type === "item" || id < 0
+  }
+  const removeSelected = () => {
+    const gone = new Set(sel.filter(canRemove))
+    if (gone.size === 0) {
+      if (sel.length > 0) toast.info(t("restaurant.plan.savedTablesStay"))
+      return
+    }
+    remember("delete")
+    setItems((list) => list.filter((x) => !gone.has(keyOf("item", x.id))))
+    setTables((list) => list.filter((x) => !gone.has(keyOf("table", x.id))))
+    const kept = sel.filter((k) => !gone.has(k))
+    setSel(kept)
+    if (kept.length > 0) toast.info(t("restaurant.plan.savedTablesStay"))
+  }
+  const selectAll = () =>
+    setSel([
+      ...latest.current.tables.map((x) => keyOf("table", x.id)),
+      ...latest.current.items
+        .filter((x) => x.kind !== "zone")
+        .map((x) => keyOf("item", x.id)),
+    ])
+
   // one Save: every table's place and every object (checked together), then the tables whose details changed
   const save = useMutation({
     mutationFn: async () => {
@@ -486,15 +705,32 @@ function Editor({
         areaId: area.id,
         plan_width: W,
         plan_height: H,
-        tables: tables.map((x) => ({
-          id: x.id,
-          plan_x: x.plan_x,
-          plan_y: x.plan_y,
-          plan_w: x.plan_w,
-          plan_h: x.plan_h,
-          rotation: x.rotation,
-          shape: x.shape,
-        })),
+        tables: tables
+          .filter((x) => x.id > 0)
+          .map((x) => ({
+            id: x.id,
+            plan_x: x.plan_x,
+            plan_y: x.plan_y,
+            plan_w: x.plan_w,
+            plan_h: x.plan_h,
+            rotation: x.rotation,
+            shape: x.shape,
+          })),
+        // copies made on this screen: created by the same save
+        new_tables: tables
+          .filter((x) => x.id < 0)
+          .map((x) => ({
+            name: x.name,
+            seats: x.seats,
+            extra_chairs: x.extra_chairs,
+            active: x.active,
+            shape: x.shape,
+            plan_x: x.plan_x,
+            plan_y: x.plan_y,
+            plan_w: x.plan_w,
+            plan_h: x.plan_h,
+            rotation: x.rotation,
+          })),
         items,
       })
       for (const x of tables) {
@@ -518,8 +754,69 @@ function Editor({
     },
   })
 
+  // keyboard shortcuts (⌘ on a Mac, Ctrl on Windows and Linux); never while typing in a field or in a dialog
+  const keys = useRef<(e: KeyboardEvent) => void>(() => {})
+  const onKey = (e: KeyboardEvent) => {
+    if (typingOrDialog(e.target)) return
+    const el = e.target instanceof HTMLElement ? e.target : null
+    const onPlan = el === document.body || !el || !!root.current?.contains(el)
+    if (!onPlan) return
+    const mod = e.metaKey || e.ctrlKey
+    const k = e.key.toLowerCase()
+    const hasText = !!window.getSelection()?.toString()
+    const done = () => e.preventDefault()
+    if (mod && k === "s") {
+      done()
+      if (dirty && !problems && !save.isPending) save.mutate()
+    } else if (mod && k === "z" && !e.shiftKey) {
+      done()
+      undo()
+    } else if (mod && (k === "y" || (k === "z" && e.shiftKey))) {
+      done()
+      redo()
+    } else if (mod && k === "a") {
+      done()
+      selectAll()
+    } else if (mod && k === "d") {
+      done()
+      duplicate()
+    } else if (mod && k === "c" && !hasText) {
+      if (sel.length > 0) {
+        done()
+        copy()
+      }
+    } else if (mod && k === "v") {
+      if (clip.current) {
+        done()
+        pasteCopied()
+      }
+    } else if (!mod && (e.key === "Delete" || e.key === "Backspace")) {
+      if (sel.length > 0) {
+        done()
+        removeSelected()
+      }
+    } else if (!mod && e.key === "Escape") {
+      if (sel.length > 0) setSel([])
+    } else if (!mod && e.key.startsWith("Arrow") && sel.length > 0) {
+      done()
+      const n = e.shiftKey ? 5 : 1
+      nudge(
+        e.key === "ArrowLeft" ? -n : e.key === "ArrowRight" ? n : 0,
+        e.key === "ArrowUp" ? -n : e.key === "ArrowDown" ? n : 0,
+      )
+    }
+  }
+  useEffect(() => {
+    keys.current = onKey
+  })
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => keys.current(e)
+    window.addEventListener("keydown", on)
+    return () => window.removeEventListener("keydown", on)
+  }, [])
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div ref={root} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="min-w-0 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">
@@ -539,6 +836,38 @@ function Editor({
             >
               <PencilIcon />
               {t("restaurant.area.edit")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-lg"
+              className="size-11 lg:size-9"
+              aria-label={t("restaurant.plan.undoStep")}
+              title={`${t("restaurant.plan.undoStep")} (${isMac ? "⌘Z" : "Ctrl+Z"})`}
+              disabled={steps.undo === 0}
+              onClick={undo}
+            >
+              <Undo2Icon />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-lg"
+              className="size-11 lg:size-9"
+              aria-label={t("restaurant.plan.redoStep")}
+              title={`${t("restaurant.plan.redoStep")} (${isMac ? "⇧⌘Z" : "Ctrl+Y"})`}
+              disabled={steps.redo === 0}
+              onClick={redo}
+            >
+              <Redo2Icon />
+            </Button>
+            <Button
+              variant={selectMode ? "default" : "outline"}
+              className="h-11 lg:h-9"
+              aria-pressed={selectMode}
+              title={t("restaurant.plan.selectModeHint")}
+              onClick={() => setSelectMode((v) => !v)}
+            >
+              <BoxSelectIcon />
+              {t("restaurant.plan.selectMode")}
             </Button>
             <AddItemMenu onAdd={addItem} />
             <Button
@@ -562,24 +891,23 @@ function Editor({
           height={H}
           tables={tables}
           items={items}
-          picked={picked}
+          selected={new Set(sel)}
+          selectMode={selectMode}
           bad={(type, id) =>
             type === "table"
               ? clashing.has(id) || outside.has(id)
               : itemsOutside.has(id)
           }
-          onPick={setPicked}
-          onMove={(type, id, x, y) =>
-            type === "table"
-              ? update(id, { plan_x: x, plan_y: y })
-              : updateItem(id, { plan_x: x, plan_y: y })
-          }
+          onSelect={setSel}
+          onBegin={remember}
+          onMoveMany={moveMany}
           onResize={(type, id, w, h) =>
             type === "table"
               ? update(id, { plan_w: w, plan_h: h })
               : updateItem(id, { plan_w: w, plan_h: h })
           }
         />
+        <ShortcutHints />
         {problems && (
           <p className="flex items-center gap-2 text-sm text-destructive">
             <AlertTriangleIcon className="size-4 shrink-0" />
@@ -601,6 +929,18 @@ function Editor({
                 queryKey: key("plan", area.id),
               })
             }}
+            // a copy that is not saved yet is just taken off the plan
+            onRemoveCopy={
+              selectedTable.id < 0
+                ? () => {
+                    remember("delete")
+                    setTables((list) =>
+                      list.filter((x) => x.id !== selectedTable.id),
+                    )
+                    setSel([])
+                  }
+                : undefined
+            }
             canDelete={!dirty}
           />
         ) : selectedItem ? (
@@ -617,6 +957,15 @@ function Editor({
               setItems((list) => list.filter((x) => x.id !== selectedItem.id))
               setPicked(null)
             }}
+          />
+        ) : sel.length > 1 ? (
+          <MultiPanel
+            tables={sel.filter((k) => parseKey(k).type === "table").length}
+            objects={sel.filter((k) => parseKey(k).type === "item").length}
+            canRemove={sel.some(canRemove)}
+            onDuplicate={duplicate}
+            onRemove={removeSelected}
+            onClear={() => setSel([])}
           />
         ) : (
           <Panel>
@@ -656,7 +1005,7 @@ function Editor({
       <div className="min-w-0 lg:col-start-1">
         <TableList
           tables={tables}
-          selectedId={picked?.type === "table" ? picked.id : null}
+          selected={new Set(sel)}
           onSelect={(id) => setPicked({ type: "table", id })}
         />
       </div>
@@ -671,54 +1020,6 @@ function Editor({
       )}
     </div>
   )
-}
-
-const ITEM_ICONS: Record<FloorItemKind, LucideIcon> = {
-  bar: MartiniIcon,
-  pole: CircleDotIcon,
-  stage: MicVocalIcon,
-  toilet: ToiletIcon,
-  entry: DoorOpenIcon,
-  label: TypeIcon,
-  zone: SquareDashedIcon,
-  stairs: FootprintsIcon,
-}
-
-/** Zone colours: a light fill behind the tables, a darker border and name */
-const ZONE_STYLES: Record<ZoneColor, string> = {
-  green: "bg-emerald-500/15 border-emerald-600/50 text-emerald-900",
-  blue: "bg-sky-500/15 border-sky-600/50 text-sky-900",
-  amber: "bg-amber-400/20 border-amber-600/50 text-amber-900",
-  rose: "bg-rose-500/15 border-rose-600/50 text-rose-900",
-  violet: "bg-violet-500/15 border-violet-600/50 text-violet-900",
-  slate: "bg-slate-500/15 border-slate-600/50 text-slate-900",
-}
-const ZONE_COLORS = Object.keys(ZONE_STYLES) as ZoneColor[]
-
-/** How each object looks on the plan */
-function itemLook(item: FloorItem) {
-  switch (item.kind) {
-    case "zone":
-      return cn(
-        "border-2 border-dashed items-start justify-start p-1",
-        ZONE_STYLES[(item.color || "green") as ZoneColor],
-      )
-    case "bar":
-      return "rounded-md bg-stone-700 text-white border-stone-800"
-    case "pole":
-      return "rounded-full bg-stone-500 text-white border-stone-600"
-    case "stage":
-      return "rounded-md bg-violet-200 text-violet-950 border-violet-400"
-    case "toilet":
-      return "rounded-md bg-sky-100 text-sky-950 border-sky-300"
-    case "entry":
-      return "rounded-md border-dashed border-foreground/40 bg-background/70"
-    case "label":
-      return "border-transparent bg-transparent"
-    case "stairs":
-      // steps: light and dark stripes across the stairs
-      return "rounded-sm border-stone-500 text-stone-900 bg-[repeating-linear-gradient(0deg,var(--color-stone-200)_0_6px,var(--color-stone-400)_6px_8px)]"
-  }
 }
 
 /** Add a bar, pole, stage, toilet, entrance, text or zone; it starts in the top-left corner */
@@ -909,29 +1210,38 @@ function ItemPanel({
 }
 
 /**
- * The grid with the zones (behind), the tables and the objects; each is dragged with a finger
- * or the mouse, or moved with the arrow keys once selected. The selected one has handles on its
- * right edge, bottom edge and corner to make it bigger or smaller.
+ * The grid with the zones (behind), the tables and the objects. Click one to select it; Shift,
+ * Ctrl or ⌘ click adds or removes pieces, and dragging on the empty grid draws a rectangle that
+ * selects what it touches. Drag any selected piece to move the whole selection together. A single
+ * selected piece has handles on its right edge, bottom edge and corner to make it bigger or smaller.
  */
 function Canvas({
   width,
   height,
   tables,
   items,
-  picked,
+  selected,
+  selectMode,
   bad,
-  onPick,
-  onMove,
+  onSelect,
+  onBegin,
+  onMoveMany,
   onResize,
 }: {
   width: number
   height: number
   tables: ManagedTable[]
   items: FloorItem[]
-  picked: Pick_
+  selected: Set<PieceKey>
+  /** taps add and remove pieces, and dragging on the plan draws the selection rectangle (phones) */
+  selectMode: boolean
   bad: (type: "table" | "item", id: number) => boolean
-  onPick: (p: Pick_) => void
-  onMove: (type: "table" | "item", id: number, x: number, y: number) => void
+  onSelect: (keys: PieceKey[]) => void
+  /** a change is about to start (for Undo) */
+  onBegin: (kind: string) => void
+  onMoveMany: (
+    moves: Array<{ type: PieceType; id: number; x: number; y: number }>,
+  ) => void
   /** the new plan_w × plan_h (before rotation), in grid squares */
   onResize: (type: "table" | "item", id: number, w: number, h: number) => void
 }) {
@@ -939,12 +1249,29 @@ function Canvas({
   const box = useRef<HTMLDivElement>(null)
   const [cell, setCell] = useState(0)
   const drag = useRef<{
-    key: string
+    key: PieceKey
     px: number
     py: number
-    x: number
-    y: number
+    moved: boolean
+    wasInGroup: boolean
+    starts: Array<{
+      type: PieceType
+      id: number
+      x: number
+      y: number
+      piece: Piece
+    }>
   } | null>(null)
+  // the selection rectangle, in pixels inside the plan
+  const [rect, setRect] = useState<{
+    x0: number
+    y0: number
+    x1: number
+    y1: number
+  } | null>(null)
+  const lasso = useRef<{ x0: number; y0: number; additive: boolean } | null>(
+    null,
+  )
 
   useEffect(() => {
     const el = box.current
@@ -957,7 +1284,7 @@ function Canvas({
   }, [width])
 
   type Piece = {
-    type: "table" | "item"
+    type: PieceType
     id: number
     plan_x: number
     plan_y: number
@@ -965,55 +1292,178 @@ function Canvas({
     plan_h: number
     rotation: 0 | 90 | 180 | 270
   }
-  const clampMove = (p: Piece, x: number, y: number) => {
-    const f = footprint(p)
-    onMove(
-      p.type,
-      p.id,
-      Math.max(0, Math.min(width - f.w, x)),
-      Math.max(0, Math.min(height - f.h, y)),
-    )
+  const pieceOf = (k: PieceKey): Piece | null => {
+    const { type, id } = parseKey(k)
+    if (type === "table") {
+      const x = tables.find((v) => v.id === id)
+      return x ? { type, ...x } : null
+    }
+    const x = items.find((v) => v.id === id)
+    return x ? { type, ...x } : null
   }
+  const isSel = (type: PieceType, id: number) => selected.has(keyOf(type, id))
+  const additiveKey = (e: {
+    shiftKey: boolean
+    metaKey: boolean
+    ctrlKey: boolean
+  }) => e.shiftKey || e.metaKey || e.ctrlKey
+
+  const startLasso = (e: PointerEvent<HTMLElement>) => {
+    const el = box.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const x = e.clientX - r.left
+    const y = e.clientY - r.top
+    lasso.current = { x0: x, y0: y, additive: additiveKey(e) }
+    setRect({ x0: x, y0: y, x1: x, y1: y })
+    el.setPointerCapture(e.pointerId)
+  }
+  const moveLasso = (e: PointerEvent<HTMLDivElement>) => {
+    const l = lasso.current
+    const el = box.current
+    if (!l || !el) return
+    const r = el.getBoundingClientRect()
+    setRect({
+      x0: l.x0,
+      y0: l.y0,
+      x1: e.clientX - r.left,
+      y1: e.clientY - r.top,
+    })
+  }
+  const endLasso = (cancel: boolean) => {
+    const l = lasso.current
+    const r = rect
+    lasso.current = null
+    setRect(null)
+    if (!l || !r || cancel || cell === 0) return
+    const left = Math.min(r.x0, r.x1)
+    const right = Math.max(r.x0, r.x1)
+    const top = Math.min(r.y0, r.y1)
+    const bottom = Math.max(r.y0, r.y1)
+    if (right - left < 4 && bottom - top < 4) {
+      // a click on the empty plan: nothing selected any more
+      if (!l.additive) onSelect([])
+      return
+    }
+    const hit = (p: Piece, whole: boolean) => {
+      const f = footprint(p)
+      const a = f.x * cell
+      const b = (f.x + f.w) * cell
+      const c = f.y * cell
+      const d = (f.y + f.h) * cell
+      return whole
+        ? a >= left && b <= right && c >= top && d <= bottom
+        : a < right && b > left && c < bottom && d > top
+    }
+    const keys: PieceKey[] = [
+      ...tables
+        .filter((x) => hit({ type: "table", ...x }, false))
+        .map((x) => keyOf("table", x.id)),
+      // a zone is only taken when the rectangle holds all of it (it would else be taken by every drag)
+      ...items
+        .filter((x) => hit({ type: "item", ...x }, x.kind === "zone"))
+        .map((x) => keyOf("item", x.id)),
+    ]
+    onSelect(l.additive ? [...new Set([...selected, ...keys])] : keys)
+  }
+
   const handlers = (p: Piece) => {
-    const k = `${p.type}${p.id}`
+    const k = keyOf(p.type, p.id)
     return {
       onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
-        onPick({ type: p.type, id: p.id })
+        if (e.pointerType === "mouse" && e.button !== 0) return
+        // on a zone, Alt (or Select several) starts the rectangle: zones are big and lie under everything
+        if (p.type === "item" && (e.altKey || selectMode)) {
+          const item = items.find((v) => v.id === p.id)
+          if (item?.kind === "zone") {
+            startLasso(e)
+            return
+          }
+        }
+        // Shift / Ctrl / ⌘ (or Select several): add or remove this piece, no dragging
+        if (additiveKey(e) || selectMode) {
+          onSelect(
+            selected.has(k)
+              ? [...selected].filter((x) => x !== k)
+              : [...selected, k],
+          )
+          return
+        }
+        const inGroup = selected.has(k) && selected.size > 1
+        const group: PieceKey[] = inGroup ? [...selected] : [k]
+        if (!inGroup) onSelect([k])
         e.currentTarget.setPointerCapture(e.pointerId)
         drag.current = {
           key: k,
           px: e.clientX,
           py: e.clientY,
-          x: p.plan_x,
-          y: p.plan_y,
+          moved: false,
+          wasInGroup: inGroup,
+          starts: group.flatMap((g) => {
+            const piece = pieceOf(g)
+            return piece
+              ? [
+                  {
+                    type: piece.type,
+                    id: piece.id,
+                    x: piece.plan_x,
+                    y: piece.plan_y,
+                    piece,
+                  },
+                ]
+              : []
+          }),
         }
       },
       onPointerMove: (e: PointerEvent<HTMLButtonElement>) => {
         const d = drag.current
         if (!d || d.key !== k || cell === 0) return
-        const x = d.x + Math.round((e.clientX - d.px) / cell)
-        const y = d.y + Math.round((e.clientY - d.py) / cell)
-        if (x !== p.plan_x || y !== p.plan_y) clampMove(p, x, y)
+        let dx = Math.round((e.clientX - d.px) / cell)
+        let dy = Math.round((e.clientY - d.py) / cell)
+        if (dx === 0 && dy === 0 && !d.moved) return
+        // the whole group stays on the plan
+        const lim = moveLimits(
+          d.starts.map((s) => s.piece),
+          width,
+          height,
+        )
+        dx = clamp(dx, lim.minDx, lim.maxDx)
+        dy = clamp(dy, lim.minDy, lim.maxDy)
+        if (!d.moved) {
+          if (dx === 0 && dy === 0) return
+          d.moved = true
+          onBegin("move")
+        }
+        onMoveMany(
+          d.starts.map((s) => ({
+            type: s.type,
+            id: s.id,
+            x: s.x + dx,
+            y: s.y + dy,
+          })),
+        )
       },
       onPointerUp: () => {
+        const d = drag.current
         drag.current = null
+        // a click (no drag) on one of several selected pieces keeps just that one
+        if (d && !d.moved && d.wasInGroup) onSelect([d.key])
       },
       onPointerCancel: () => {
         drag.current = null
       },
+      // from the keyboard: Enter or Space picks the piece (arrows move the selection: see the editor)
       onKeyDown: (e: React.KeyboardEvent) => {
-        const step: Record<string, [number, number]> = {
-          ArrowLeft: [-1, 0],
-          ArrowRight: [1, 0],
-          ArrowUp: [0, -1],
-          ArrowDown: [0, 1],
-        }
-        const s = step[e.key]
-        if (!s) return
+        if (e.key !== "Enter" && e.key !== " ") return
         e.preventDefault()
-        clampMove(p, p.plan_x + s[0], p.plan_y + s[1])
+        if (additiveKey(e)) {
+          onSelect(
+            selected.has(k)
+              ? [...selected].filter((x) => x !== k)
+              : [...selected, k],
+          )
+        } else onSelect([k])
       },
-      onFocus: () => onPick({ type: p.type, id: p.id }),
     }
   }
   const place = (p: Piece) => {
@@ -1026,10 +1476,8 @@ function Canvas({
       cursor: "grab",
     }
   }
-  const isPicked = (type: "table" | "item", id: number) =>
-    picked?.type === type && picked.id === id
 
-  // resizing the selected piece: which edge, where the pointer started, the size it had
+  // resizing the one selected piece: which edge, where the pointer started, the size it had
   const sizing = useRef<{
     edge: "right" | "bottom" | "corner"
     px: number
@@ -1037,18 +1485,7 @@ function Canvas({
     w: number
     h: number
   } | null>(null)
-  const pickedPiece: Piece | null =
-    picked?.type === "table"
-      ? (() => {
-          const x = tables.find((t) => t.id === picked.id)
-          return x ? { type: "table" as const, ...x } : null
-        })()
-      : picked?.type === "item"
-        ? (() => {
-            const x = items.find((i) => i.id === picked.id)
-            return x ? { type: "item" as const, ...x } : null
-          })()
-        : null
+  const only = selected.size === 1 ? pieceOf([...selected][0]) : null
   const resizeHandle = (p: Piece, edge: "right" | "bottom" | "corner") => {
     const f = footprint(p)
     const turned = p.rotation === 90 || p.rotation === 270
@@ -1058,6 +1495,7 @@ function Canvas({
       onPointerDown: (e: PointerEvent<HTMLSpanElement>) => {
         e.stopPropagation()
         e.currentTarget.setPointerCapture(e.pointerId)
+        onBegin("resize")
         sizing.current = { edge, px: e.clientX, py: e.clientY, w: f.w, h: f.h }
       },
       onPointerMove: (e: PointerEvent<HTMLSpanElement>) => {
@@ -1083,6 +1521,28 @@ function Canvas({
     }
   }
 
+  // a dashed frame round the whole selection, when there are several pieces
+  const group =
+    selected.size > 1
+      ? (() => {
+          const fps = [...selected].flatMap((k) => {
+            const p = pieceOf(k)
+            return p ? [footprint(p)] : []
+          })
+          if (fps.length === 0) return null
+          const x0 = Math.min(...fps.map((f) => f.x))
+          const y0 = Math.min(...fps.map((f) => f.y))
+          const x1 = Math.max(...fps.map((f) => f.x + f.w))
+          const y1 = Math.max(...fps.map((f) => f.y + f.h))
+          return {
+            left: x0 * cell - 4,
+            top: y0 * cell - 4,
+            width: (x1 - x0) * cell + 8,
+            height: (y1 - y0) * cell + 8,
+          }
+        })()
+      : null
+
   const zones = items.filter((i) => i.kind === "zone")
   const objects = items.filter((i) => i.kind !== "zone")
   const itemButton = (item: FloorItem, z: string) => {
@@ -1094,13 +1554,13 @@ function Canvas({
         key={`i${item.id}`}
         type="button"
         aria-label={`${t(`restaurant.items.kinds.${item.kind}`)}${item.label ? `: ${item.label}` : ""}`}
-        aria-pressed={isPicked("item", item.id)}
+        aria-pressed={isSel("item", item.id)}
         {...handlers({ type: "item", ...item })}
         className={cn(
           "absolute flex touch-none items-center justify-center gap-1 overflow-hidden border text-[11px] leading-tight font-medium select-none sm:text-xs",
           z,
           itemLook(item),
-          isPicked("item", item.id) && "ring-2 ring-primary",
+          isSel("item", item.id) && "ring-2 ring-primary",
           bad("item", item.id) && "border-destructive ring-2 ring-destructive",
         )}
         style={place({ type: "item", ...item })}
@@ -1118,7 +1578,10 @@ function Canvas({
   return (
     <div
       ref={box}
-      className="relative w-full overflow-hidden rounded-xl bg-muted/40 ring-1 ring-border"
+      className={cn(
+        "relative w-full overflow-hidden rounded-xl bg-muted/40 ring-1 ring-border",
+        selectMode && "touch-none",
+      )}
       style={{
         aspectRatio: `${width} / ${height}`,
         backgroundImage:
@@ -1126,11 +1589,22 @@ function Canvas({
         backgroundSize: `${cell}px ${cell}px`,
       }}
       aria-label={t("restaurant.plan.canvas")}
+      onPointerDown={(e) => {
+        // the empty plan (not a piece): the selection rectangle
+        if (
+          e.target === e.currentTarget &&
+          (e.pointerType !== "mouse" || e.button === 0)
+        )
+          startLasso(e)
+      }}
+      onPointerMove={moveLasso}
+      onPointerUp={() => endLasso(false)}
+      onPointerCancel={() => endLasso(true)}
     >
       {zones.map((z) => itemButton(z, "z-0"))}
       {tables.map((table) => {
         const f = footprint(table)
-        const selected = isPicked("table", table.id)
+        const picked = isSel("table", table.id)
         return (
           <button
             key={`t${table.id}`}
@@ -1139,16 +1613,17 @@ function Canvas({
               name: table.name,
               seats: table.seats,
             })}
-            aria-pressed={selected}
+            aria-pressed={picked}
             {...handlers({ type: "table", ...table })}
             className={cn(
               "absolute z-10 flex touch-none flex-col items-center justify-center overflow-hidden border-2 bg-background text-center leading-tight shadow-sm select-none",
               table.shape === "round" ? "rounded-full" : "rounded-lg",
-              selected
+              picked
                 ? "z-30 border-primary ring-2 ring-primary/30"
                 : "border-foreground/25",
               bad("table", table.id) && "border-destructive bg-destructive/10",
               !table.active && "border-dashed opacity-60",
+              table.id < 0 && !picked && "border-dashed border-primary/60",
             )}
             style={place({ type: "table", ...table })}
           >
@@ -1165,14 +1640,155 @@ function Canvas({
         )
       })}
       {objects.map((o) => itemButton(o, "z-20"))}
-      {pickedPiece && cell > 0 && (
+      {group && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute z-40 rounded-md border-2 border-dashed border-primary"
+          style={group}
+        />
+      )}
+      {only && cell > 0 && (
         <ResizeFrame
-          place={place(pickedPiece)}
-          handle={(edge) => resizeHandle(pickedPiece, edge)}
+          place={place(only)}
+          handle={(edge) => resizeHandle(only, edge)}
           label={t("restaurant.plan.resize")}
         />
       )}
+      {rect && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute z-50 border border-primary bg-primary/15"
+          style={{
+            left: Math.min(rect.x0, rect.x1),
+            top: Math.min(rect.y0, rect.y1),
+            width: Math.abs(rect.x1 - rect.x0),
+            height: Math.abs(rect.y1 - rect.y0),
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+/** What several selected pieces can do together */
+function MultiPanel({
+  tables,
+  objects,
+  canRemove,
+  onDuplicate,
+  onRemove,
+  onClear,
+}: {
+  tables: number
+  objects: number
+  canRemove: boolean
+  onDuplicate: () => void
+  onRemove: () => void
+  onClear: () => void
+}) {
+  const { t } = useTranslation()
+  const mod = isMac ? "⌘" : "Ctrl+"
+  return (
+    <Panel
+      title={t("restaurant.plan.selectedTitle", { count: tables + objects })}
+      lead={[
+        tables > 0 && t("restaurant.plan.selectedTables", { count: tables }),
+        objects > 0 && t("restaurant.plan.selectedObjects", { count: objects }),
+      ]
+        .filter(Boolean)
+        .join(" · ")}
+    >
+      <div className="space-y-2">
+        <Button
+          type="button"
+          className="h-11 w-full justify-between lg:h-9"
+          onClick={onDuplicate}
+        >
+          <span className="flex items-center gap-2">
+            <CopyIcon />
+            {t("restaurant.plan.duplicate")}
+          </span>
+          <kbd className="text-xs opacity-70">{mod}D</kbd>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 w-full justify-between lg:h-9"
+          disabled={!canRemove}
+          onClick={onRemove}
+        >
+          <span className="flex items-center gap-2">
+            <Trash2Icon />
+            {t("restaurant.plan.removeSelected")}
+          </span>
+          <kbd className="text-xs opacity-70">{isMac ? "⌫" : "Del"}</kbd>
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-11 w-full justify-between lg:h-9"
+          onClick={onClear}
+        >
+          <span className="flex items-center gap-2">
+            <XIcon />
+            {t("restaurant.plan.clearSelection")}
+          </span>
+          <kbd className="text-xs opacity-70">Esc</kbd>
+        </Button>
+        <p className="text-sm text-muted-foreground">
+          {t("restaurant.plan.moveTogetherHint")}
+        </p>
+      </div>
+    </Panel>
+  )
+}
+
+/** The shortcuts, written for the keyboard in use (⌘ ⇧ ⌫ on a Mac, Ctrl Shift Del elsewhere) */
+function ShortcutHints() {
+  const { t } = useTranslation()
+  const mod = isMac ? "⌘" : "Ctrl"
+  const sep = isMac ? "" : "+"
+  const rows: Array<[string, string]> = [
+    [`${mod}${sep}A`, t("restaurant.plan.keys.all")],
+    [`${mod}${sep}C  /  ${mod}${sep}V`, t("restaurant.plan.keys.copyPaste")],
+    [`${mod}${sep}D`, t("restaurant.plan.keys.duplicate")],
+    [isMac ? "⌫" : "Delete", t("restaurant.plan.keys.delete")],
+    [isMac ? "← ↑ → ↓" : "← ↑ → ↓", t("restaurant.plan.keys.arrows")],
+    [
+      isMac ? "⇧ ← ↑ → ↓" : "Shift + ← ↑ → ↓",
+      t("restaurant.plan.keys.arrowsFive"),
+    ],
+    [
+      `${isMac ? "⇧" : "Shift"} / ${mod} ${t("restaurant.plan.keys.click")}`,
+      t("restaurant.plan.keys.addRemove"),
+    ],
+    [t("restaurant.plan.keys.dragEmpty"), t("restaurant.plan.keys.rectangle")],
+    [
+      `${mod}${sep}Z  /  ${isMac ? "⇧⌘Z" : "Ctrl+Y"}`,
+      t("restaurant.plan.keys.undoRedo"),
+    ],
+    [`${mod}${sep}S`, t("restaurant.plan.keys.save")],
+    ["Esc", t("restaurant.plan.keys.clear")],
+  ]
+  return (
+    <details className="group rounded-xl bg-background ring-1 ring-border">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 text-sm font-medium">
+        <KeyboardIcon className="size-4" />
+        {t("restaurant.plan.shortcuts")}
+      </summary>
+      <dl className="grid gap-x-6 gap-y-1.5 px-4 pb-4 text-sm sm:grid-cols-[auto_1fr]">
+        {rows.map(([keys, what]) => (
+          <div key={keys} className="contents">
+            <dt>
+              <kbd className="rounded border bg-muted px-1.5 py-0.5 font-mono text-xs">
+                {keys}
+              </kbd>
+            </dt>
+            <dd className="text-muted-foreground">{what}</dd>
+          </div>
+        ))}
+      </dl>
+    </details>
   )
 }
 
@@ -1227,11 +1843,11 @@ function ResizeFrame({
 /** Every table as a row: easy to find and pick on a phone */
 function TableList({
   tables,
-  selectedId,
+  selected,
   onSelect,
 }: {
   tables: ManagedTable[]
-  selectedId: number | null
+  selected: Set<PieceKey>
   onSelect: (id: number) => void
 }) {
   const { t } = useTranslation()
@@ -1245,7 +1861,7 @@ function TableList({
             onClick={() => onSelect(x.id)}
             className={cn(
               "flex min-h-12 w-full items-center justify-between gap-3 px-4 text-left hover:bg-muted",
-              x.id === selectedId && "bg-muted",
+              selected.has(keyOf("table", x.id)) && "bg-muted",
             )}
           >
             <span className="font-medium">{x.name}</span>
@@ -1267,11 +1883,14 @@ function TablePanel({
   table,
   onChange,
   onDeleted,
+  onRemoveCopy,
   canDelete,
 }: {
   table: ManagedTable
   onChange: (patch: Partial<ManagedTable>) => void
   onDeleted: () => void
+  /** a copy that is not saved yet: remove it from the plan (no delete question, nothing stored) */
+  onRemoveCopy?: () => void
   canDelete: boolean
 }) {
   const { t } = useTranslation()
@@ -1284,15 +1903,27 @@ function TablePanel({
     <Panel
       title={table.name || t("restaurant.table.title")}
       actions={
-        canDelete && (
-          <DeleteButton
-            what={table.name}
-            open={deleting}
-            onOpenChange={setDeleting}
-            pending={remove.isPending}
-            error={remove.error}
-            onConfirm={() => remove.mutate(table.id)}
-          />
+        onRemoveCopy ? (
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            className="size-11 lg:size-9"
+            aria-label={t("restaurant.plan.removeCopy")}
+            onClick={onRemoveCopy}
+          >
+            <Trash2Icon />
+          </Button>
+        ) : (
+          canDelete && (
+            <DeleteButton
+              what={table.name}
+              open={deleting}
+              onOpenChange={setDeleting}
+              pending={remove.isPending}
+              error={remove.error}
+              onConfirm={() => remove.mutate(table.id)}
+            />
+          )
         )
       }
     >

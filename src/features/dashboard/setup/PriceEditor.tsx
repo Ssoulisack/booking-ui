@@ -89,7 +89,7 @@ function PriceForm({
         }}
       >
         {initial === null && (
-          <p className="flex items-center gap-2 text-sm text-amber-700">
+          <p className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
             <AlertTriangleIcon className="size-4" />
             {t("setup.price.notSet")}
           </p>

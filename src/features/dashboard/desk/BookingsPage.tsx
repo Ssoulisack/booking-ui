@@ -20,6 +20,7 @@ import { bookingTitle } from "@/features/public/booking-utils"
 import { dayIn, money, nextDays, timeIn, todayIn } from "@/lib/format"
 
 import { useSettings } from "../api"
+import { useDashboard } from "../context"
 import { PageHeader } from "../ui"
 import { useBookingList, type BookingFilters } from "./api"
 import { BookingSheet } from "./BookingSheet"
@@ -43,6 +44,8 @@ export function BookingsPage() {
   const [open, setOpen] = useState<number | null>(null)
   const [adding, setAdding] = useState(false)
   const [search, setSearch] = useState(params.get("q") ?? "")
+  // a restaurant: free table bookings, no payment to track
+  const restaurant = useDashboard().branch.type === "restaurant"
 
   const today = todayIn(tz)
   const period = (params.get("period") ?? "pending") as (typeof PERIODS)[number]
@@ -161,16 +164,18 @@ export function BookingsPage() {
             })),
           ]}
         />
-        <Filter
-          label={t("desk.payment")}
-          value={params.get("pay") ?? "all"}
-          onChange={(v) => set({ pay: v === "all" ? undefined : v })}
-          options={[
-            { value: "all", label: t("desk.allPayments") },
-            { value: "unpaid", label: t("desk.unpaid") },
-            { value: "paid", label: t("desk.paid") },
-          ]}
-        />
+        {!restaurant && (
+          <Filter
+            label={t("desk.payment")}
+            value={params.get("pay") ?? "all"}
+            onChange={(v) => set({ pay: v === "all" ? undefined : v })}
+            options={[
+              { value: "all", label: t("desk.allPayments") },
+              { value: "unpaid", label: t("desk.unpaid") },
+              { value: "paid", label: t("desk.paid") },
+            ]}
+          />
+        )}
       </form>
       {params.get("customer") && (
         <Badge variant="secondary" className="h-8 gap-2 px-3">
@@ -206,7 +211,13 @@ export function BookingsPage() {
               >
                 <span className="w-32 shrink-0">
                   <span className="block font-medium tabular-nums">
-                    {timeIn(b.starts_at, tz)}–{timeIn(b.ends_at, tz)}
+                    {!b.guests
+                      ? `${timeIn(b.starts_at, tz)}–${timeIn(b.ends_at, tz)}`
+                      : b.booking_style === "arrive_by" && b.arrive_by
+                        ? t("upcoming.arriveBy", {
+                            time: timeIn(b.arrive_by, tz),
+                          })
+                        : timeIn(b.starts_at, tz)}
                   </span>
                   <span className="block text-xs text-muted-foreground">
                     {dayIn(b.starts_at, tz)}
@@ -217,19 +228,25 @@ export function BookingsPage() {
                     {b.customer_name || b.guest_name}
                   </span>
                   <span className="block truncate text-sm text-muted-foreground">
-                    {bookingTitle(b)} · {b.code}
+                    {bookingTitle(b)}
+                    {b.guests
+                      ? ` · ${t("public.tables.guestsLine", { count: b.guests })}${b.zones ? ` · ${b.zones}` : ""}`
+                      : ""}{" "}
+                    · {b.code}
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
                   <StatusBadge status={b.status} />
-                  <Badge
-                    variant={
-                      b.payment_status === "paid" ? "outline" : "secondary"
-                    }
-                  >
-                    {money(b.total_price, b.currency)} ·{" "}
-                    {t(`desk.${b.payment_status}`)}
-                  </Badge>
+                  {!b.guests && (
+                    <Badge
+                      variant={
+                        b.payment_status === "paid" ? "outline" : "secondary"
+                      }
+                    >
+                      {money(b.total_price, b.currency)} ·{" "}
+                      {t(`desk.${b.payment_status}`)}
+                    </Badge>
+                  )}
                 </span>
               </button>
             </li>

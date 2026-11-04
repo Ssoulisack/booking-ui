@@ -125,10 +125,10 @@ function ProfileForm({
         // hold, not tap: no accidental changes to the person's own details
         <HoldButton
           className="w-full"
-          backgroundColor="#dcfce7"
-          textColor="#166534"
-          fillColor="#16a34a"
-          fillTextColor="#ffffff"
+          backgroundColor="var(--brand-soft)"
+          textColor="var(--brand-ink)"
+          fillColor="var(--brand)"
+          fillTextColor="var(--brand-foreground)"
           radius={10}
           holdTime={HOLD_MS}
           resetAfter={1500}

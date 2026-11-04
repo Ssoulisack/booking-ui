@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils"
 
 const STATUS_STYLE: Record<BranchStatus, string> = {
   draft: "bg-muted text-foreground",
-  published: "bg-emerald-100 text-emerald-900",
-  closed: "bg-rose-100 text-rose-900",
+  published:
+    "bg-emerald-100 dark:bg-emerald-400/20 text-emerald-900 dark:text-emerald-200",
+  closed: "bg-rose-100 dark:bg-rose-400/20 text-rose-900 dark:text-rose-200",
 }
 
 export function StatusBadge({ status }: { status: BranchStatus }) {

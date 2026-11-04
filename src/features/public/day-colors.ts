@@ -1,4 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz"
+import type { CSSProperties } from "react"
+
+import { middayOf } from "@/lib/format"
 
 /** One weekday's colour, in a soft tone: pale fill, dark text on it, and a strong shade for buttons */
 export interface DayColor {
@@ -22,4 +25,22 @@ const COLORS: DayColor[] = [
 export function dayColorOf(iso: string, tz: string): DayColor {
   // ISO weekday: Monday 1 … Sunday 7
   return COLORS[Number(formatInTimeZone(iso, tz, "i")) % 7]
+}
+
+/**
+ * The brand colours swapped for a day's colour (CSS variables): put on a wrapper, every button,
+ * chip and step inside it takes the colour of the picked day. Nothing until a day is picked.
+ */
+export function dayBrandStyle(
+  date: string | undefined,
+  tz: string,
+): CSSProperties | undefined {
+  if (!date) return undefined
+  const day = dayColorOf(middayOf(date, tz), tz)
+  return {
+    "--brand": day.ink,
+    "--brand-foreground": "#ffffff",
+    "--brand-soft": day.bg,
+    "--brand-ink": day.fg,
+  } as CSSProperties
 }

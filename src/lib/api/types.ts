@@ -304,6 +304,8 @@ export interface BookingItem {
   starts_at: string
   ends_at: string
   price: number
+  /** false once let go: a cancelled booking, or a table the group moved away from before using it */
+  active: boolean
 }
 
 export interface Booking {
@@ -335,14 +337,33 @@ export interface Booking {
   cancel_reason?: string
   created_at: string
   items: BookingItem[]
+  /** restaurant tables: the group size, and when the group loses its table if not there */
+  guests?: number
+  arrive_by?: string
+  arrived_at?: string
+  /** arrive_by: a bar booking for the evening (its start time means nothing to the guest) */
+  booking_style?: BookingStyle
+  /** restaurant tables: the floor of the area (sport_name) the tables are in */
+  area_floor?: number
+  /** the zones the tables stand in (e.g. "Smoking"), when booked */
+  zones?: string
+  /** event days: the event the tables were bought for, pay before, and when the customer said "I sent the slip" */
+  event_id?: number
+  pay_by?: string
+  slip_sent_at?: string
 }
 
 export interface CreatedBooking extends Booking {
   guest_token?: string
   guest_link?: string
+  /** event days: how to pay (answer to buying tables) */
+  pay?: EventPay
 }
 
 export interface CreateBookingInput {
+  /** restaurants: the chosen tables and the group size */
+  table_ids?: number[]
+  guests?: number
   resource_id?: number
   coach_id?: number
   sport_id?: number
@@ -469,6 +490,42 @@ export interface FloorItem {
   target_floor: number | null
 }
 
+/** A restaurant area as customers see it */
+export interface PublicArea {
+  id: number
+  name: string
+  floor: number
+  plan_width: number
+  plan_height: number
+  tables: PublicTable[]
+  items: FloorItem[]
+}
+
+export interface PublicTable extends TableFields {
+  id: number
+  name: string
+}
+
+/** The free start times of a day for a group, with the tables free at each */
+export interface TableAvailability {
+  date: string
+  timezone: string
+  guests: number
+  max_guests_online: number
+  late_minutes: number
+  booking_style: BookingStyle
+  /** an event takes this day over: its tables are sold, not booked free */
+  event?: { id: number; name: string }
+  times: Array<{
+    starts_at: string
+    /** not there by then: the table goes to others */
+    arrive_by: string
+    free_table_ids: number[]
+    /** nothing can seat the group on real seats: a table with extra chairs may be chosen */
+    extra_chairs_allowed: boolean
+  }>
+}
+
 /** An area with every table and object on its floor plan */
 export interface FloorPlan {
   area: ManagedSport
@@ -491,7 +548,15 @@ export interface TableSettings {
   approval_above_guests: number | null
   /** the last online booking this long before closing */
   last_call_minutes: number
+  /** time: customers pick a start time; arrive_by: a bar, only the evening */
+  booking_style: BookingStyle
+  /** arrive_by: be there by this time (HH:MM) */
+  arrive_by_time: string
+  /** arrive_by: booked after that time, be there within this many minutes */
+  late_booking_minutes: number
 }
+
+export type BookingStyle = "time" | "arrive_by"
 
 export interface ManagedCoach {
   id: number
@@ -630,12 +695,21 @@ export interface CalendarEntry {
   seats_taken?: number
   capacity?: number
   reason?: string
+  /** restaurant bookings: people in the group, and whether staff marked them arrived */
+  guests?: number
+  arrived?: boolean
 }
 
 export interface CalendarLane {
   owner_type: "resource" | "coach"
   owner_id: number
   name: string
+  /** the sport (sport branches) or area (restaurants) of a court / table; 0 for coaches */
+  group_id: number
+  group_name: string
+  floor: number
+  /** restaurant tables */
+  seats: number
   entries: CalendarEntry[]
 }
 
@@ -781,4 +855,131 @@ export interface DirectoryBranch {
   /** lowest hourly court price; null when no court has a price yet */
   from_price: number | null
   currency: string
+}
+
+// ---------- events (restaurant event days) ----------
+
+/** An event as the team sees it, with how its bookings stand */
+export interface EventItem {
+  id: number
+  name: string
+  description: string
+  starts_on: string
+  ends_on: string
+  background_key: string
+  background_url?: string
+  ad_key: string
+  ad_url?: string
+  hold_minutes: number
+  big_booking_tables: number
+  big_hold_minutes: number
+  default_price: number
+  published: boolean
+  currency: string
+  waiting: number
+  paid: number
+  cancelled: number
+}
+
+export type EventInput = Omit<
+  EventItem,
+  | "id"
+  | "background_url"
+  | "ad_url"
+  | "currency"
+  | "waiting"
+  | "paid"
+  | "cancelled"
+>
+
+export interface ZonePrice {
+  item_id: number
+  area_id: number
+  label: string
+  color: string
+  price: number | null
+}
+
+export interface TablePrice {
+  table_id: number
+  area_id: number
+  name: string
+  seats: number
+  own: number | null
+  price: number
+}
+
+/** An event's prices: the default, a price per zone, a price on one table; `price` is what each table is sold at */
+export interface EventPrices {
+  default_price: number
+  currency: string
+  zones: ZonePrice[]
+  tables: TablePrice[]
+}
+
+export interface EventPricesInput {
+  default_price: number
+  zones: { item_id: number; price: number }[]
+  tables: { table_id: number; price: number }[]
+}
+
+/** How customers pay the branch for event tables */
+export interface PayInfo {
+  whatsapp: string
+  qr_key: string
+  qr_url?: string
+  note: string
+}
+
+// ---------- events (public) ----------
+
+/** An event card (the small ad) on the branch page */
+export interface PublicEvent {
+  id: number
+  name: string
+  description: string
+  starts_on: string
+  ends_on: string
+  background_url?: string
+  ad_url?: string
+  /** the cheapest table for sale (0: none) */
+  from_price: number
+  currency: string
+}
+
+/** One table of the event day: its price (0: not for sale) and whether it is taken */
+export interface SaleTable {
+  id: number
+  price: number
+  sold: boolean
+}
+
+export interface PublicEventDetail extends PublicEvent {
+  days: string[]
+  date: string
+  opens_at?: string
+  closes_at?: string
+  tables: SaleTable[]
+  hold_minutes: number
+  big_booking_tables: number
+  big_hold_minutes: number
+}
+
+/** The total, how long the tables are held, and where to pay */
+export interface EventPay {
+  total: number
+  currency: string
+  hold_until?: string
+  big_booking: boolean
+  whatsapp: string
+  qr_url?: string
+  note: string
+}
+
+export interface BuyEventTablesInput {
+  date: string
+  table_ids: number[]
+  guests: number
+  guest?: { name: string; phone: string; email?: string }
+  notes?: string
 }

@@ -9,13 +9,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
-import type { TableMode, TableSettings } from "@/lib/api/types"
+import type { BookingStyle, TableMode, TableSettings } from "@/lib/api/types"
 import { useUnsaved } from "@/stores/unsaved"
 
 import { manage, useChange, useTableSettings } from "../api"
 import { ActiveSwitch, PageHeader, Panel } from "../ui"
 
 const MODES: TableMode[] = ["one_at_a_time", "hold"]
+const STYLES: BookingStyle[] = ["time", "arrive_by"]
+const LATE_BOOKING = [15, 30, 45, 60]
 
 /** /setup/table-settings — how the restaurant takes table bookings */
 export function TableSettingsPage() {
@@ -52,58 +54,147 @@ function Form({ initial }: { initial: TableSettings }) {
         lead={t("restaurant.settings.lead")}
       />
 
-      <Panel title={t("restaurant.settings.modeTitle")}>
+      <Panel title={t("restaurant.settings.styleTitle")}>
         <fieldset className="space-y-2">
           <legend className="sr-only">
-            {t("restaurant.settings.modeTitle")}
+            {t("restaurant.settings.styleTitle")}
           </legend>
-          {MODES.map((mode) => (
+          {STYLES.map((style) => (
             <label
-              key={mode}
+              key={style}
               className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary"
             >
               <input
                 type="radio"
-                name="table_mode"
-                value={mode}
-                checked={f.table_mode === mode}
-                onChange={() => set({ table_mode: mode })}
+                name="booking_style"
+                value={style}
+                checked={f.booking_style === style}
+                onChange={() =>
+                  set(
+                    style === "arrive_by"
+                      ? { booking_style: style, table_mode: "one_at_a_time" }
+                      : { booking_style: style },
+                  )
+                }
                 className="mt-1 accent-primary"
               />
               <span>
                 <span className="block text-sm font-medium">
-                  {t(`restaurant.settings.modes.${mode}`)}
+                  {t(`restaurant.settings.styles.${style}`)}
                 </span>
                 <span className="block text-sm text-muted-foreground">
-                  {t(`restaurant.settings.modeHints.${mode}`)}
+                  {t(`restaurant.settings.styleHints.${style}`)}
                 </span>
               </span>
             </label>
           ))}
         </fieldset>
-        {f.table_mode === "hold" && (
-          <Minutes
-            id="ts-hold"
-            className="mt-4"
-            label={t("restaurant.settings.hold")}
-            hint={t("restaurant.settings.holdHint")}
-            value={f.hold_minutes}
-            onChange={(v) => set({ hold_minutes: v })}
-            step={15}
-          />
+        {f.booking_style === "arrive_by" && (
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="ts-arrive">
+                {t("restaurant.settings.arriveByTime")}
+              </Label>
+              <Input
+                id="ts-arrive"
+                type="time"
+                step={300}
+                value={f.arrive_by_time}
+                onChange={(e) => set({ arrive_by_time: e.target.value })}
+                className="h-11 w-36 text-base lg:h-9 lg:text-sm"
+              />
+              <p className="text-sm text-muted-foreground">
+                {t("restaurant.settings.arriveByHint", {
+                  time: f.arrive_by_time,
+                })}
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ts-late-booking">
+                {t("restaurant.settings.lateBooking")}
+              </Label>
+              {/* native picker: the phone's own list */}
+              <select
+                id="ts-late-booking"
+                value={f.late_booking_minutes}
+                onChange={(e) =>
+                  set({ late_booking_minutes: Number(e.target.value) })
+                }
+                className="h-11 w-36 rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
+              >
+                {LATE_BOOKING.map((n) => (
+                  <option key={n} value={n}>
+                    {t("restaurant.settings.minutesN", { n })}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-muted-foreground">
+                {t("restaurant.settings.lateBookingHint", {
+                  time: f.arrive_by_time,
+                  n: f.late_booking_minutes,
+                })}
+              </p>
+            </div>
+          </div>
         )}
       </Panel>
 
+      {f.booking_style === "time" && (
+        <Panel title={t("restaurant.settings.modeTitle")}>
+          <fieldset className="space-y-2">
+            <legend className="sr-only">
+              {t("restaurant.settings.modeTitle")}
+            </legend>
+            {MODES.map((mode) => (
+              <label
+                key={mode}
+                className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary"
+              >
+                <input
+                  type="radio"
+                  name="table_mode"
+                  value={mode}
+                  checked={f.table_mode === mode}
+                  onChange={() => set({ table_mode: mode })}
+                  className="mt-1 accent-primary"
+                />
+                <span>
+                  <span className="block text-sm font-medium">
+                    {t(`restaurant.settings.modes.${mode}`)}
+                  </span>
+                  <span className="block text-sm text-muted-foreground">
+                    {t(`restaurant.settings.modeHints.${mode}`)}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          {f.table_mode === "hold" && (
+            <Minutes
+              id="ts-hold"
+              className="mt-4"
+              label={t("restaurant.settings.hold")}
+              hint={t("restaurant.settings.holdHint")}
+              value={f.hold_minutes}
+              onChange={(v) => set({ hold_minutes: v })}
+              step={15}
+            />
+          )}
+        </Panel>
+      )}
+
       <Panel title={t("restaurant.settings.timesTitle")}>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Minutes
-            id="ts-late"
-            label={t("restaurant.settings.late")}
-            hint={t("restaurant.settings.lateHint", { n: f.late_minutes })}
-            value={f.late_minutes}
-            onChange={(v) => set({ late_minutes: v })}
-            step={5}
-          />
+          {f.booking_style === "time" && (
+            <Minutes
+              id="ts-late"
+              label={t("restaurant.settings.late")}
+              hint={t("restaurant.settings.lateHint", { n: f.late_minutes })}
+              value={f.late_minutes}
+              onChange={(v) => set({ late_minutes: v })}
+              step={5}
+            />
+          )}
           <Minutes
             id="ts-last"
             label={t("restaurant.settings.lastCall")}

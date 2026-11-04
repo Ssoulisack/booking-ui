@@ -32,7 +32,10 @@ export function TimePicker({
   onChange,
   disabled,
   tone = "brand",
+  part = "both",
 }: {
+  /** "length" only, "time" only (step by step on the public page), or both (the desk) */
+  part?: "both" | "length" | "time"
   availability: Availability
   tz: string
   start?: string
@@ -75,107 +78,114 @@ export function TimePicker({
       : "border-primary bg-primary text-primary-foreground"
   const off =
     tone === "brand"
-      ? "border-black/10 bg-white active:bg-[var(--brand-soft)]"
+      ? "border-border bg-card active:bg-[var(--brand-soft)]"
       : "border-border bg-background hover:bg-muted"
 
   return (
     <div className="space-y-5">
-      <fieldset className="space-y-2">
-        <legend className="mb-2 text-base font-semibold">
-          {t("public.step.length")}
-        </legend>
-        <div
-          role="radiogroup"
-          aria-label={t("public.step.length")}
-          className="flex flex-wrap gap-2"
-        >
-          {lengths.map((d) => {
-            const p = priceOf(d)
-            return (
-              <button
-                key={d}
-                type="button"
-                role="radio"
-                aria-checked={d === len}
-                // keep the chosen start if it allows the new length
-                onClick={() => onChange(keepsStart(d) ? start : undefined, d)}
-                className={cn(
-                  "flex min-h-12 flex-col items-center justify-center rounded-xl border px-4 py-1.5 transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring",
-                  d === len ? on : off,
-                )}
-              >
-                <span className="font-semibold">{duration(d)}</span>
-                {p !== undefined && currency && (
-                  <span className="text-xs opacity-80">
-                    {money(p, currency)}
+      {part !== "time" && (
+        <fieldset className="space-y-2">
+          <legend className="mb-2 text-base font-semibold">
+            {t("public.step.length")}
+          </legend>
+          <div
+            role="radiogroup"
+            aria-label={t("public.step.length")}
+            className="flex flex-wrap gap-2"
+          >
+            {lengths.map((d) => {
+              const p = priceOf(d)
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  role="radio"
+                  aria-checked={d === len}
+                  // keep the chosen start if it allows the new length
+                  onClick={() => onChange(keepsStart(d) ? start : undefined, d)}
+                  className={cn(
+                    "flex min-h-12 flex-col items-center justify-center rounded-xl border px-4 py-1.5 transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring",
+                    d === len ? on : off,
+                  )}
+                >
+                  <span className="font-semibold">{duration(d)}</span>
+                  {p !== undefined && currency && (
+                    <span className="text-xs opacity-80">
+                      {money(p, currency)}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </fieldset>
+      )}
+
+      {part !== "length" && (
+        <fieldset className="space-y-3">
+          <legend className="mb-2 text-base font-semibold">
+            {t("public.step.time")}
+          </legend>
+          <div
+            role="radiogroup"
+            aria-label={t("time.partOfDay")}
+            className="flex rounded-xl bg-muted p-1"
+          >
+            {PERIODS.map((p) => {
+              const count = byPeriod[p].length
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  role="radio"
+                  aria-checked={p === period}
+                  disabled={count === 0}
+                  onClick={() => setPicked(p)}
+                  className={cn(
+                    "flex h-11 flex-1 flex-col items-center justify-center rounded-lg text-sm font-medium transition-colors disabled:opacity-40",
+                    p === period
+                      ? "bg-card shadow-sm"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {t(`time.${p}`)}
+                  <span className="text-[11px] font-normal opacity-70">
+                    {t("time.free", { count })}
                   </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      </fieldset>
+                </button>
+              )
+            })}
+          </div>
+          <div
+            role="radiogroup"
+            aria-label={t("public.step.time")}
+            className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4"
+          >
+            {byPeriod[period].map((s) => {
+              const selected = s.starts_at === chosen?.starts_at
+              return (
+                <button
+                  key={s.starts_at}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  disabled={disabled}
+                  onClick={() => onChange(s.starts_at, len)}
+                  className={cn(
+                    "flex min-h-12 items-center justify-center rounded-xl border px-2 text-base font-semibold tabular-nums transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring",
+                    selected ? on : off,
+                  )}
+                >
+                  {timeIn(s.starts_at, tz)}–
+                  {timeIn(endOf(s.starts_at, len), tz)}
+                </button>
+              )
+            })}
+          </div>
+        </fieldset>
+      )}
 
-      <fieldset className="space-y-3">
-        <legend className="mb-2 text-base font-semibold">
-          {t("public.step.time")}
-        </legend>
-        <div
-          role="radiogroup"
-          aria-label={t("time.partOfDay")}
-          className="flex rounded-xl bg-black/5 p-1"
-        >
-          {PERIODS.map((p) => {
-            const count = byPeriod[p].length
-            return (
-              <button
-                key={p}
-                type="button"
-                role="radio"
-                aria-checked={p === period}
-                disabled={count === 0}
-                onClick={() => setPicked(p)}
-                className={cn(
-                  "flex h-11 flex-1 flex-col items-center justify-center rounded-lg text-sm font-medium transition-colors disabled:opacity-40",
-                  p === period ? "bg-white shadow-sm" : "text-muted-foreground",
-                )}
-              >
-                {t(`time.${p}`)}
-                <span className="text-[11px] font-normal opacity-70">
-                  {t("time.free", { count })}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-        <div
-          role="radiogroup"
-          aria-label={t("public.step.time")}
-          className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4"
-        >
-          {byPeriod[period].map((s) => {
-            const selected = s.starts_at === chosen?.starts_at
-            return (
-              <button
-                key={s.starts_at}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                disabled={disabled}
-                onClick={() => onChange(s.starts_at, len)}
-                className={cn(
-                  "flex min-h-12 items-center justify-center rounded-xl border px-2 text-base font-semibold tabular-nums transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring",
-                  selected ? on : off,
-                )}
-              >
-                {timeIn(s.starts_at, tz)}–{timeIn(endOf(s.starts_at, len), tz)}
-              </button>
-            )
-          })}
-        </div>
-      </fieldset>
-
-      {chosen && (
+      {part === "both" && chosen && (
         <p
           className="flex items-center gap-2 text-sm font-medium"
           aria-live="polite"

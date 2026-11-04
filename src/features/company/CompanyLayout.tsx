@@ -5,6 +5,7 @@ import {
   ImagesIcon,
   KeyRoundIcon,
   LayoutDashboardIcon,
+  QrCodeIcon,
   SettingsIcon,
   UsersIcon,
   UsersRoundIcon,
@@ -16,7 +17,7 @@ import { Link, Outlet, useLocation } from "react-router"
 import { ErrorAlert } from "@/components/form"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ShareBooking } from "@/features/dashboard/ShareBooking"
+import { LiveStrip } from "@/features/dashboard/LiveStrip"
 import { PageHeader, Panel } from "@/features/dashboard/ui"
 import { money } from "@/lib/format"
 import { AppShell } from "@/layouts/AppShell"
@@ -37,6 +38,7 @@ const COMPANY_CRUMBS: Record<string, string> = {
   users: "nav.users",
   rules: "nav.bookingRules",
   media: "nav.media",
+  share: "nav.share",
   settings: "nav.companySettings",
 }
 
@@ -69,6 +71,7 @@ export function CompanyLayout() {
       label: t("nav.bookingRules"),
       icon: CalendarRangeIcon,
     },
+    { to: "/company/share", label: t("nav.share"), icon: QrCodeIcon },
     { to: "/company/media", label: t("nav.media"), icon: ImagesIcon },
     {
       to: "/company/settings",
@@ -161,15 +164,7 @@ export function CompanyHome() {
           </dl>
         )}
       </Panel>
-      <Panel
-        title={t("company.homeLinkTitle")}
-        lead={t("company.homeLinkLead")}
-      >
-        <ShareBooking
-          url={`${window.location.origin}/`}
-          name={company.data?.name ?? ""}
-        />
-      </Panel>
+      <LiveStrip url={`${window.location.origin}/`} to="/company/share" />
       <Panel title={t("nav.branches")}>
         {branches.isPending ? (
           <Skeleton className="h-32" />

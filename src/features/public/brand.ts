@@ -8,36 +8,56 @@ extend([a11yPlugin])
 
 const INK = "#141a17"
 const WHITE = "#ffffff"
-export const DEFAULT_BRAND = "#0e7c66"
+/** The theme's navy: a company that has not chosen a colour gets the navy + candy look */
+export const DEFAULT_BRAND = "#1c2350"
+
+const NAVY = "#0e1330"
+const CANDY_YELLOW = "#fbbf24"
+const CANDY_INK = "#10142c"
 
 /**
  * CSS variables for one business's brand colour. Buttons and selected states use --primary, so
  * shadcn components follow the brand. Text on the brand is white or ink, whichever reads better;
- * a pale brand colour is darkened for links and text on white so it stays readable (WCAG AA).
+ * the brand used as text is darkened (light pages) or lightened (dark pages) until it reads
+ * (WCAG AA). On the navy night theme a brand too dark to see gives its buttons to candy yellow;
+ * the hero keeps the real brand colour (--brand-hero).
  */
 export function brandStyle(
   hex: string | undefined,
   look?: Look,
+  mode: "light" | "dark" = "light",
 ): CSSProperties {
-  const base = colord(hex || DEFAULT_BRAND).isValid()
+  const real = colord(hex || DEFAULT_BRAND).isValid()
     ? colord(hex || DEFAULT_BRAND)
     : colord(DEFAULT_BRAND)
+  const page = mode === "dark" ? NAVY : WHITE
+  const base =
+    mode === "dark" && real.contrast(NAVY) < 3 ? colord(CANDY_YELLOW) : real
 
-  const onBrand = base.contrast(WHITE) >= base.contrast(INK) ? WHITE : INK
+  const onBrand =
+    base.toHex() === CANDY_YELLOW
+      ? CANDY_INK
+      : base.contrast(WHITE) >= base.contrast(INK)
+        ? WHITE
+        : INK
+  const onHero = real.contrast(WHITE) >= real.contrast(INK) ? WHITE : INK
 
-  // brand as text on white: darken until it reaches 4.5:1
+  // brand as text on the page: darken (light) or lighten (dark) until it reaches 4.5:1
   let ink = base
-  for (let i = 0; i < 20 && ink.contrast(WHITE) < 4.5; i++)
-    ink = ink.darken(0.04)
+  for (let i = 0; i < 20 && ink.contrast(page) < 4.5; i++)
+    ink = mode === "dark" ? ink.lighten(0.04) : ink.darken(0.04)
 
   return {
     "--brand": base.toHex(),
     "--brand-foreground": onBrand,
     "--brand-ink": ink.toHex(),
-    "--brand-soft": base.alpha(0.1).toRgbString(),
+    "--brand-soft": base.alpha(mode === "dark" ? 0.16 : 0.1).toRgbString(),
     "--brand-line": base.alpha(0.28).toRgbString(),
+    "--brand-hero": real.toHex(),
+    "--brand-hero-foreground": onHero,
     "--primary": base.toHex(),
     "--primary-foreground": onBrand,
+    "--primary-ink": ink.toHex(),
     "--ring": base.alpha(0.5).toRgbString(),
     ...lookStyle(look),
   } as CSSProperties
@@ -68,4 +88,12 @@ export function ringColors(hex: string | undefined): {
         colorTwo: base.darken(0.6).toHex(),
         theme: "light",
       }
+}
+
+/** A hero on a dark brand colour (white text): it gets the bright candy accents */
+export function heroIsDark(hex: string | undefined): boolean {
+  const base = colord(hex || DEFAULT_BRAND).isValid()
+    ? colord(hex || DEFAULT_BRAND)
+    : colord(DEFAULT_BRAND)
+  return base.contrast(WHITE) >= base.contrast(INK)
 }

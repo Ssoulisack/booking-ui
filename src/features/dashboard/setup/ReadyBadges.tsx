@@ -22,7 +22,7 @@ export function ReadyBadges({
     <span className="flex flex-wrap gap-1.5">
       {!active && <Badge variant="secondary">{t("dash.hidden")}</Badge>}
       {!r.hasHours && (
-        <Badge className="border-0 bg-amber-100 text-amber-900">
+        <Badge className="border-0 bg-amber-100 text-amber-900 dark:bg-amber-400/20 dark:text-amber-200">
           {t("setup.needsHours")}
         </Badge>
       )}
@@ -33,7 +33,7 @@ export function ReadyBadges({
           })}
         </Badge>
       ) : (
-        <Badge className="border-0 bg-amber-100 text-amber-900">
+        <Badge className="border-0 bg-amber-100 text-amber-900 dark:bg-amber-400/20 dark:text-amber-200">
           {t("setup.needsPrice")}
         </Badge>
       )}

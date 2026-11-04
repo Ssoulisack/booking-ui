@@ -14,6 +14,7 @@ const RESTAURANT_TABS = [
   "floor-plan",
   "hours",
   "table-settings",
+  "events",
   "closures",
   "rules",
 ] as const

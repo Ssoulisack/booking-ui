@@ -97,7 +97,7 @@ export function GoLiveGuide({
         </ol>
 
         {step.done && (
-          <p className="flex items-center gap-2 text-sm text-emerald-700">
+          <p className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300">
             <CheckCircle2Icon className="size-4 shrink-0" />
             {t("overview.guide.done")}
           </p>

@@ -6,9 +6,9 @@ import { Link } from "react-router"
 import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/form"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Spinner } from "@/components/ui/spinner"
 import { roleAtLeast } from "@/lib/roles"
 import { cn } from "@/lib/utils"
@@ -25,7 +25,10 @@ import {
 } from "./api"
 import { useDashboard } from "./context"
 import { GoLiveGuide, type GuideStep } from "./GoLiveGuide"
-import { ShareBooking } from "./ShareBooking"
+import { TonightPlan } from "./TonightPlan"
+import { UpcomingBookings } from "./UpcomingBookings"
+import { LiveStrip } from "./LiveStrip"
+import { EventPayments } from "./EventPayments"
 import { PageHeader, Panel } from "./ui"
 
 /** /dashboard/:id — what to do next: get the booking page live, then share it */
@@ -47,31 +50,60 @@ export function DashboardHome() {
       {canSetUp ? (
         <PagePanel />
       ) : (
-        <Panel title={t("dashboard.staffTitle")}>
-          <p className="mb-4 text-muted-foreground">
-            {t("dashboard.staffLead")}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {(["calendar", "bookings", "cash-up"] as const).map((to) => (
-              <Button
-                key={to}
-                asChild
-                variant={to === "calendar" ? "default" : "outline"}
-                className="h-11 lg:h-9"
-              >
-                <Link to={to}>
-                  {t(`nav.${to === "cash-up" ? "cashUp" : to}`)}
-                </Link>
-              </Button>
-            ))}
-          </div>
-        </Panel>
+        <>
+          <Panel title={t("dashboard.staffTitle")}>
+            <p className="mb-4 text-muted-foreground">
+              {t("dashboard.staffLead")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(branch.type === "restaurant"
+                ? (["calendar", "bookings"] as const)
+                : (["calendar", "bookings", "cash-up"] as const)
+              ).map((to) => (
+                <Button
+                  key={to}
+                  asChild
+                  variant={to === "calendar" ? "default" : "outline"}
+                  className="h-11 lg:h-9"
+                >
+                  <Link to={to}>
+                    {t(`nav.${to === "cash-up" ? "cashUp" : to}`)}
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </Panel>
+          <UpcomingBookings />
+        </>
       )}
     </div>
   )
 }
 
-/** Published: the link to share. Not yet: the steps to get there, then Publish */
+/** A restaurant's Overview: tonight's floor plan or the bookings to come, one at a time */
+function OverviewTabs() {
+  const { t } = useTranslation()
+  return (
+    <Tabs defaultValue="plan" className="space-y-4">
+      <TabsList className="h-11 lg:h-9">
+        <TabsTrigger value="plan" className="px-4">
+          {t("tonight.tab")}
+        </TabsTrigger>
+        <TabsTrigger value="upcoming" className="px-4">
+          {t("upcoming.title")}
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="plan">
+        <TonightPlan />
+      </TabsContent>
+      <TabsContent value="upcoming">
+        <UpcomingBookings />
+      </TabsContent>
+    </Tabs>
+  )
+}
+
+/** Published: the bookings to come (the link and QR code are on the Share page). Not yet: the steps to go live */
 function PagePanel() {
   const { t } = useTranslation()
   const { branch } = useDashboard()
@@ -84,19 +116,13 @@ function PagePanel() {
   const url = `${window.location.origin}${s.public_path}`
 
   if (s.status === "published") {
+    // live: what is coming up; the link and QR code have their own Share page
     return (
-      <Panel
-        title={t("overview.liveTitle")}
-        lead={t("overview.liveLead")}
-        actions={
-          <Badge className="border-0 bg-emerald-100 text-emerald-900">
-            {t("status.published")}
-          </Badge>
-        }
-      >
-        <ShareBooking url={url} name={s.name} />
-        {isOwner && <PublishButton published />}
-      </Panel>
+      <div className="space-y-6">
+        <LiveStrip url={url} to="share" />
+        {branch.type === "restaurant" && <EventPayments />}
+        {branch.type === "restaurant" ? <OverviewTabs /> : <UpcomingBookings />}
+      </div>
     )
   }
   if (s.status === "closed") {
@@ -270,7 +296,7 @@ function StepList({ isOwner, steps }: { isOwner: boolean; steps: Step[] }) {
                 )}
               >
                 {step.done ? (
-                  <CheckCircle2Icon className="size-5 shrink-0 text-emerald-600" />
+                  <CheckCircle2Icon className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 ) : (
                   <CircleIcon className="size-5 shrink-0 text-muted-foreground" />
                 )}
@@ -300,7 +326,7 @@ function StepList({ isOwner, steps }: { isOwner: boolean; steps: Step[] }) {
   )
 }
 
-function PublishButton({
+export function PublishButton({
   published,
   disabled,
 }: {

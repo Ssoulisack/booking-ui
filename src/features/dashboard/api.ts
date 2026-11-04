@@ -1,5 +1,6 @@
 import {
   useMutation,
+  useQueries,
   useQuery,
   useQueryClient,
   type QueryKey,
@@ -31,6 +32,11 @@ import type {
   ScheduleOwner,
   SettingsInput,
   EffectiveRule,
+  EventInput,
+  EventItem,
+  EventPrices,
+  EventPricesInput,
+  PayInfo,
 } from "@/lib/api/types"
 
 import { useDashboard } from "./context"
@@ -136,11 +142,48 @@ export function useFloorPlan(areaId: number) {
   })
 }
 
+/** Every area's plan of a restaurant at once (the Overview's floor plan) */
+export function useAllFloorPlans(areaIds: number[]) {
+  const biz = useBiz()
+  return useQueries({
+    queries: areaIds.map((id) => ({
+      queryKey: biz.key("plan", id),
+      queryFn: () => api<FloorPlan>(`${biz.base}/sports/${id}/plan`),
+    })),
+  })
+}
+
 export function useTableSettings() {
   const { base, key } = useBiz()
   return useQuery({
     queryKey: key("table-settings"),
     queryFn: () => api<TableSettings>(`${base}/table-settings`),
+    refetchOnWindowFocus: false,
+  })
+}
+
+export function useEvents() {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("events"),
+    queryFn: () => api<EventItem[]>(`${base}/events`),
+  })
+}
+
+export function useEventPrices(eventId: number) {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("events", "prices", eventId),
+    queryFn: () => api<EventPrices>(`${base}/events/${eventId}/prices`),
+    refetchOnWindowFocus: false,
+  })
+}
+
+export function usePayInfo() {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("event-pay"),
+    queryFn: () => api<PayInfo>(`${base}/event-pay`),
     refetchOnWindowFocus: false,
   })
 }
@@ -296,6 +339,22 @@ export const manage = {
         >
       >
       items: FloorItem[]
+      /** copies of tables, made together with this save */
+      new_tables?: Array<
+        Pick<
+          ManagedTable,
+          | "name"
+          | "seats"
+          | "extra_chairs"
+          | "active"
+          | "shape"
+          | "plan_x"
+          | "plan_y"
+          | "plan_w"
+          | "plan_h"
+          | "rotation"
+        >
+      >
     },
   ) =>
     api<FloorPlan>(`${base}/sports/${p.areaId}/plan`, {
@@ -304,6 +363,7 @@ export const manage = {
         plan_width: p.plan_width,
         plan_height: p.plan_height,
         tables: p.tables,
+        new_tables: p.new_tables ?? [],
         // the whole list replaces the area's objects (new ones have no id yet)
         items: p.items.map((i) => ({ ...i, id: i.id > 0 ? i.id : 0 })),
       },
@@ -345,6 +405,32 @@ export const manage = {
       method: "PUT",
       body: { price_per_hour: p.price_per_hour, currency: p.currency },
     }),
+
+  saveEvent: (base: string, e: { id?: number } & EventInput) =>
+    e.id
+      ? api<EventItem>(`${base}/events/${e.id}`, { method: "PUT", body: e })
+      : api<EventItem>(`${base}/events`, { method: "POST", body: e }),
+  deleteEvent: (base: string, id: number) =>
+    apiMessage(`${base}/events/${id}`, { method: "DELETE" }),
+  copyEvent: (
+    base: string,
+    c: { id: number; name: string; starts_on: string; ends_on: string },
+  ) =>
+    api<EventItem>(`${base}/events/${c.id}/copy`, {
+      method: "POST",
+      body: { name: c.name, starts_on: c.starts_on, ends_on: c.ends_on },
+    }),
+  saveEventPrices: (base: string, p: { id: number } & EventPricesInput) =>
+    api<EventPrices>(`${base}/events/${p.id}/prices`, {
+      method: "PUT",
+      body: {
+        default_price: p.default_price,
+        zones: p.zones,
+        tables: p.tables,
+      },
+    }),
+  savePayInfo: (base: string, body: PayInfo) =>
+    api<PayInfo>(`${base}/event-pay`, { method: "PUT", body }),
 
   saveClosure: (base: string, c: { id?: number } & Omit<Closure, "id">) =>
     c.id

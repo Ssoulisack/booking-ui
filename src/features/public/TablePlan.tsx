@@ -1,0 +1,214 @@
+import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
+
+import { ITEM_ICONS, itemLook } from "@/components/floor-plan/look"
+import type { PublicArea } from "@/lib/api/types"
+import { footprint } from "@/lib/floor-plan"
+import { cn } from "@/lib/utils"
+
+/** A table on the team's plan: free, taken (a group sits there) or booked (a group is coming) */
+export interface StaffTable {
+  tone: "free" | "taken" | "booked"
+  /** a short line under the name: "Taken", "19:30" */
+  note?: string
+}
+
+const STAFF_TONE: Record<StaffTable["tone"], string> = {
+  free: "border-[var(--brand)]/60 bg-card text-foreground shadow-sm active:bg-[var(--brand-soft)]",
+  taken: "border-rose-600 bg-rose-500 text-white shadow-sm",
+  booked: "border-dashed border-amber-500 bg-amber-50 text-amber-950",
+}
+
+/**
+ * A restaurant area's plan for customers: zones behind, objects (bar, stage, toilet, stairs…)
+ * for finding the way, and the tables: free ones can be tapped, taken ones are grey. Tapping
+ * stairs that lead to another floor opens it.
+ */
+export function TablePlan({
+  area,
+  free,
+  chosen,
+  onToggle,
+  onStairs,
+  staffLook,
+  priceLabel,
+  tint,
+}: {
+  area: PublicArea
+  free: Set<number>
+  chosen: Set<number>
+  onToggle: (id: number) => void
+  onStairs: (floor: number) => void
+  /** the team's plan: every table can be tapped, coloured by what it is doing now */
+  staffLook?: (id: number) => StaffTable
+  /** event days: a short price under the table's name (instead of its seats) */
+  priceLabel?: (id: number) => string | undefined
+  /** event days: tables of one price share a colour (any CSS colour) */
+  tint?: (id: number) => string | undefined
+}) {
+  const { t } = useTranslation()
+  const box = useRef<HTMLDivElement>(null)
+  const [cell, setCell] = useState(0)
+  const W = area.plan_width
+  const H = area.plan_height
+
+  useEffect(() => {
+    const el = box.current
+    if (!el) return
+    const measure = () => setCell(el.clientWidth / W)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [W])
+
+  const place = (p: Parameters<typeof footprint>[0]) => {
+    const f = footprint(p)
+    return {
+      left: f.x * cell,
+      top: f.y * cell,
+      width: f.w * cell,
+      height: f.h * cell,
+    }
+  }
+  const zones = area.items.filter((i) => i.kind === "zone")
+  const objects = area.items.filter((i) => i.kind !== "zone")
+
+  return (
+    <div
+      ref={box}
+      className="relative w-full overflow-hidden rounded-xl bg-card ring-1 ring-border"
+      style={{
+        aspectRatio: `${W} / ${H}`,
+        backgroundImage:
+          "radial-gradient(circle, rgb(0 0 0 / 0.07) 1px, transparent 1px)",
+        backgroundSize: `${cell}px ${cell}px`,
+      }}
+    >
+      {zones.map((z) => (
+        <div
+          key={`z${z.id}`}
+          aria-hidden
+          className={cn(
+            "absolute flex text-[11px] leading-tight font-medium sm:text-xs",
+            itemLook(z),
+          )}
+          style={place(z)}
+        >
+          <span className="truncate">{z.label}</span>
+        </div>
+      ))}
+
+      {area.tables.map((table) => {
+        const isFree = free.has(table.id)
+        const isChosen = chosen.has(table.id)
+        const f = footprint(table)
+        const staff = staffLook?.(table.id)
+        const color = isFree && !isChosen ? tint?.(table.id) : undefined
+        return (
+          <button
+            key={table.id}
+            type="button"
+            disabled={!isFree && !staff}
+            aria-pressed={staff ? undefined : isChosen}
+            aria-label={
+              staff
+                ? `${table.name} · ${t(`tonight.${staff.tone}`)}${staff.note ? ` · ${staff.note}` : ""}`
+                : t(
+                    isFree
+                      ? "public.tables.tableFree"
+                      : "public.tables.tableTaken",
+                    { name: table.name, count: table.seats },
+                  )
+            }
+            onClick={() => onToggle(table.id)}
+            className={cn(
+              "absolute z-10 flex flex-col items-center justify-center overflow-hidden border-2 text-center leading-tight transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring",
+              table.shape === "round" ? "rounded-full" : "rounded-lg",
+              staff
+                ? STAFF_TONE[staff.tone]
+                : isChosen
+                  ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)] shadow-md"
+                  : isFree
+                    ? "border-[var(--brand)]/60 bg-card text-foreground shadow-sm active:bg-[var(--brand-soft)]"
+                    : "cursor-not-allowed border-dashed border-border bg-muted text-muted-foreground",
+            )}
+            style={{
+              ...place(table),
+              ...(color
+                ? {
+                    borderColor: color,
+                    backgroundColor: `color-mix(in srgb, ${color} 18%, var(--card))`,
+                  }
+                : {}),
+            }}
+          >
+            <span className="max-w-full truncate px-0.5 text-[11px] font-semibold sm:text-sm">
+              {table.name}
+            </span>
+            {/* small tables on a phone: just the number of seats under the name */}
+            {f.h * cell > 30 && (
+              <span className="text-[10px] leading-none opacity-80 sm:text-xs">
+                {staff?.note
+                  ? staff.note
+                  : priceLabel?.(table.id)
+                    ? priceLabel(table.id)
+                    : f.w * cell >= 60
+                      ? t("public.tables.seatsShort", { count: table.seats })
+                      : table.seats}
+              </span>
+            )}
+          </button>
+        )
+      })}
+
+      {objects.map((item) => {
+        const Icon = ITEM_ICONS[item.kind]
+        const f = footprint(item)
+        const roomy = Math.min(f.w, f.h) * cell > 28
+        const content = (
+          <>
+            {item.kind !== "label" && roomy && (
+              <Icon className="size-3.5 shrink-0" />
+            )}
+            {(item.kind === "label" || f.w * cell > 48) && (
+              <span className="truncate px-0.5">{item.label}</span>
+            )}
+          </>
+        )
+        const look = cn(
+          "absolute z-20 flex items-center justify-center gap-1 overflow-hidden border text-[11px] leading-tight font-medium sm:text-xs",
+          itemLook(item),
+        )
+        // stairs to another floor open it
+        if (item.kind === "stairs" && item.target_floor !== null) {
+          return (
+            <button
+              key={`i${item.id}`}
+              type="button"
+              aria-label={t("public.tables.stairsTo", { label: item.label })}
+              onClick={() => onStairs(item.target_floor!)}
+              className={cn(
+                look,
+                "outline-none focus-visible:ring-3 focus-visible:ring-ring",
+              )}
+              style={place(item)}
+            >
+              {content}
+            </button>
+          )
+        }
+        return (
+          <div
+            key={`i${item.id}`}
+            aria-hidden
+            className={look}
+            style={place(item)}
+          >
+            {content}
+          </div>
+        )
+      })}
+    </div>
+  )
+}

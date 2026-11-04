@@ -14,7 +14,9 @@ import BlurText from "@/components/reactbits/BlurText"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { brandStyle, DEFAULT_BRAND } from "@/features/public/brand"
+import { brandStyle, DEFAULT_BRAND, heroIsDark } from "@/features/public/brand"
+import { ThemeToggle } from "@/features/public/ThemeToggle"
+import { useBrandOnPage, usePublicTheme } from "@/features/public/theme"
 import { BrandMark } from "@/features/public/BrandMark"
 import { MobileNav } from "@/features/public/MobileNav"
 import { PageSpark } from "@/features/public/PageSpark"
@@ -43,6 +45,9 @@ export function BrandHome() {
   const company = usePublicCompany()
   const branches = useLiveBranches()
   const data = company.data
+  const mode = usePublicTheme()
+  const brand = brandStyle(data?.brand_color, data, mode)
+  useBrandOnPage(brand)
 
   useEffect(() => {
     if (!data) return
@@ -65,8 +70,8 @@ export function BrandHome() {
   const live = branches.data ?? []
   return (
     <div
-      style={brandStyle(data.brand_color, data)}
-      className="min-h-dvh bg-[#f3f5f4] pb-24 text-[#141a17] lg:pb-0"
+      style={brand}
+      className="min-h-dvh bg-background pb-24 text-foreground lg:pb-0"
     >
       <PageSpark>
         <TopBar company={data} />
@@ -74,7 +79,9 @@ export function BrandHome() {
         <main className="mx-auto max-w-5xl px-4 pt-8 pb-16">
           <section id="branches" className="scroll-mt-20 space-y-5">
             <h2 className="display-tight text-3xl">
-              {t("home.branchesTitle", { count: live.length })}
+              <span className="candy-label [--candy:var(--candy-yellow)]">
+                {t("home.branchesTitle", { count: live.length })}
+              </span>
             </h2>
             {branches.isPending ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -115,6 +122,7 @@ function HomeNav({ company }: { company: PublicCompany }) {
   const { active, jump } = useScrollSpy(sections.map((s) => s.id))
   return (
     <MobileNav
+      themed
       color={company.brand_color}
       active={active}
       items={[
@@ -135,7 +143,7 @@ function TopBar({ company }: { company: PublicCompany }) {
   const { t } = useTranslation()
   const user = useSession((s) => s.user)
   return (
-    <header className="sticky top-0 z-30 border-b border-black/5 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header className="pub-rainbow sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4">
         <Link to="/" className="mr-auto flex min-w-0 items-center gap-2.5">
           <BrandMark
@@ -145,6 +153,7 @@ function TopBar({ company }: { company: PublicCompany }) {
           />
           <span className="truncate display-tight text-lg">{company.name}</span>
         </Link>
+        <ThemeToggle />
         {user ? (
           // logged in: the profile circle, whose menu has My bookings and My account
           <UserMenu />
@@ -174,7 +183,7 @@ function Hero({
   // one branch: straight to its booking page; several: down to the list
   const only = branches.length === 1 ? branches[0] : undefined
   return (
-    <header className="relative overflow-hidden bg-[var(--brand)] text-[var(--brand-foreground)]">
+    <header className="relative overflow-hidden bg-[var(--brand-hero)] text-[var(--brand-hero-foreground)]">
       {company.cover_url && (
         <img
           src={company.cover_url}
@@ -190,7 +199,10 @@ function Hero({
             animateBy="letters"
             trigger="load"
             delay={35}
-            className="display-tight text-5xl sm:text-7xl"
+            className={cn(
+              "display-tight text-5xl sm:text-7xl",
+              heroIsDark(company.brand_color) && "text-[var(--candy-yellow)]",
+            )}
           />
         </div>
         {company.description && (
@@ -304,7 +316,7 @@ function BranchList({
                 setSearch(e.target.value)
                 set("q", e.target.value.trim())
               }}
-              className="h-12 bg-white pl-10 text-base"
+              className="h-12 bg-card pl-10 text-base"
             />
           </form>
           {types.length > 1 && (
@@ -323,7 +335,7 @@ function BranchList({
                     "h-11 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors",
                     sportType === type
                       ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
-                      : "bg-white",
+                      : "bg-card",
                   )}
                 >
                   {type ? t(`sportTypes.${type}`) : t("places.allSports")}
@@ -339,7 +351,7 @@ function BranchList({
                   aria-label={t("places.province")}
                   value={province}
                   onChange={(e) => set("province", e.target.value)}
-                  className="h-11 rounded-lg border border-input bg-white px-3 text-base"
+                  className="h-11 rounded-lg border border-input bg-card px-3 text-base"
                 >
                   <option value="">{t("places.allProvinces")}</option>
                   {provinces.map((p) => (
@@ -400,9 +412,9 @@ function BranchCard({
   return (
     <Link
       to={`/b/${b.slug}`}
-      className="group block overflow-hidden rounded-2xl bg-white ring-1 ring-black/5 transition-shadow focus-visible:ring-3 focus-visible:ring-ring/50 active:shadow-sm"
+      className="group block overflow-hidden candy-card bg-card transition-transform hover:-translate-y-0.5 focus-visible:outline-3 focus-visible:outline-ring/50 active:translate-y-0"
     >
-      <div className="relative h-28 bg-[var(--brand)]">
+      <div className="relative h-28 bg-[var(--brand-hero)]">
         {b.cover_url && (
           <img
             src={b.cover_url}
@@ -412,7 +424,7 @@ function BranchCard({
           />
         )}
         {company.logo_url && (
-          <span className="absolute -bottom-6 left-4 rounded-xl ring-4 ring-white">
+          <span className="absolute -bottom-6 left-4 rounded-xl ring-4 ring-card">
             <BrandMark
               name={company.name}
               logo={company.logo_url}
@@ -468,9 +480,13 @@ function Footer({ company }: { company: PublicCompany }) {
   )
   if (!company.phone && !company.email && links.length === 0) return null
   return (
-    <footer id="contact" className="border-t border-black/5 bg-white">
+    <footer id="contact" className="border-t border-border bg-card">
       <div className="mx-auto max-w-5xl space-y-4 px-4 py-8">
-        <h2 className="display-tight text-2xl">{t("home.contactTitle")}</h2>
+        <h2 className="display-tight text-2xl">
+          <span className="candy-label [--candy:var(--candy-sky)]">
+            {t("home.contactTitle")}
+          </span>
+        </h2>
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
           {company.phone && (
             <a
@@ -499,7 +515,7 @@ function Footer({ company }: { company: PublicCompany }) {
                 href={webUrl(url)}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-11 items-center rounded-full border border-black/10 px-5 text-sm font-medium capitalize"
+                className="inline-flex h-11 items-center rounded-full border border-border px-5 text-sm font-medium capitalize"
               >
                 {name}
               </a>
@@ -514,7 +530,7 @@ function Footer({ company }: { company: PublicCompany }) {
 function HomeSkeleton() {
   return (
     <div style={brandStyle(DEFAULT_BRAND)} aria-busy="true">
-      <div className="h-14 border-b bg-white" />
+      <div className="h-14 border-b bg-card" />
       <Skeleton className="h-56 rounded-none" />
       <div className="mx-auto grid max-w-5xl gap-4 px-4 py-8 sm:grid-cols-2 lg:grid-cols-3">
         {[0, 1, 2].map((i) => (

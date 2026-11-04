@@ -7,8 +7,19 @@ export function zoneOf(iso: string): string {
 }
 
 /** What was booked, in words: "Court 2 + Somchai", or the class title */
+/**
+ * What the booking holds now: a group moved to other tables keeps its earlier tables in the list
+ * (ended or let go); those are left out. A cancelled booking shows what it had.
+ */
+export function currentItems(b: Booking) {
+  const live = b.items.filter((i) => i.active !== false)
+  if (live.length === 0) return b.items
+  const last = live.reduce((m, i) => (i.ends_at > m ? i.ends_at : m), "")
+  return live.filter((i) => i.ends_at === last)
+}
+
 export function bookingTitle(b: Booking): string {
-  const names = b.items.flatMap((i) =>
+  const names = currentItems(b).flatMap((i) =>
     [i.class_title, i.resource_name, i.coach_name].filter(Boolean),
   )
   return names.join(" + ") || b.sport_name

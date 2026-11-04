@@ -97,7 +97,7 @@ export function AccountPage() {
             onRetry={() => bookings.refetch()}
           />
         ) : shown.length === 0 ? (
-          <p className="rounded-xl bg-white p-6 text-muted-foreground">
+          <p className="rounded-xl bg-card p-6 text-muted-foreground">
             {tab === "upcoming" ? t("account.noUpcoming") : t("account.noPast")}
           </p>
         ) : (

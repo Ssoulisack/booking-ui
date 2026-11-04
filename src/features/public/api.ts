@@ -1,6 +1,6 @@
 import {
-  keepPreviousData,
   useInfiniteQuery,
+  keepPreviousData,
   useMutation,
   useQuery,
 } from "@tanstack/react-query"
@@ -11,11 +11,16 @@ import type {
   Booking,
   ClassSession,
   CreateBookingInput,
+  BuyEventTablesInput,
   CreatedBooking,
+  PublicArea,
   PublicBranch,
   PublicCoach,
+  PublicEvent,
+  PublicEventDetail,
   PublicResource,
   Sport,
+  TableAvailability,
 } from "@/lib/api/types"
 
 const pub = (slug: string) => `/public/branches/${encodeURIComponent(slug)}`
@@ -30,6 +35,12 @@ export const publicKeys = {
   upcomingClasses: (slug: string) => ["public", slug, "classes"] as const,
   availability: (slug: string, q: AvailabilityQuery) =>
     ["public", slug, "availability", q] as const,
+  events: (slug: string) => ["public", slug, "events"] as const,
+  event: (slug: string, id: number, date: string) =>
+    ["public", slug, "events", id, date] as const,
+  floorPlans: (slug: string) => ["public", slug, "floor-plans"] as const,
+  tableAvailability: (slug: string, date: string, guests: number) =>
+    ["public", slug, "table-availability", date, guests] as const,
   guestBooking: (slug: string, token: string) =>
     ["public", slug, "booking", token] as const,
   myBookings: ["me", "bookings"] as const,
@@ -100,14 +111,14 @@ export function useUpcomingClasses(slug: string) {
   })
 }
 
-/** The classes list on the branch page: six at a time, more as the list is scrolled */
+/** The "Coming up" list under the Group class tab: a page at a time, more as it is scrolled */
 export function useUpcomingClassPages(slug: string) {
   return useInfiniteQuery({
     queryKey: [...publicKeys.upcomingClasses(slug), "pages"],
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
       apiPage<ClassSession>(`${pub(slug)}/class-sessions`, {
-        query: { limit: CLASS_PAGE, page: pageParam },
+        query: { limit: 20, page: pageParam },
       }),
     getNextPageParam: (last) =>
       last.meta.page < last.meta.total_page ? last.meta.page + 1 : undefined,
@@ -152,6 +163,17 @@ export function useGuestBooking(slug: string, token: string) {
 }
 
 export const bookingApi = {
+  /** a booking without its link: the code and the phone it was made with */
+  find: (slug: string, code: string, phone: string) =>
+    api<Booking>(`${pub(slug)}/bookings/find`, {
+      method: "POST",
+      body: { code, phone },
+    }),
+  cancelFound: (slug: string, code: string, phone: string, reason: string) =>
+    api<Booking>(`${pub(slug)}/bookings/find/cancel`, {
+      method: "POST",
+      body: { code, phone, reason },
+    }),
   cancelGuest: (slug: string, token: string, reason: string) =>
     api<Booking>(`${pub(slug)}/bookings/${encodeURIComponent(token)}/cancel`, {
       method: "POST",
@@ -164,4 +186,75 @@ export const bookingApi = {
       method: "POST",
       body: { reason },
     }),
+}
+
+/** A restaurant's areas with their tables and objects, lowest floor first */
+export function useFloorPlans(slug: string, enabled = true) {
+  return useQuery({
+    queryKey: publicKeys.floorPlans(slug),
+    queryFn: () => api<PublicArea[]>(`${pub(slug)}/floor-plans`),
+    enabled,
+    ...CATALOG,
+  })
+}
+
+/** The free times of a day for a group, with the free tables at each (refreshed often) */
+export function useTableAvailability(
+  slug: string,
+  q: { date: string; guests: number } | null,
+) {
+  return useQuery({
+    queryKey: publicKeys.tableAvailability(slug, q?.date ?? "", q?.guests ?? 0),
+    queryFn: () =>
+      api<TableAvailability>(`${pub(slug)}/table-availability`, {
+        query: { date: q!.date, guests: q!.guests },
+      }),
+    enabled: !!q,
+    placeholderData: keepPreviousData,
+    refetchInterval: 60_000,
+  })
+}
+
+/** The published events of a restaurant (the ads); a draft or past event is not in the list */
+export function useEvents(slug: string, enabled = true) {
+  return useQuery({
+    queryKey: publicKeys.events(slug),
+    queryFn: () => api<PublicEvent[]>(`${pub(slug)}/events`),
+    enabled,
+    staleTime: 60_000,
+  })
+}
+
+/** One event day: its tables with prices and what is already sold (refreshed often) */
+export function useEventDetail(slug: string, id: number, date: string) {
+  return useQuery({
+    queryKey: publicKeys.event(slug, id, date),
+    queryFn: () =>
+      api<PublicEventDetail>(`${pub(slug)}/events/${id}`, {
+        query: date ? { date } : undefined,
+      }),
+    placeholderData: keepPreviousData,
+    refetchInterval: 30_000,
+    retry: false,
+  })
+}
+
+export function useBuyEventTables(slug: string, id: number) {
+  return useMutation({
+    mutationFn: (body: BuyEventTablesInput) =>
+      api<CreatedBooking>(`${pub(slug)}/events/${id}/bookings`, {
+        method: "POST",
+        body,
+      }),
+  })
+}
+
+/** "I paid and sent the slip": by the private link, or for a logged-in customer's own booking */
+export const slipApi = {
+  guest: (slug: string, token: string) =>
+    api<Booking>(`${pub(slug)}/bookings/${encodeURIComponent(token)}/slip-sent`, {
+      method: "POST",
+    }),
+  mine: (id: number) =>
+    api<Booking>(`/me/bookings/${id}/slip-sent`, { method: "POST" }),
 }

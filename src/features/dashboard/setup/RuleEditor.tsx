@@ -20,6 +20,7 @@ import {
   useRules,
 } from "../api"
 import { useUnsaved } from "@/stores/unsaved"
+import { useDashboard } from "../context"
 import { Panel } from "../ui"
 import { numberOrNull, useInvalidate } from "./shared"
 
@@ -38,8 +39,23 @@ const FIELDS: Array<{
   { key: "max_active_bookings_per_customer", unit: "" },
 ]
 
+// a restaurant has no lengths, capacity or (bar style) start steps: tables are held for the evening
+const TABLE_FIELDS = new Set<keyof RuleFields>([
+  "start_step_min",
+  "cancel_before_hours",
+  "max_days_ahead",
+  "min_notice_min",
+  "max_active_bookings_per_customer",
+])
+
 /** The rule in force, in one line people can read */
-export function RuleSummary({ rule }: { rule: EffectiveRule }) {
+export function RuleSummary({
+  rule,
+  tables,
+}: {
+  rule: EffectiveRule
+  tables?: boolean
+}) {
   const { t } = useTranslation()
   const lengths =
     rule.min_duration_min === rule.max_duration_min
@@ -52,7 +68,7 @@ export function RuleSummary({ rule }: { rule: EffectiveRule }) {
   return (
     <ul className="flex flex-wrap gap-2 text-sm">
       {[
-        lengths,
+        !tables && lengths,
         t("rules.summary.starts", { step: duration(rule.start_step_min) }),
         rule.cancel_before_hours === 0
           ? t("rules.summary.cancelUntilStart")
@@ -62,11 +78,13 @@ export function RuleSummary({ rule }: { rule: EffectiveRule }) {
         t("rules.summary.perCustomer", {
           count: rule.max_active_bookings_per_customer,
         }),
-      ].map((text) => (
-        <li key={text} className="rounded-full bg-muted px-3 py-1">
-          {text}
-        </li>
-      ))}
+      ]
+        .filter((x): x is string => !!x)
+        .map((text) => (
+          <li key={text} className="rounded-full bg-muted px-3 py-1">
+            {text}
+          </li>
+        ))}
     </ul>
   )
 }
@@ -92,6 +110,7 @@ export function RuleEditor({
   lead?: string
 }) {
   const { base } = useBiz()
+  const tables = useDashboard().branch.type === "restaurant"
   const rules = useRules()
   const company = useCompanyRuleAtBranch()
   const widerRule = useEffectiveRule(parent ?? {})
@@ -114,6 +133,7 @@ export function RuleEditor({
       inForce={inForce}
       title={title}
       lead={lead}
+      tables={tables}
       onSave={async (fields) => {
         await manage.saveRule(base, { scope, id: scopeId, fields })
         invalidate()
@@ -143,7 +163,10 @@ export function RuleForm({
   lead,
   onSave,
   onReset,
+  tables,
 }: {
+  /** a restaurant: only the fields that apply to tables */
+  tables?: boolean
   idPrefix: string
   own: RuleFields | null
   inherited: EffectiveRule | null
@@ -189,34 +212,36 @@ export function RuleForm({
         }}
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FIELDS.map(({ key, unit }) => {
-            const id = `${idPrefix}-${key}`
-            return (
-              <div key={key} className="space-y-1.5">
-                <Label htmlFor={id}>{t(`rules.fields.${key}`)}</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id={id}
-                    inputMode="numeric"
-                    value={values[key]}
-                    placeholder={inherited ? String(inherited[key]) : ""}
-                    onChange={(e) =>
-                      setValues({
-                        ...values,
-                        [key]: e.target.value.replace(/[^\d]/g, ""),
-                      })
-                    }
-                    className="h-11 w-28 text-base lg:h-9 lg:text-sm"
-                  />
-                  {unit && (
-                    <span className="text-sm text-muted-foreground">
-                      {t(`rules.units.${unit}`)}
-                    </span>
-                  )}
+          {FIELDS.filter(({ key }) => !tables || TABLE_FIELDS.has(key)).map(
+            ({ key, unit }) => {
+              const id = `${idPrefix}-${key}`
+              return (
+                <div key={key} className="space-y-1.5">
+                  <Label htmlFor={id}>{t(`rules.fields.${key}`)}</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id={id}
+                      inputMode="numeric"
+                      value={values[key]}
+                      placeholder={inherited ? String(inherited[key]) : ""}
+                      onChange={(e) =>
+                        setValues({
+                          ...values,
+                          [key]: e.target.value.replace(/[^\d]/g, ""),
+                        })
+                      }
+                      className="h-11 w-28 text-base lg:h-9 lg:text-sm"
+                    />
+                    {unit && (
+                      <span className="text-sm text-muted-foreground">
+                        {t(`rules.units.${unit}`)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            },
+          )}
         </div>
         {inherited && (
           <p className="text-sm text-muted-foreground">
@@ -231,7 +256,7 @@ export function RuleForm({
           ) : inForce.error ? (
             <ErrorAlert error={inForce.error} />
           ) : inForce.data ? (
-            <RuleSummary rule={inForce.data} />
+            <RuleSummary rule={inForce.data} tables={tables} />
           ) : null}
         </div>
 

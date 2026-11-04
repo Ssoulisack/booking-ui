@@ -275,11 +275,11 @@ function MemberRow({
       </td>
       <td className="py-3 pr-3">
         {m.active ? (
-          <Badge className="border-0 bg-emerald-100 text-emerald-900">
+          <Badge className="border-0 bg-emerald-100 text-emerald-900 dark:bg-emerald-400/20 dark:text-emerald-200">
             {t("team.accessOn")}
           </Badge>
         ) : (
-          <Badge className="border-0 bg-rose-100 text-rose-900">
+          <Badge className="border-0 bg-rose-100 text-rose-900 dark:bg-rose-400/20 dark:text-rose-200">
             {t("company.accessOff")}
           </Badge>
         )}

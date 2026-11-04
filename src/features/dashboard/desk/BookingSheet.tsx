@@ -7,27 +7,34 @@ import { ErrorAlert } from "@/components/form"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { StatusBadge } from "@/features/public/BookingCard"
-import { bookingTitle } from "@/features/public/booking-utils"
+import { bookingTitle, currentItems } from "@/features/public/booking-utils"
 import type { Booking, PaymentMethod } from "@/lib/api/types"
+import { floorName } from "@/lib/floor-plan"
 import { dayIn, duration, money, timeIn } from "@/lib/format"
 import { displayPhone, telHref } from "@/lib/phone"
 
 import { useSettings } from "../api"
-import { useBooking, useChangeStatus, useSetPayment } from "./api"
+import {
+  useBooking,
+  useChangeStatus,
+  useMarkArrived,
+  useSetPayment,
+} from "./api"
+import { MoveTablesDialog } from "./TableDesk"
 
 const METHODS: PaymentMethod[] = ["cash", "transfer", "qr", "other"]
 
-/** One booking at the desk: details, status changes and payment */
+/** One booking at the desk, as a popup: details, status changes and payment */
 export function BookingSheet({
   id,
   onClose,
@@ -38,17 +45,17 @@ export function BookingSheet({
   const { t } = useTranslation()
   const booking = useBooking(id)
   return (
-    <Sheet open={!!id} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>
+    <Dialog open={!!id} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>
             {booking.data ? bookingTitle(booking.data) : t("desk.booking")}
-          </SheetTitle>
-          <SheetDescription>
+          </DialogTitle>
+          <DialogDescription>
             {booking.data && `${t("booking.code")} ${booking.data.code}`}
-          </SheetDescription>
-        </SheetHeader>
-        <div className="px-4 pb-6">
+          </DialogDescription>
+        </DialogHeader>
+        <div>
           {booking.isPending ? (
             <Skeleton className="h-64 rounded-xl" />
           ) : booking.isError ? (
@@ -57,8 +64,8 @@ export function BookingSheet({
             <Details booking={booking.data} />
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -67,6 +74,8 @@ function Details({ booking: b }: { booking: Booking }) {
   const tz = useSettings().data?.in_force.timezone ?? "Asia/Vientiane"
   const status = useChangeStatus()
   const payment = useSetPayment()
+  const arrive = useMarkArrived()
+  const [moving, setMoving] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [reason, setReason] = useState("")
   const [now] = useState(() => Date.now())
@@ -76,6 +85,19 @@ function Details({ booking: b }: { booking: Booking }) {
     (Date.parse(b.ends_at) - Date.parse(b.starts_at)) / 60_000,
   )
   const who = b.customer_name ?? b.guest_name ?? "—"
+  // a restaurant table: people, where and when to arrive instead of a length and a price
+  const isTable = !!b.guests
+  // event days: the tables were sold, so the money is part of the booking; releasing them = cancelling
+  const isEvent = !!b.event_id
+  const waitingForMoney =
+    isEvent && b.status === "pending" && b.payment_status === "unpaid"
+  const where = [
+    b.sport_name,
+    b.area_floor !== undefined ? floorName(t, b.area_floor) : "",
+    b.zones,
+  ]
+    .filter(Boolean)
+    .join(" · ")
   const phone = b.guest_phone || b.customer_phone
   const email = b.customer_email
 
@@ -85,7 +107,13 @@ function Details({ booking: b }: { booking: Booking }) {
       {
         onSuccess: () => {
           setCancelling(false)
-          toast.success(t(`desk.statusDone.${next}`))
+          toast.success(
+            t(
+              isTable && next === "completed"
+                ? "desk.billClosed"
+                : `desk.statusDone.${next}`,
+            ),
+          )
         },
       },
     )
@@ -101,10 +129,56 @@ function Details({ booking: b }: { booking: Booking }) {
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
         <dt className="text-muted-foreground">{t("booking.when")}</dt>
-        <dd className="font-medium">
-          {dayIn(b.starts_at, tz)}, {timeIn(b.starts_at, tz)}–
-          {timeIn(b.ends_at, tz)} ({duration(minutes)})
-        </dd>
+        {isTable ? (
+          <dd className="font-medium">
+            {dayIn(b.starts_at, tz)}
+            {b.booking_style !== "arrive_by" && `, ${timeIn(b.starts_at, tz)}`}
+          </dd>
+        ) : (
+          <dd className="font-medium">
+            {dayIn(b.starts_at, tz)}, {timeIn(b.starts_at, tz)}–
+            {timeIn(b.ends_at, tz)} ({duration(minutes)})
+          </dd>
+        )}
+        {isTable && (
+          <>
+            {b.arrive_by && (
+              <>
+                <dt className="text-muted-foreground">
+                  {t("public.tables.arriveByLabel")}
+                </dt>
+                <dd className="font-medium">{timeIn(b.arrive_by, tz)}</dd>
+              </>
+            )}
+            {b.arrived_at && (
+              <>
+                <dt className="text-muted-foreground">{t("desk.arrived")}</dt>
+                <dd>{timeIn(b.arrived_at, tz)}</dd>
+              </>
+            )}
+            <dt className="text-muted-foreground">
+              {t("public.tables.people")}
+            </dt>
+            <dd className="font-medium">
+              {t("public.tables.guestsLine", { count: b.guests })}
+            </dd>
+            <dt className="text-muted-foreground">{t("desk.tables")}</dt>
+            <dd>
+              <p className="font-medium">
+                {/* the tables in use now (not the ones the group was moved away from) */}
+                {currentItems(b)
+                  .map((i) =>
+                    t("desk.tableSeats", {
+                      name: i.resource_name,
+                      count: i.seats,
+                    }),
+                  )
+                  .join(" + ")}
+              </p>
+              {where && <p className="text-muted-foreground">{where}</p>}
+            </dd>
+          </>
+        )}
         <dt className="text-muted-foreground">{t("desk.who")}</dt>
         <dd>
           <p className="font-medium">
@@ -134,19 +208,20 @@ function Details({ booking: b }: { booking: Booking }) {
             </a>
           )}
         </dd>
-        {b.items.map((i, n) => (
-          <div key={n} className="contents">
-            <dt className="text-muted-foreground">
-              {t(`desk.itemKind.${i.kind}`)}
-            </dt>
-            <dd>
-              {[i.resource_name, i.coach_name, i.class_title]
-                .filter(Boolean)
-                .join(" ")}
-              {i.seats > 1 && ` × ${i.seats}`} · {money(i.price, b.currency)}
-            </dd>
-          </div>
-        ))}
+        {!isTable &&
+          b.items.map((i, n) => (
+            <div key={n} className="contents">
+              <dt className="text-muted-foreground">
+                {t(`desk.itemKind.${i.kind}`)}
+              </dt>
+              <dd>
+                {[i.resource_name, i.coach_name, i.class_title]
+                  .filter(Boolean)
+                  .join(" ")}
+                {i.seats > 1 && ` × ${i.seats}`} · {money(i.price, b.currency)}
+              </dd>
+            </div>
+          ))}
         {b.notes && (
           <>
             <dt className="text-muted-foreground">{t("desk.notes")}</dt>
@@ -161,64 +236,79 @@ function Details({ booking: b }: { booking: Booking }) {
         )}
       </dl>
 
-      <section className="space-y-3 rounded-xl border p-4">
-        <div className="flex items-baseline justify-between">
-          <span className="text-sm text-muted-foreground">
-            {t("booking.total")}
-          </span>
-          <span className="text-xl font-semibold tabular-nums">
-            {money(b.total_price, b.currency)}
-          </span>
-        </div>
-        {b.payment_status === "paid" ? (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-emerald-700">
-              {t("desk.paidWith", {
-                method: t(`desk.methods.${b.payment_method ?? "other"}`),
-                when: b.paid_at
-                  ? `${dayIn(b.paid_at, tz)} ${timeIn(b.paid_at, tz)}`
-                  : "",
-              })}
+      {/* a table is free to book: the bill is paid at the place, outside the system; an event table is sold */}
+      {(!isTable || isEvent) && (
+        <section className="space-y-3 rounded-xl border p-4">
+          <div className="flex items-baseline justify-between">
+            <span className="text-sm text-muted-foreground">
+              {t("booking.total")}
+            </span>
+            <span className="text-xl font-semibold tabular-nums">
+              {money(b.total_price, b.currency)}
+            </span>
+          </div>
+          {waitingForMoney && (
+            <p className="rounded-lg bg-muted/50 p-3 text-sm">
+              {b.slip_sent_at
+                ? t("eventPay.slipAtLong", {
+                    when: `${dayIn(b.slip_sent_at, tz)} ${timeIn(b.slip_sent_at, tz)}`,
+                  })
+                : t("eventPay.noSlipLong")}
+              {b.pay_by &&
+                !b.slip_sent_at &&
+                ` ${t("eventPay.payBy", { when: `${dayIn(b.pay_by, tz)} ${timeIn(b.pay_by, tz)}` })}`}
             </p>
-            <Button
-              variant="ghost"
-              className="h-11 px-2 text-muted-foreground lg:h-9"
-              disabled={payment.isPending}
-              onClick={() => payment.mutate({ id: b.id, status: "unpaid" })}
-            >
-              {t("desk.markUnpaid")}
-            </Button>
-          </div>
-        ) : b.status !== "cancelled" ? (
-          <div className="space-y-2">
-            <p className="text-sm">{t("desk.markPaidWith")}</p>
-            <div className="grid grid-cols-2 gap-2">
-              {METHODS.map((m) => (
-                <Button
-                  key={m}
-                  variant="outline"
-                  className="h-12 lg:h-10"
-                  disabled={payment.isPending}
-                  onClick={() =>
-                    payment.mutate(
-                      { id: b.id, status: "paid", method: m },
-                      { onSuccess: () => toast.success(t("desk.paidDone")) },
-                    )
-                  }
-                >
-                  {t(`desk.methods.${m}`)}
-                </Button>
-              ))}
+          )}
+          {b.payment_status === "paid" ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                {t("desk.paidWith", {
+                  method: t(`desk.methods.${b.payment_method ?? "other"}`),
+                  when: b.paid_at
+                    ? `${dayIn(b.paid_at, tz)} ${timeIn(b.paid_at, tz)}`
+                    : "",
+                })}
+              </p>
+              <Button
+                variant="ghost"
+                className="h-11 px-2 text-muted-foreground lg:h-9"
+                disabled={payment.isPending}
+                onClick={() => payment.mutate({ id: b.id, status: "unpaid" })}
+              >
+                {t("desk.markUnpaid")}
+              </Button>
             </div>
-          </div>
-        ) : null}
-        <ErrorAlert error={payment.error} />
-      </section>
+          ) : b.status !== "cancelled" ? (
+            <div className="space-y-2">
+              <p className="text-sm">{t("desk.markPaidWith")}</p>
+              <div className="grid grid-cols-2 gap-2">
+                {METHODS.map((m) => (
+                  <Button
+                    key={m}
+                    variant="outline"
+                    className="h-12 lg:h-10"
+                    disabled={payment.isPending}
+                    onClick={() =>
+                      payment.mutate(
+                        { id: b.id, status: "paid", method: m },
+                        { onSuccess: () => toast.success(t("desk.paidDone")) },
+                      )
+                    }
+                  >
+                    {t(`desk.methods.${m}`)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          <ErrorAlert error={payment.error} />
+        </section>
+      )}
 
       {active && (
         <section className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            {b.status === "pending" && (
+            {b.status === "pending" && !isEvent && (
               <Button
                 className="h-11 lg:h-9"
                 disabled={status.isPending}
@@ -227,7 +317,50 @@ function Details({ booking: b }: { booking: Booking }) {
                 {t("desk.confirm")}
               </Button>
             )}
-            {b.status === "confirmed" && started && (
+            {/* restaurants: Arrived → Close bill; No-show once the time has come; Move table */}
+            {isTable && b.status === "confirmed" && (
+              <>
+                {b.arrived_at ? (
+                  <Button
+                    className="h-11 lg:h-9"
+                    disabled={status.isPending}
+                    onClick={() => change("completed")}
+                  >
+                    {t("desk.closeBill")}
+                  </Button>
+                ) : (
+                  <Button
+                    className="h-11 lg:h-9"
+                    disabled={arrive.isPending}
+                    onClick={() =>
+                      arrive.mutate(b.id, {
+                        onSuccess: () => toast.success(t("desk.arrivedDone")),
+                      })
+                    }
+                  >
+                    {t("desk.markArrived")}
+                  </Button>
+                )}
+                {!b.arrived_at && started && (
+                  <Button
+                    variant="outline"
+                    className="h-11 lg:h-9"
+                    disabled={status.isPending}
+                    onClick={() => change("no_show")}
+                  >
+                    {t("desk.noShow")}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="h-11 lg:h-9"
+                  onClick={() => setMoving(true)}
+                >
+                  {t("desk.moveTable")}
+                </Button>
+              </>
+            )}
+            {!isTable && b.status === "confirmed" && started && (
               <>
                 <Button
                   className="h-11 lg:h-9"
@@ -252,11 +385,16 @@ function Details({ booking: b }: { booking: Booking }) {
                 className="h-11 lg:h-9"
                 onClick={() => setCancelling(true)}
               >
-                {t("booking.cancel")}
+                {waitingForMoney ? t("eventPay.release") : t("booking.cancel")}
               </Button>
             )}
           </div>
-          {b.status === "confirmed" && !started && (
+          {waitingForMoney && !cancelling && (
+            <p className="text-sm text-muted-foreground">
+              {t("eventPay.releaseHint")}
+            </p>
+          )}
+          {!isTable && b.status === "confirmed" && !started && (
             <p className="text-sm text-muted-foreground">
               {t("desk.afterStart")}
             </p>
@@ -296,8 +434,11 @@ function Details({ booking: b }: { booking: Booking }) {
               </div>
             </div>
           )}
-          <ErrorAlert error={status.error} />
+          <ErrorAlert error={status.error ?? arrive.error} />
         </section>
+      )}
+      {moving && (
+        <MoveTablesDialog booking={b} onClose={() => setMoving(false)} />
       )}
     </div>
   )

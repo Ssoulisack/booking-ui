@@ -35,7 +35,7 @@ export function ForgotPasswordPage() {
   if (send.isSuccess) {
     return (
       <>
-        <MailCheckIcon className="mb-4 size-10 text-primary" />
+        <MailCheckIcon className="mb-4 size-10 text-[var(--primary-ink)]" />
         <AuthHeading
           title={t("forgot.sentTitle")}
           subtitle={t(`messages.${send.data}`, {

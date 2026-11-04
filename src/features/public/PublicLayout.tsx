@@ -18,11 +18,16 @@ import { BranchSwitcher } from "./BranchSwitcher"
 import { rememberBranchName } from "./origin"
 import { PageSpark } from "./PageSpark"
 import type { PublicContext } from "./context"
+import { ThemeToggle } from "./ThemeToggle"
+import { useBrandOnPage, usePublicTheme } from "./theme"
 
 /** /b/:slug/* — a branch's public pages, in the company's brand colour and language */
 export function PublicLayout() {
   const { slug = "" } = useParams()
   const business = usePublicBranch(slug)
+  const mode = usePublicTheme()
+  const brand = brandStyle(business.data?.brand_color, business.data, mode)
+  useBrandOnPage(brand)
 
   const data = business.data
   useEffect(() => {
@@ -45,10 +50,7 @@ export function PublicLayout() {
     )
   }
   return (
-    <div
-      style={brandStyle(business.data.brand_color, business.data)}
-      className="min-h-dvh bg-[#f3f5f4] text-[#141a17]"
-    >
+    <div style={brand} className="min-h-dvh bg-background text-foreground">
       <PageSpark>
         <UnsavedGuard />
         <PublicTopBar business={business.data} />
@@ -67,27 +69,27 @@ function PublicTopBar({ business }: { business: PublicBranch }) {
   const home = `/b/${business.slug}`
   const loginLink = `/login?next=${encodeURIComponent(pathname)}`
 
+  // the parts of the booking page (classes are booked in it: Group class)
   const sections = [
-    { hash: "book", label: t("public.nav.book") },
-    { hash: "classes", label: t("public.nav.classes") },
-    { hash: "coaches", label: t("public.nav.coaches") },
+    { to: `${home}#book`, label: t("public.nav.book") },
     ...(business.booking_policy
-      ? [{ hash: "policy", label: t("public.nav.policy") }]
+      ? [{ to: `${home}#policy`, label: t("public.nav.policy") }]
       : []),
   ]
 
   return (
-    <header className="sticky top-0 z-30 border-b border-black/5 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header className="pub-rainbow sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4">
         <BranchSwitcher business={business} />
         <nav className="ml-auto hidden items-center gap-1 lg:flex">
           {sections.map((s) => (
-            <Button key={s.hash} asChild variant="ghost" className="h-11 px-3">
-              <Link to={`${home}#${s.hash}`}>{s.label}</Link>
+            <Button key={s.to} asChild variant="ghost" className="h-11 px-3">
+              <Link to={s.to}>{s.label}</Link>
             </Button>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-1 lg:ml-2">
+        <div className="ml-auto flex items-center gap-2 lg:ml-2">
+          <ThemeToggle />
           {user ? (
             // logged in: the profile circle, whose menu has My bookings, All branches, My account
             <UserMenu allBranches />
@@ -105,7 +107,7 @@ function PublicTopBar({ business }: { business: PublicBranch }) {
 function PublicSkeleton() {
   return (
     <div style={brandStyle(DEFAULT_BRAND)} aria-busy="true">
-      <div className="h-16 border-b bg-white" />
+      <div className="h-16 border-b bg-card" />
       <Skeleton className="h-56 rounded-none" />
       <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
         <Skeleton className="h-10 w-2/3" />

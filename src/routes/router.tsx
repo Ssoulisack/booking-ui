@@ -112,12 +112,20 @@ export const router = createBrowserRouter([
             lazy: async () => ({ Component: (await pub()).CheckoutPage }),
           },
           {
+            path: "events/:eventId",
+            lazy: async () => ({ Component: (await pub()).EventPage }),
+          },
+          {
             path: "confirmed",
             lazy: async () => ({ Component: (await pub()).ConfirmedPage }),
           },
           {
             path: "booking/:token",
             lazy: async () => ({ Component: (await pub()).GuestBookingPage }),
+          },
+          {
+            path: "find",
+            lazy: async () => ({ Component: (await pub()).FindBookingPage }),
           },
         ],
       },
@@ -171,6 +179,7 @@ export const router = createBrowserRouter([
                   companyPage("users", "UsersPage"),
                   companyPage("rules", "CompanyRulesPage"),
                   companyPage("media", "CompanyMediaPage"),
+                  companyPage("share", "CompanySharePage"),
                   companyPage("settings", "CompanySettingsPage"),
                   { path: "*", element: <NotFound /> },
                 ],
@@ -198,6 +207,7 @@ export const router = createBrowserRouter([
               page("calendar", "CalendarPage"),
               page("bookings", "BookingsPage"),
               page("customers", "CustomersPage"),
+              page("share", "SharePage"),
               page("cash-up", "CashUpPage"),
               {
                 lazy: async () => {
@@ -231,6 +241,7 @@ export const router = createBrowserRouter([
                       page("floor-plan", "FloorPlanPage"),
                       page("hours", "VenueHoursPage"),
                       page("table-settings", "TableSettingsPage"),
+                      page("events", "EventsPage"),
                     ],
                   },
                   page("media", "MediaPage"),

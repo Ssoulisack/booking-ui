@@ -227,3 +227,34 @@ export function useSetPayment() {
       }),
   )
 }
+
+// ---------- restaurants: the group came in, other tables, a group without booking ----------
+
+export function useMarkArrived() {
+  return useDeskChange((base, id: number) =>
+    api<Booking>(`${base}/bookings/${id}/arrived`, { method: "POST" }),
+  )
+}
+
+export function useMoveTables() {
+  return useDeskChange((base, p: { id: number; table_ids: number[] }) =>
+    api<Booking>(`${base}/bookings/${p.id}/move`, {
+      method: "POST",
+      body: { table_ids: p.table_ids },
+    }),
+  )
+}
+
+export interface WalkInInput {
+  table_ids: number[]
+  guests: number
+  name?: string
+  phone?: string
+  notes?: string
+}
+
+export function useWalkIn() {
+  return useDeskChange((base, body: WalkInInput) =>
+    api<Booking>(`${base}/walk-ins`, { method: "POST", body }),
+  )
+}

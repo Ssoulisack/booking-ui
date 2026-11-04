@@ -1,13 +1,16 @@
-import { CheckIcon, CopyIcon, Share2Icon } from "lucide-react"
+import { CheckIcon, ClockIcon, CopyIcon, Share2Icon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, Navigate, useLocation } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import type { CreatedBooking } from "@/lib/api/types"
+import { timeIn } from "@/lib/format"
 import { useSession } from "@/stores/session"
 
 import { BookingCard } from "./BookingCard"
+import { CopyCode } from "./CopyCode"
+import { EventPayPanel, recallPay } from "./EventPay"
 import { usePublic } from "./context"
 
 /** /b/:slug/confirmed — shown once after booking (the booking comes from the checkout) */
@@ -35,12 +38,48 @@ export function ConfirmedPage() {
         </p>
       </div>
 
-      <div className="rounded-xl border-2 border-dashed border-[var(--brand-line)] bg-white px-4 py-5 text-center">
+      <div className="rounded-xl border-2 border-dashed border-[var(--brand-line)] bg-card px-4 py-5 text-center">
         <p className="text-sm text-muted-foreground">{t("public.showCode")}</p>
         <p className="display-tight text-6xl tracking-wider text-[var(--brand-ink)]">
           {booking.code}
         </p>
+        <div className="mt-3 flex justify-center">
+          <CopyCode code={booking.code} />
+        </div>
       </div>
+
+      {/* a table: when the group must be there, said once and clearly after booking */}
+      {booking.arrive_by && (
+        <div className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-amber-950 ring-1 ring-amber-200 dark:bg-amber-400/15 dark:text-amber-100">
+          <ClockIcon className="mt-0.5 size-6 shrink-0" />
+          <div>
+            <p className="text-lg font-semibold">
+              {t("public.tables.arriveByTitle", {
+                time: timeIn(booking.arrive_by, business.timezone),
+              })}
+            </p>
+            <p className="text-sm">{t("public.tables.arriveByLead")}</p>
+          </div>
+        </div>
+      )}
+
+      {booking.event_id && (
+        <EventPayPanel
+          slug={slug}
+          tz={business.timezone}
+          phone={business.phone}
+          booking={booking}
+          guestToken={booking.guest_token}
+          info={
+            booking.pay
+              ? {
+                  pay: booking.pay,
+                  ...(recallPay(slug, booking.id) ?? { event: "", tables: "" }),
+                }
+              : recallPay(slug, booking.id)
+          }
+        />
+      )}
 
       <BookingCard booking={booking} tz={business.timezone} />
 
@@ -75,7 +114,7 @@ function GuestLink({ link, path }: { link: string; path: string }) {
     <section className="space-y-3 rounded-xl bg-[var(--brand-soft)] p-4">
       <h2 className="font-semibold">{t("public.guestLinkTitle")}</h2>
       <p className="text-sm">{t("public.guestLinkLead")}</p>
-      <p className="rounded-lg bg-white px-3 py-2 text-sm break-all">{link}</p>
+      <p className="rounded-lg bg-card px-3 py-2 text-sm break-all">{link}</p>
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"

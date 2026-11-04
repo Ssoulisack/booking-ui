@@ -109,7 +109,7 @@ export function ShareBooking({ url, name }: { url: string; name: string }) {
 
   return (
     <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-      <div className="shrink-0 self-center rounded-xl bg-white p-2 ring-1 ring-border sm:self-start">
+      <div className="shrink-0 self-center rounded-xl bg-card p-2 ring-1 ring-border sm:self-start">
         {qr ? (
           <img
             src={qr}
@@ -207,7 +207,7 @@ export function ShareBooking({ url, name }: { url: string; name: string }) {
 function Poster({ url, name, qr }: { url: string; name: string; qr: string }) {
   const { t } = useTranslation()
   return createPortal(
-    <div className="qr-poster hidden flex-col items-center justify-center gap-6 bg-white p-12 text-center text-black">
+    <div className="qr-poster hidden flex-col items-center justify-center gap-6 bg-card p-12 text-center text-black">
       <h1 className="display-tight text-5xl">{name}</h1>
       <img src={qr} alt="" className="size-[12cm]" />
       <p className="text-3xl font-semibold">{t("overview.share.scan")}</p>

@@ -47,7 +47,9 @@ export function MediaLibrary({ base }: { base: string }) {
           e.target.value = ""
         }}
       />
-      <p className="-mt-3 text-sm text-muted-foreground">{t("dash.imageHint")}</p>
+      <p className="-mt-3 text-sm text-muted-foreground">
+        {t("dash.imageHint")}
+      </p>
       <ErrorAlert error={upload.error ?? media.error} />
       {media.isPending ? (
         <Skeleton className="h-64 rounded-xl" />

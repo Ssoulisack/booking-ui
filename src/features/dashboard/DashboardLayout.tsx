@@ -5,6 +5,7 @@ import {
   HandCoinsIcon,
   ImagesIcon,
   LayoutDashboardIcon,
+  QrCodeIcon,
   SettingsIcon,
   UsersRoundIcon,
   WrenchIcon,
@@ -58,7 +59,13 @@ export function DashboardIndex() {
 }
 
 const NAV: Array<
-  Omit<NavItem, "to" | "label"> & { path: string; key: string; min: BranchRole }
+  Omit<NavItem, "to" | "label"> & {
+    path: string
+    key: string
+    min: BranchRole
+    /** courts only: a restaurant has no money to count or court use to report */
+    sportOnly?: boolean
+  }
 > = [
   {
     path: "",
@@ -70,9 +77,22 @@ const NAV: Array<
   { path: "calendar", key: "calendar", icon: CalendarDaysIcon, min: "staff" },
   { path: "bookings", key: "bookings", icon: ClipboardListIcon, min: "staff" },
   { path: "customers", key: "customers", icon: UsersRoundIcon, min: "staff" },
-  { path: "cash-up", key: "cashUp", icon: HandCoinsIcon, min: "staff" },
+  {
+    path: "cash-up",
+    key: "cashUp",
+    icon: HandCoinsIcon,
+    min: "staff",
+    sportOnly: true,
+  },
   { path: "setup", key: "setup", icon: WrenchIcon, min: "manager" },
-  { path: "reports", key: "reports", icon: BarChart3Icon, min: "manager" },
+  {
+    path: "reports",
+    key: "reports",
+    icon: BarChart3Icon,
+    min: "manager",
+    sportOnly: true,
+  },
+  { path: "share", key: "share", icon: QrCodeIcon, min: "staff" },
   { path: "media", key: "media", icon: ImagesIcon, min: "manager" },
   { path: "settings", key: "branchSettings", icon: SettingsIcon, min: "admin" },
 ]
@@ -85,6 +105,7 @@ const DASHBOARD_CRUMBS: Record<string, string> = {
   "cash-up": "nav.cashUp",
   setup: "nav.setup",
   reports: "nav.reports",
+  share: "nav.share",
   media: "nav.media",
   settings: "nav.branchSettings",
   sports: "setup.tabs.sports",
@@ -137,8 +158,15 @@ export function DashboardLayout() {
   if (!branch) return <Navigate to="/dashboard" replace />
 
   const base = `/dashboard/${branch.branch_id}`
-  const nav: NavItem[] = NAV.filter((item) =>
-    roleAtLeast(branch.role, item.min),
+  const restaurant = branch.type === "restaurant"
+  // a restaurant's address for a sport-only page (an old bookmark): back to its overview
+  const hidden = NAV.find(
+    (item) => item.sportOnly && pathname.startsWith(`${base}/${item.path}`),
+  )
+  if (restaurant && hidden) return <Navigate to={base} replace />
+  const nav: NavItem[] = NAV.filter(
+    (item) =>
+      roleAtLeast(branch.role, item.min) && !(restaurant && item.sportOnly),
   ).map(({ path, key, icon, end }) => ({
     to: path ? `${base}/${path}` : base,
     label: t(`nav.${key}`),

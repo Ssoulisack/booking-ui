@@ -58,7 +58,7 @@ export function AcceptInvitePage() {
 
   return (
     <>
-      <MailOpenIcon className="mb-4 size-10 text-primary" />
+      <MailOpenIcon className="mb-4 size-10 text-[var(--primary-ink)]" />
       <AuthHeading title={t("invite.title")} />
       <p className="mb-1">
         <Trans

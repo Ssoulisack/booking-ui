@@ -20,6 +20,7 @@ import type { PublicBranch } from "@/lib/api/types"
 import { useLiveBranches } from "@/features/places/api"
 
 import { brandStyle } from "./brand"
+import { usePubMode } from "./theme"
 import { BrandMark } from "./BrandMark"
 
 /**
@@ -29,6 +30,7 @@ import { BrandMark } from "./BrandMark"
 export function BranchSwitcher({ business }: { business: PublicBranch }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
+  const mode = usePubMode()
   const branches = useLiveBranches()
   const others = (branches.data ?? []).filter((b) => b.slug !== business.slug)
 
@@ -61,7 +63,7 @@ export function BranchSwitcher({ business }: { business: PublicBranch }) {
       {/* the sheet renders outside the page: give it the brand colours again */}
       <SheetContent
         side="bottom"
-        style={brandStyle(business.brand_color, business)}
+        style={brandStyle(business.brand_color, business, mode)}
         className="max-h-[85dvh] rounded-t-2xl"
       >
         <SheetHeader>
@@ -99,7 +101,7 @@ export function BranchSwitcher({ business }: { business: PublicBranch }) {
           <Link
             to="/"
             onClick={() => setOpen(false)}
-            className="mt-2 flex min-h-12 items-center gap-3 rounded-xl border border-black/10 px-3 font-medium hover:bg-muted"
+            className="mt-2 flex min-h-12 items-center gap-3 rounded-xl border border-border px-3 font-medium hover:bg-muted"
           >
             <LayoutGridIcon className="size-5 shrink-0 text-muted-foreground" />
             {t("public.seeAllBranches")}

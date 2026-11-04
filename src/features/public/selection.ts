@@ -17,9 +17,25 @@ export interface Selection {
   length?: number
   cls?: number
   seats?: number
+  /** restaurants: the group size and the chosen tables */
+  guests?: number
+  tables?: string
+  /** courts: 1 = the visitor wants a coach with the space (picked on the coach step) */
+  withCoach?: number
+  /** the open step: the table (restaurants), the coach or the time (courts) */
+  step?: "table" | "coach" | "time"
 }
 
-const NUMBERS = ["sport", "court", "coach", "length", "cls", "seats"] as const
+const NUMBERS = [
+  "sport",
+  "court",
+  "coach",
+  "length",
+  "cls",
+  "seats",
+  "guests",
+  "withCoach",
+] as const
 
 export function readSelection(params: URLSearchParams): Selection {
   const sel: Selection = {}
@@ -33,6 +49,10 @@ export function readSelection(params: URLSearchParams): Selection {
   if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) sel.date = date
   const start = params.get("start")
   if (start) sel.start = start
+  const step = params.get("step")
+  if (step === "table" || step === "coach" || step === "time") sel.step = step
+  const tables = params.get("tables")
+  if (tables && /^\d+(-\d+)*$/.test(tables)) sel.tables = tables
   return sel
 }
 
@@ -50,13 +70,18 @@ export function selectionQuery(sel: Selection): string {
 export function useSelection() {
   const [params, setParams] = useSearchParams()
   const sel = readSelection(params)
+  // push: a new step (the back button returns to the one before); otherwise the entry is replaced
   const update = useCallback(
-    (next: Selection) =>
+    (next: Selection, opts?: { push?: boolean }) =>
       setParams(selectionQuery(next), {
-        replace: true,
+        replace: !opts?.push,
         preventScrollReset: true,
       }),
     [setParams],
   )
   return [sel, update] as const
 }
+
+/** The table ids of a selection ("3-4" → [3, 4]) */
+export const tableIdsOf = (sel: Selection) =>
+  sel.tables ? sel.tables.split("-").map(Number) : []
