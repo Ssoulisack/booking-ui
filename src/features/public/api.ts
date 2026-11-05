@@ -15,6 +15,7 @@ import type {
   CreatedBooking,
   OnlinePayment,
   PaymentOption,
+  PublicPayInfo,
   PublicArea,
   PublicBranch,
   PublicCoach,
@@ -161,6 +162,34 @@ export function useGuestBooking(slug: string, token: string) {
     queryFn: () =>
       api<Booking>(`${pub(slug)}/bookings/${encodeURIComponent(token)}`),
     retry: false,
+    // the team may approve or cancel it, a payment may arrive: keep asking while it is open
+    refetchOnWindowFocus: true,
+    refetchInterval: (q) => {
+      const b = q.state.data
+      if (!b || (b.status !== "pending" && b.status !== "confirmed"))
+        return false
+      return b.status === "pending" || b.payment_status === "unpaid"
+        ? 5_000
+        : 20_000
+    },
+  })
+}
+
+/** A logged-in customer's own booking, kept up to date while it is open (the team may approve or cancel it) */
+export function useMyBooking(id: number) {
+  return useQuery({
+    queryKey: ["me", "bookings", "one", id] as const,
+    queryFn: () => api<Booking>(`/me/bookings/${id}`),
+    retry: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: (q) => {
+      const b = q.state.data
+      if (!b || (b.status !== "pending" && b.status !== "confirmed"))
+        return false
+      return b.status === "pending" || b.payment_status === "unpaid"
+        ? 5_000
+        : 20_000
+    },
   })
 }
 
@@ -254,9 +283,12 @@ export function useBuyEventTables(slug: string, id: number) {
 /** "I paid and sent the slip": by the private link, or for a logged-in customer's own booking */
 export const slipApi = {
   guest: (slug: string, token: string) =>
-    api<Booking>(`${pub(slug)}/bookings/${encodeURIComponent(token)}/slip-sent`, {
-      method: "POST",
-    }),
+    api<Booking>(
+      `${pub(slug)}/bookings/${encodeURIComponent(token)}/slip-sent`,
+      {
+        method: "POST",
+      },
+    ),
   mine: (id: number) =>
     api<Booking>(`/me/bookings/${id}/slip-sent`, { method: "POST" }),
 }
@@ -286,6 +318,13 @@ export const payApi = {
           method: "POST",
           body,
         }),
+  /** the payment still open for this booking (same QR, time left), the one just paid, or null */
+  open: (slug: string, who: { token: string } | { bookingId: number }) =>
+    "token" in who
+      ? api<OnlinePayment | null>(
+          `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/payment`,
+        )
+      : api<OnlinePayment | null>(`/me/bookings/${who.bookingId}/payment`),
   check: (
     slug: string,
     who: { token: string } | { bookingId: number },
@@ -296,4 +335,14 @@ export const payApi = {
           `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/payments/${id}`,
         )
       : api<OnlinePayment>(`/me/bookings/${who.bookingId}/payments/${id}`),
+}
+
+/** How to pay the branch outside the system (QR, account, WhatsApp), for a page opened on any device */
+export function usePublicPayInfo(slug: string, enabled = true) {
+  return useQuery({
+    queryKey: ["public", slug, "event-pay"] as const,
+    queryFn: () => api<PublicPayInfo>(`${pub(slug)}/event-pay`),
+    enabled,
+    staleTime: 60_000,
+  })
 }

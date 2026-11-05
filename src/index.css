@@ -307,3 +307,14 @@ html[data-booking-bar] .mobile-nav {
     min-height: 100vh;
   }
 }
+
+/* number fields: no tiny up/down arrows (they are fiddly on a phone); counters use their own − / + buttons */
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

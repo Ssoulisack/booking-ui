@@ -49,3 +49,8 @@ export function readBack(): Back | null {
   const name = read<Record<string, string>>(NAMES)?.[page.slug]
   return { to: page.to, name: name ?? page.slug }
 }
+
+/** The branch the customer came from (its address name), or null when they came from the list of all branches */
+export function readOriginSlug(): string | null {
+  return read<{ slug?: string }>(PAGE)?.slug ?? null
+}

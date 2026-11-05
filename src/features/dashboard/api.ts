@@ -37,6 +37,7 @@ import type {
   EventPrices,
   EventPricesInput,
   PayInfo,
+  PaymentSettings,
 } from "@/lib/api/types"
 
 import { useDashboard } from "./context"
@@ -175,6 +176,15 @@ export function useEventPrices(eventId: number) {
   return useQuery({
     queryKey: key("events", "prices", eventId),
     queryFn: () => api<EventPrices>(`${base}/events/${eventId}/prices`),
+    refetchOnWindowFocus: false,
+  })
+}
+
+export function usePaymentSettings() {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("payment-settings"),
+    queryFn: () => api<PaymentSettings>(`${base}/payment-settings`),
     refetchOnWindowFocus: false,
   })
 }
@@ -431,6 +441,11 @@ export const manage = {
     }),
   savePayInfo: (base: string, body: PayInfo) =>
     api<PayInfo>(`${base}/event-pay`, { method: "PUT", body }),
+  savePaymentSettings: (
+    base: string,
+    body: { online_enabled: boolean; charge_minutes: number },
+  ) =>
+    api<PaymentSettings>(`${base}/payment-settings`, { method: "PUT", body }),
 
   saveClosure: (base: string, c: { id?: number } & Omit<Closure, "id">) =>
     c.id

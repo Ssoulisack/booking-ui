@@ -358,22 +358,28 @@ export function StepBar({
 }: {
   at: number
   /** a table booking, or a court booking (date & duration, [coach,] time, confirm) */
-  kind?: "table" | "time" | "coachTime"
+  kind?: "table" | "time" | "coachTime" | "event"
 }) {
   const { t } = useTranslation()
   const steps =
-    kind === "table"
+    kind === "event"
       ? [
-          t("public.tables.steps.when"),
-          t("public.tables.steps.table"),
+          t("public.events.steps.tables"),
           t("public.tables.steps.confirm"),
+          t("public.events.steps.pay"),
         ]
-      : [
-          t("public.tables.steps.whenLength"),
-          ...(kind === "coachTime" ? [t("public.tables.steps.coach")] : []),
-          t("public.tables.steps.time"),
-          t("public.tables.steps.confirm"),
-        ]
+      : kind === "table"
+        ? [
+            t("public.tables.steps.when"),
+            t("public.tables.steps.table"),
+            t("public.tables.steps.confirm"),
+          ]
+        : [
+            t("public.tables.steps.whenLength"),
+            ...(kind === "coachTime" ? [t("public.tables.steps.coach")] : []),
+            t("public.tables.steps.time"),
+            t("public.tables.steps.confirm"),
+          ]
   return (
     <ol
       className={cn(

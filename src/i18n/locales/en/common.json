@@ -172,7 +172,15 @@
     "noPast": "Nothing here yet.",
     "openBusiness": "Open branch page",
     "branch": "Branch",
-    "allBranches": "All branches"
+    "allBranches": "All branches",
+    "searchCode": "Search by booking code",
+    "day": "Day",
+    "clearFilters": "Clear",
+    "found_one": "{{count}} booking found",
+    "found_other": "{{count}} bookings found",
+    "noMatch": "No booking matches. Check the code or the day.",
+    "continuePay": "Continue payment",
+    "payBefore": "Pay before {{when}}, or the tables are released."
   },
   "notFound": {
     "title": "Page not found",
@@ -190,11 +198,13 @@
       "confirmed": "Confirmed",
       "cancelled": "Cancelled",
       "completed": "Completed",
-      "no_show": "No-show"
+      "no_show": "No-show",
+      "awaitingPayment": "Waiting for payment"
     },
     "payment": {
       "unpaid": "pay at the venue",
-      "paid": "paid"
+      "paid": "paid",
+      "eventUnpaid": "not paid yet"
     },
     "cancel": "Cancel booking",
     "cancelTitle": "Cancel this booking?",
@@ -207,7 +217,8 @@
     "tooLateToCancel": "It is too late to cancel online. Call the branch: {{phone}}",
     "holdToCancel": "Hold to cancel",
     "cancelling": "Cancelling…",
-    "holdHint": "Press and hold for {{seconds}} seconds to cancel the booking"
+    "holdHint": "Press and hold for {{seconds}} seconds to cancel the booking",
+    "tooLateToCancelNoPhone": "It is too late to cancel online. Please contact the branch."
   },
   "public": {
     "notFoundTitle": "This page is not available",
@@ -445,17 +456,50 @@
         "total": "Total to pay",
         "before": "Pay before {{when}}",
         "scan": "Scan to pay",
-        "whatsapp": "Send the slip on WhatsApp",
+        "whatsapp": "Send the slip to the team on WhatsApp",
         "slipSent": "I sent the slip",
-        "slipDone": "Slip sent — waiting for the team to confirm.",
+        "slipDone": "Slip sent. The team will confirm your tables on WhatsApp. Keep your phone close.",
         "waiting": "Waiting for payment",
         "paid": "Paid — your tables are confirmed.",
         "cancelled": "This booking was cancelled.",
         "message": "Hello! Booking {{code}} for {{event}}: {{tables}}. Total {{total}}. Here is my payment slip.",
         "bigHold": "Big booking: held until {{when}} only.",
         "noInfo": "Ask the team how to pay: {{phone}}",
-        "code": "Your code"
-      }
+        "code": "Your code",
+        "whatsappAgain": "Open WhatsApp again",
+        "method": "How do you want to pay?",
+        "methods": {
+          "online": "Pay online",
+          "manual": "Branch QR or transfer"
+        },
+        "methodHints": {
+          "online": "Scan a bank QR in your bank app. Your booking confirms itself.",
+          "manual": "Pay the branch's QR or by transfer, then send the slip to the team on WhatsApp."
+        },
+        "accountName": "Account name",
+        "accountNumber": "Account number",
+        "accountNote": "More details",
+        "copy": "Copy {{what}}",
+        "copied": "Copied",
+        "noWay": "Online payment is not open for this event. Please contact the branch to pay: {{phone}}."
+      },
+      "steps": {
+        "tables": "Tables",
+        "pay": "Pay"
+      },
+      "changeTables": "Change tables",
+      "detailsNeeded": "Please add your name and phone number.",
+      "seatsN_one": "{{count}} seat",
+      "seatsN_other": "{{count}} seats",
+      "guestsMax_one": "Up to {{count}} person at these tables",
+      "guestsMax_other": "Up to {{count}} people at these tables"
+    },
+    "cancelledNotice": {
+      "title": "This booking was cancelled",
+      "lead": "The branch cancelled booking {{code}}.",
+      "reason": "Reason: {{reason}}",
+      "contact": "Questions? Call {{phone}}.",
+      "home": "Back to home"
     }
   },
   "weekday": {
@@ -969,7 +1013,10 @@
     },
     "closedTitle": "This branch is closed",
     "closedLead": "Its booking page is offline and its team cannot use the dashboard. The owner or an admin can reopen it from the company area.",
-    "sharePage": "Share page"
+    "sharePage": "Share page",
+    "unpublishTitle": "Take {{name}} offline?",
+    "unpublishLead": "Customers will no longer be able to open the booking page or book here. Bookings already made stay as they are. You can publish the page again at any time.",
+    "unpublishKeep": "Keep it online"
   },
   "desk": {
     "booking": "Booking",
@@ -1746,9 +1793,24 @@
       "whatsapp": "WhatsApp number",
       "whatsappHint": "Customers tap a button that opens WhatsApp to this number.",
       "qr": "Payment QR (optional)",
-      "note": "Account text (optional)",
+      "note": "Extra text (optional)",
       "notePlaceholder": "Bank, account name and number…",
-      "saved": "Saved"
+      "saved": "Saved",
+      "online": "Pay online (bank app QR)",
+      "onlineHint": "Customers pay in their bank app and the booking confirms itself. No staff step.",
+      "noGateway": "Not available yet: the server has no payment gateway set up (PhaJay keys).",
+      "transfer": "Branch QR or transfer",
+      "transferHint": "Customers pay your own QR or bank account and send you the slip on WhatsApp. You confirm it.",
+      "noWay": "Both are off: customers cannot pay on the website. They have to contact the branch, and you confirm each booking by hand.",
+      "accountName": "Account name",
+      "accountNamePlaceholder": "Event Club Co., Ltd",
+      "accountNumber": "Account number",
+      "accountHint": "Customers see the name and the number, each with a copy button. Put the bank name in the extra text below.",
+      "window": "Time to pay after choosing a bank",
+      "windowN_one": "{{count}} minute",
+      "windowN_other": "{{count}} minutes",
+      "windowHint_one": "The QR stays open for {{count}} minute and the tables are held that long (plus a few minutes). Then the customer picks a bank again.",
+      "windowHint_other": "The QR stays open for {{count}} minutes and the tables are held that long (plus a few minutes). Then the customer picks a bank again."
     }
   },
   "eventPay": {
@@ -1781,7 +1843,10 @@
       "expired": "That payment ran out of time. Choose a bank to try again.",
       "failed": "The bank could not start that payment. Try another bank.",
       "review": "We received a payment that needs the team to look at it. Please contact the branch."
-    }
+    },
+    "saveQr": "Save QR image",
+    "saveQrHint": "Paying on this phone? Save the QR, open your bank app and choose “scan from gallery”.",
+    "payingWith": "You are paying with"
   },
   "payStatus": {
     "title": "Online payments",

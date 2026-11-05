@@ -224,5 +224,9 @@
   "BOOKING_OVER": "This booking's time is over.",
   "NOT_A_TABLE_BOOKING": "This is not a table booking.",
   "TABLE_BOOKED_LATER": "This table is booked later today. Choose another table, or allow walk-ins before a booking in Table settings.",
-  "VENUE_CLOSED": "The place is closed now, so walk-ins cannot be seated."
+  "VENUE_CLOSED": "The place is closed now, so walk-ins cannot be seated.",
+  "TOO_MANY_GUESTS_FOR_TABLES": "That is more people than these tables seat. Choose more tables or fewer people.",
+  "PAYMENT_LIMIT_REACHED": "Online payment has reached its limit for today. Please pay with the branch's QR or transfer, or try again tomorrow.",
+  "ONLINE_PAYMENT_OFF": "Online payment is switched off at this branch. Please use the branch's QR or transfer.",
+  "PAYMENT_PROVIDER_ERROR": "The bank's payment service could not start this payment. Please try another bank, or try again in a moment."
 }

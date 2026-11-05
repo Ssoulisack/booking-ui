@@ -929,6 +929,19 @@ export interface PayInfo {
   qr_key: string
   qr_url?: string
   note: string
+  /** the account customers transfer to */
+  account_name: string
+  account_number: string
+  /** the branch's own way to pay (QR, transfer, WhatsApp) is on */
+  transfer_enabled: boolean
+}
+
+/** Online payment on or off for the branch, and whether the server has a gateway at all */
+export interface PaymentSettings {
+  online_enabled: boolean
+  gateway_available: boolean
+  /** how long a customer has to pay once they chose a bank */
+  charge_minutes: number
 }
 
 // ---------- events (public) ----------
@@ -974,6 +987,9 @@ export interface EventPay {
   whatsapp: string
   qr_url?: string
   note: string
+  account_name: string
+  account_number: string
+  transfer_enabled: boolean
 }
 
 export interface BuyEventTablesInput {
@@ -1027,4 +1043,14 @@ export interface StaffPayment extends OnlinePayment {
   refund_ref?: string
   note?: string
   created_at: string
+}
+
+/** How a customer pays the branch outside the system (read from any device) */
+export interface PublicPayInfo {
+  whatsapp: string
+  qr_url?: string
+  note: string
+  account_name: string
+  account_number: string
+  transfer_enabled: boolean
 }

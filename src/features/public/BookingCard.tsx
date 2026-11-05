@@ -19,11 +19,20 @@ const STATUS_STYLE: Record<Booking["status"], string> = {
   no_show: "bg-rose-100 text-rose-900 dark:bg-rose-400/20 dark:text-rose-200",
 }
 
-export function StatusBadge({ status }: { status: Booking["status"] }) {
+export function StatusBadge({
+  status,
+  awaitingPayment,
+}: {
+  status: Booking["status"]
+  /** an event booking waits for the money, not for the team's approval */
+  awaitingPayment?: boolean
+}) {
   const { t } = useTranslation()
   return (
     <Badge className={cn("border-0", STATUS_STYLE[status])}>
-      {t(`booking.status.${status}`)}
+      {awaitingPayment
+        ? t("booking.status.awaitingPayment")
+        : t(`booking.status.${status}`)}
     </Badge>
   )
 }
@@ -71,7 +80,14 @@ export function BookingCard({
             {booking.guests && booking.zones ? ` · ${booking.zones}` : ""}
           </p>
         </div>
-        <StatusBadge status={booking.status} />
+        <StatusBadge
+          status={booking.status}
+          awaitingPayment={
+            !!booking.event_id &&
+            booking.status === "pending" &&
+            booking.payment_status === "unpaid"
+          }
+        />
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
         {booking.guests ? (
@@ -104,7 +120,10 @@ export function BookingCard({
               <dd className="font-medium">
                 {money(booking.total_price, booking.currency)}{" "}
                 <span className="font-normal text-muted-foreground">
-                  · {t(`booking.payment.${booking.payment_status}`)}
+                  ·{" "}
+                  {booking.payment_status === "unpaid"
+                    ? t("booking.payment.eventUnpaid")
+                    : t(`booking.payment.${booking.payment_status}`)}
                 </span>
               </dd>
             ) : (

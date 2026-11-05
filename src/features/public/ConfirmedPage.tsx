@@ -9,24 +9,38 @@ import { timeIn } from "@/lib/format"
 import { useSession } from "@/stores/session"
 
 import { BookingCard } from "./BookingCard"
+import { CancelledNotice } from "./CancelledNotice"
 import { CopyCode } from "./CopyCode"
 import { EventPayPanel, recallPay } from "./EventPay"
 import { PayOnline, payableOnline } from "./PayOnline"
+import { StepBar } from "./TableBookingPanel"
 import { usePublic } from "./context"
+import { useLiveBooking } from "./live-booking"
 
 /** /b/:slug/confirmed — shown once after booking (the booking comes from the checkout) */
 export function ConfirmedPage() {
+  const { slug } = usePublic()
+  const created = (useLocation().state as { booking?: CreatedBooking } | null)
+    ?.booking
+  if (!created) return <Navigate to={`/b/${slug}`} replace />
+  return <Confirmed created={created} />
+}
+
+function Confirmed({ created }: { created: CreatedBooking }) {
   const { t } = useTranslation()
   const { slug, business } = usePublic()
   const user = useSession((s) => s.user)
-  const booking = (useLocation().state as { booking?: CreatedBooking } | null)
-    ?.booking
-
-  if (!booking) return <Navigate to={`/b/${slug}`} replace />
+  // what the page was given may be old (a reload keeps it): the booking is read again while it is open,
+  // so an approval, a payment or a cancellation by the team shows up here
+  const live = useLiveBooking(slug, created, created.guest_token)
+  // the answer to booking also holds the private link and the way to pay: keep those
+  const booking: CreatedBooking = { ...created, ...live.data }
   const pending = booking.status === "pending"
 
   return (
     <main className="mx-auto max-w-xl space-y-6 px-4 pt-8 pb-16">
+      {/* an event booking is not done until it is paid: step 3 of 3 */}
+      {booking.event_id && <StepBar at={3} kind="event" />}
       <div className="space-y-2">
         <span className="flex size-12 items-center justify-center rounded-full bg-[var(--brand)] text-[var(--brand-foreground)]">
           <CheckIcon className="size-7" />
@@ -109,6 +123,9 @@ export function ConfirmedPage() {
           <Link to={`/b/${slug}#book`}>{t("public.bookAnother")}</Link>
         </Button>
       </div>
+      {booking.status === "cancelled" && (
+        <CancelledNotice booking={booking} slug={slug} phone={business.phone} />
+      )}
     </main>
   )
 }

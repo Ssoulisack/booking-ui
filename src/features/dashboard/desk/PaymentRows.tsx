@@ -10,7 +10,15 @@ import { DeleteButton } from "../ui"
 import { useRefundPayment } from "./api"
 
 /** Banks with a logo in public/banks */
-const BANK_LOGOS = new Set(["apb", "bcel", "ib", "jdb", "ldb", "m-money"])
+const BANK_LOGOS = new Set([
+  "apb",
+  "bcel",
+  "ib",
+  "jdb",
+  "ldb",
+  "m-money",
+  "stb",
+])
 
 const TONE: Record<
   OnlinePaymentStatus,

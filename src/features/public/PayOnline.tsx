@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   BanknoteIcon,
   CheckCircle2Icon,
+  DownloadIcon,
   ExternalLinkIcon,
   SmartphoneIcon,
 } from "lucide-react"
@@ -17,6 +18,7 @@ import { money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 import { payApi, publicKeys, usePaymentOptions } from "./api"
+import { saveImage } from "./save-image"
 
 type Who = { token: string } | { bookingId: number }
 
@@ -52,6 +54,16 @@ export function PayOnline({
     : { bookingId: booking.id }
   const queryClient = useQueryClient()
   const [payment, setPayment] = useState<OnlinePayment | null>(null)
+  // someone who left the page and came back carries on with the payment that is still open (same QR)
+  const [released, setReleased] = useState(false)
+  const resume = useQuery({
+    queryKey: ["public", slug, "open-payment", guestToken ?? booking.id],
+    queryFn: () => payApi.open(slug, who),
+    enabled: payableOnline(booking),
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  })
+  const started = payment ?? (released ? null : (resume.data ?? null))
 
   const start = useMutation({
     mutationFn: (p: { provider: string; method: string }) =>
@@ -61,12 +73,12 @@ export function PayOnline({
 
   // the page does not wait for the webhook: it asks every few seconds while the payment is open
   const check = useQuery({
-    queryKey: ["public", slug, "payment", payment?.id],
-    queryFn: () => payApi.check(slug, who, payment!.id),
-    enabled: !!payment && payment.status === "pending",
+    queryKey: ["public", slug, "payment", started?.id],
+    queryFn: () => payApi.check(slug, who, started!.id),
+    enabled: !!started && started.status === "pending",
     refetchInterval: 3000,
   })
-  const current = check.data ?? payment
+  const current = check.data ?? started
   const paid = current?.status === "paid"
 
   useEffect(() => {
@@ -76,6 +88,10 @@ export function PayOnline({
         queryKey: publicKeys.guestBooking(slug, guestToken),
       })
     void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
+    // the confirmation page's live copy of the booking: it is confirmed now
+    void queryClient.invalidateQueries({
+      queryKey: ["public", slug, "live-booking"],
+    })
     onPaid?.()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paid])
@@ -106,8 +122,14 @@ export function PayOnline({
       {current && current.status === "pending" ? (
         <Charge
           payment={current}
+          bankName={
+            options.data
+              .flatMap((o) => o.methods)
+              .find((m) => m.key === current.method)?.label
+          }
           onChange={() => {
             setPayment(null)
+            setReleased(true)
             start.reset()
           }}
         />
@@ -126,8 +148,33 @@ export function PayOnline({
   )
 }
 
-/** Banks with a logo in public/banks (STB has none yet: its name is shown) */
-const LOGOS = new Set(["apb", "bcel", "ib", "jdb", "ldb", "m-money"])
+/** Banks with a logo in public/banks (all seven banks) */
+const LOGOS = new Set(["apb", "bcel", "ib", "jdb", "ldb", "m-money", "stb"])
+
+/** Each bank's colour (from its logo): its button gets a tint of it, so banks are known at a glance */
+const BANK_COLORS: Record<string, { light: string; dark: string }> = {
+  apb: { light: "#1f7a5c", dark: "#4cc9a0" },
+  bcel: { light: "#e30613", dark: "#ff6b73" },
+  // Indochina's purple is almost black on the dark theme: a much lighter violet there
+  ib: { light: "#540c84", dark: "#c08cf5" },
+  jdb: { light: "#0c54e4", dark: "#6ea2ff" },
+  ldb: { light: "#0c9ce4", dark: "#5cc3ff" },
+  "m-money": { light: "#e43c24", dark: "#ff7d68" },
+  stb: { light: "#0903ff", dark: "#8583ff" },
+}
+
+/**
+ * The bank's colour as a CSS variable `--c` (its light shade; its lighter shade on the dark theme): put the
+ * returned class and style on a wrapper, then use var(--c) inside. undefined for a bank with no colour.
+ */
+function bankTheme(key: string) {
+  const c = BANK_COLORS[key]
+  if (!c) return undefined
+  return {
+    className: "[--c:var(--bank-l)] dark:[--c:var(--bank-d)]",
+    style: { "--bank-l": c.light, "--bank-d": c.dark } as React.CSSProperties,
+  }
+}
 
 /** Choose the bank */
 function Methods({
@@ -151,10 +198,23 @@ function Methods({
               type="button"
               variant="outline"
               className={cn(
-                "h-auto min-h-12 flex-col gap-0.5 py-2 text-center whitespace-normal",
+                "h-auto min-h-12 flex-col gap-0.5 py-2 text-center whitespace-normal hover:brightness-95 dark:hover:brightness-110",
+                bankTheme(m.key)?.className,
                 m.key === "link" && "col-span-2",
               )}
               disabled={pending}
+              // a light tint of the bank's colour behind its logo, a border in the colour itself
+              style={
+                bankTheme(m.key)
+                  ? {
+                      ...bankTheme(m.key)!.style,
+                      borderColor:
+                        "color-mix(in srgb, var(--c) 55%, transparent)",
+                      backgroundColor:
+                        "color-mix(in srgb, var(--c) 10%, var(--card))",
+                    }
+                  : undefined
+              }
               onClick={() => onPick(o.provider, m.key)}
             >
               {pending ? <Spinner /> : null}
@@ -162,7 +222,7 @@ function Methods({
                 <img
                   src={`/banks/${m.key}.png`}
                   alt=""
-                  className="h-8 w-auto max-w-full object-contain"
+                  className="h-9 w-auto max-w-[80%] rounded-md bg-white object-contain p-1"
                   loading="lazy"
                 />
               )}
@@ -190,9 +250,12 @@ function Methods({
 /** The open payment: the QR, the bank-app link, the time left, and a way to change bank */
 function Charge({
   payment: p,
+  bankName,
   onChange,
 }: {
   payment: OnlinePayment
+  /** the bank's name as the gateway lists it (BCEL One, JDB…) */
+  bankName?: string
   onChange: () => void
 }) {
   const { t } = useTranslation()
@@ -217,11 +280,61 @@ function Charge({
   const left = Math.max(Math.floor((Date.parse(p.expires_at) - now) / 1000), 0)
   const mmss = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`
 
+  const theme = bankTheme(p.method)
+  const name = p.method === "link" ? t("payOnline.otherBank") : bankName
   return (
-    <div className="space-y-4">
-      <div className="rounded-lg bg-[var(--brand-soft)] p-3 text-center">
+    <div className={cn("space-y-4", theme?.className)} style={theme?.style}>
+      {/* which bank this payment is for: its logo, name and colour (the customer may have tapped the wrong one) */}
+      <div
+        className="flex items-center gap-3 rounded-lg border p-3"
+        style={
+          theme
+            ? {
+                borderColor: "color-mix(in srgb, var(--c) 55%, transparent)",
+                backgroundColor:
+                  "color-mix(in srgb, var(--c) 10%, var(--card))",
+              }
+            : undefined
+        }
+      >
+        {LOGOS.has(p.method) && (
+          <img
+            src={`/banks/${p.method}.png`}
+            alt=""
+            className="h-11 w-auto max-w-24 shrink-0 rounded-md bg-white object-contain p-1"
+          />
+        )}
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">
+            {t("payOnline.payingWith")}
+          </p>
+          <p className="truncate text-lg font-semibold">{name ?? p.method}</p>
+        </div>
+      </div>
+      {/* the amount in the bank's colours too: the whole payment looks like that bank */}
+      <div
+        className="rounded-lg bg-[var(--brand-soft)] p-3 text-center"
+        style={
+          theme
+            ? {
+                backgroundColor:
+                  "color-mix(in srgb, var(--c) 14%, var(--card))",
+                border:
+                  "1px solid color-mix(in srgb, var(--c) 45%, transparent)",
+              }
+            : undefined
+        }
+      >
         <p className="text-sm text-muted-foreground">{t("payOnline.amount")}</p>
-        <p className="display-tight text-4xl text-[var(--brand-ink)]">
+        <p
+          className="display-tight text-4xl text-[var(--brand-ink)]"
+          // the bank's colour, a little toward the text colour so it reads on light and dark
+          style={
+            theme
+              ? { color: "color-mix(in srgb, var(--c) 78%, var(--foreground))" }
+              : undefined
+          }
+        >
           {money(p.amount, p.currency)}
         </p>
       </div>
@@ -230,12 +343,38 @@ function Charge({
           <img
             src={qr}
             alt={t("payOnline.scan")}
-            className="size-64 rounded-lg bg-white p-2"
+            className="size-64 rounded-lg border-4 bg-white p-2"
+            style={theme ? { borderColor: "var(--c)" } : undefined}
           />
           <figcaption className="text-sm text-muted-foreground">
             {t("payOnline.scan")}
           </figcaption>
         </figure>
+      )}
+      {p.qr_code && (
+        <div className="space-y-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-12 w-full text-base"
+            onClick={async () => {
+              // a bigger picture with a wide margin: easier for a bank app to read from the gallery
+              const big = await QRCode.toDataURL(p.qr_code!, {
+                margin: 3,
+                width: 800,
+              })
+              if (!(await saveImage(big, `payment-${p.id}.png`)))
+                window.open(big, "_blank")
+            }}
+          >
+            <DownloadIcon />
+            {t("payOnline.saveQr")}
+          </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            {t("payOnline.saveQrHint")}
+          </p>
+        </div>
       )}
       <div className="grid gap-2">
         {p.deeplink && (

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { SearchIcon, XIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
@@ -6,24 +7,36 @@ import { toast } from "sonner"
 
 import { PageError, PageTitle } from "@/components/page-state"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { bookingApi, publicKeys } from "@/features/public/api"
 import { BookingCard } from "@/features/public/BookingCard"
 import { canCancel, zoneOf } from "@/features/public/booking-utils"
 import { CancelDialog } from "@/features/public/CancelDialog"
+import { ContinuePayment } from "@/features/public/ContinuePayment"
+import { readOriginSlug } from "@/features/public/origin"
 import type { Booking } from "@/lib/api/types"
-import { dayIn, timeIn } from "@/lib/format"
+import { dayIn, timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 /** /account — the customer's bookings at every branch, with a branch filter once there are two */
 export function AccountPage() {
   const { t } = useTranslation()
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming")
-  const [branch, setBranch] = useState("")
+  // null: not chosen yet, so the branch the customer came from is shown (Music Bar → its bookings first);
+  // "" is a choice too: all branches
+  const [picked, setPicked] = useState<string | null>(null)
+  // find one booking: by (part of) its code, and/or by the day it is on
+  const [code, setCode] = useState("")
+  const [day, setDay] = useState("")
+  const searching = code.trim() !== "" || day !== ""
   const bookings = useQuery({
     queryKey: publicKeys.myBookings,
     queryFn: () => bookingApi.myBookings(),
+    // approvals, payments and cancellations by the team show up without a reload
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   })
 
   // the moment the page opened splits upcoming from past
@@ -36,9 +49,24 @@ export function AccountPage() {
     )
     .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))
   const past = (bookings.data?.items ?? []).filter((b) => !upcoming.includes(b))
-  const shown = (tab === "upcoming" ? upcoming : past).filter(
-    (b) => !branch || b.branch_slug === branch,
-  )
+  const all = bookings.data?.items ?? []
+  const came = readOriginSlug()
+  // the branch they came from, when they have bookings there; a search looks everywhere until a branch is picked
+  const branch =
+    picked ??
+    (!searching && came && all.some((b) => b.branch_slug === came) ? came : "")
+  const setBranch = setPicked
+  // searching looks at every booking, upcoming or past; otherwise the tab decides
+  const matches = (b: Booking) =>
+    (!branch || b.branch_slug === branch) &&
+    (code.trim() === "" ||
+      b.code.toLowerCase().includes(code.trim().toLowerCase())) &&
+    (day === "" || todayIn(zoneOf(b.starts_at), new Date(b.starts_at)) === day)
+  const shown = searching
+    ? all
+        .filter(matches)
+        .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at))
+    : (tab === "upcoming" ? upcoming : past).filter(matches)
   // every branch this person has booked at, by name
   const branches = [
     ...new Map(
@@ -50,10 +78,57 @@ export function AccountPage() {
     <>
       <div className="mx-auto max-w-2xl">
         <PageTitle title={t("account.title")} />
+        <div className="mb-4 flex flex-wrap items-end gap-3">
+          <div className="relative min-w-0 flex-1 basis-56">
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder={t("account.searchCode")}
+              aria-label={t("account.searchCode")}
+              autoCapitalize="characters"
+              autoComplete="off"
+              className="h-11 pl-9 text-base uppercase placeholder:normal-case lg:text-sm"
+            />
+          </div>
+          <Input
+            type="date"
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+            aria-label={t("account.day")}
+            className="h-11 w-44 text-base lg:text-sm"
+          />
+          {searching && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-11"
+              onClick={() => {
+                setCode("")
+                setDay("")
+              }}
+            >
+              <XIcon />
+              {t("account.clearFilters")}
+            </Button>
+          )}
+        </div>
+        {searching && (
+          <p className="mb-3 text-sm text-muted-foreground" aria-live="polite">
+            {t("account.found", { count: shown.length })}
+          </p>
+        )}
         <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-          <TabsList className="mb-4 h-11 w-full sm:w-auto">
+          <TabsList
+            className={cn("mb-4 h-11 w-full sm:w-auto", searching && "hidden")}
+          >
             <TabsTrigger value="upcoming" className="h-9 px-4">
-              {t("account.upcoming", { count: upcoming.length })}
+              {t("account.upcoming", {
+                count: upcoming.filter(
+                  (b) => !branch || b.branch_slug === branch,
+                ).length,
+              })}
             </TabsTrigger>
             <TabsTrigger value="past" className="h-9 px-4">
               {t("account.past")}
@@ -98,7 +173,11 @@ export function AccountPage() {
           />
         ) : shown.length === 0 ? (
           <p className="rounded-xl bg-card p-6 text-muted-foreground">
-            {tab === "upcoming" ? t("account.noUpcoming") : t("account.noPast")}
+            {searching
+              ? t("account.noMatch")
+              : tab === "upcoming"
+                ? t("account.noUpcoming")
+                : t("account.noPast")}
           </p>
         ) : (
           <div className="space-y-3">
@@ -129,6 +208,10 @@ function MyBooking({ booking }: { booking: Booking }) {
 
   return (
     <BookingCard booking={booking} showBusiness>
+      {/* left the pay page? carry on while there is time */}
+      <div className="mt-4 empty:hidden">
+        <ContinuePayment booking={booking} />
+      </div>
       <div className="mt-4 flex flex-col gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
         <Button asChild variant="outline" className="h-11">
           <Link to={`/b/${booking.branch_slug}`}>

@@ -6,6 +6,15 @@ import { Link } from "react-router"
 import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/form"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -337,11 +346,14 @@ export function PublishButton({
 }) {
   const { t } = useTranslation()
   const { base, key } = useBiz()
+  const { branch } = useDashboard()
   const queryClient = useQueryClient()
+  const [confirming, setConfirming] = useState(false)
   const change = useMutation({
     mutationFn: () =>
       published ? manage.unpublish(base) : manage.publish(base),
     onSuccess: () => {
+      setConfirming(false)
       void queryClient.invalidateQueries({ queryKey: key("settings") })
       void queryClient.invalidateQueries({ queryKey: ["me", "branches"] })
       void queryClient.invalidateQueries({ queryKey: ["public"] })
@@ -352,15 +364,16 @@ export function PublishButton({
   })
   return (
     <div className="mt-4 space-y-3">
-      <ErrorAlert error={change.error} />
+      {!confirming && <ErrorAlert error={change.error} />}
       <Button
         variant={published ? "outline" : "default"}
         size="lg"
         className="h-11 lg:h-10"
         disabled={disabled || change.isPending}
-        onClick={() => change.mutate()}
+        // taking a page offline is one tap for a mistake: ask first (publishing is harmless)
+        onClick={() => (published ? setConfirming(true) : change.mutate())}
       >
-        {change.isPending && <Spinner />}
+        {change.isPending && !published && <Spinner />}
         {published ? t("overview.unpublish") : t("overview.publish")}
       </Button>
       {!published && disabled && (
@@ -368,6 +381,33 @@ export function PublishButton({
           {t("overview.publishNeeds")}
         </p>
       )}
+      <AlertDialog open={confirming} onOpenChange={setConfirming}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("overview.unpublishTitle", { name: branch.name })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("overview.unpublishLead")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <ErrorAlert error={change.error} />
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11 lg:h-9">
+              {t("overview.unpublishKeep")}
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              className="h-11 lg:h-9"
+              disabled={change.isPending}
+              onClick={() => change.mutate()}
+            >
+              {change.isPending && <Spinner />}
+              {t("overview.unpublish")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

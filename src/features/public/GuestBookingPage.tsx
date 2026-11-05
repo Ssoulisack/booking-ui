@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router"
 import { toast } from "sonner"
@@ -8,13 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import { bookingApi, publicKeys, useGuestBooking } from "./api"
-import { BookingCard } from "./BookingCard"
-import { canCancel } from "./booking-utils"
-import { CancelDialog } from "./CancelDialog"
-import { EventPayPanel, recallPay } from "./EventPay"
-import { PayOnline, payableOnline } from "./PayOnline"
+import { BookingDetailView } from "./BookingDetailView"
+import { CancelledNotice } from "./CancelledNotice"
 import { usePublic } from "./context"
-import { dayIn, timeIn } from "@/lib/format"
 
 /** /b/:slug/booking/:token — a guest's private link: see the booking and cancel it */
 export function GuestBookingPage() {
@@ -23,6 +20,13 @@ export function GuestBookingPage() {
   const { token = "" } = useParams()
   const queryClient = useQueryClient()
   const booking = useGuestBooking(slug, token)
+  // told when the team cancels it while this page is open (not when the guest cancels it here)
+  const wasOpen = useRef(false)
+  if (
+    booking.data &&
+    (booking.data.status === "pending" || booking.data.status === "confirmed")
+  )
+    wasOpen.current = true
 
   const cancel = useMutation({
     mutationFn: (reason: string) => bookingApi.cancelGuest(slug, token, reason),
@@ -41,49 +45,31 @@ export function GuestBookingPage() {
       ) : booking.isError ? (
         <ErrorAlert error={booking.error} />
       ) : (
-        <>
-          {booking.data.event_id && booking.data.status !== "completed" && (
-            <EventPayPanel
-              slug={slug}
-              tz={business.timezone}
-              phone={business.phone}
-              booking={booking.data}
-              guestToken={token}
-              info={recallPay(slug, booking.data.id)}
-            />
-          )}
-          {!booking.data.event_id && payableOnline(booking.data) && (
-            <PayOnline slug={slug} booking={booking.data} guestToken={token} />
-          )}
-          <BookingCard booking={booking.data} tz={business.timezone}>
-            <div className="mt-4 border-t pt-4">
-              {canCancel(booking.data) ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    {t("booking.cancelUntil", {
-                      when: `${dayIn(booking.data.cancellable_until, business.timezone)}, ${timeIn(booking.data.cancellable_until, business.timezone)}`,
-                    })}
-                  </p>
-                  <CancelDialog
-                    pending={cancel.isPending}
-                    error={cancel.error}
-                    onConfirm={(reason) => cancel.mutate(reason)}
-                  />
-                </div>
-              ) : (
-                booking.data.status !== "cancelled" && (
-                  <p className="text-sm text-muted-foreground">
-                    {t("booking.tooLateToCancel", { phone: business.phone })}
-                  </p>
-                )
-              )}
-            </div>
-          </BookingCard>
-        </>
+        <BookingDetailView
+          slug={slug}
+          booking={booking.data}
+          tz={business.timezone}
+          phone={business.phone}
+          guestToken={token}
+          cancel={{
+            pending: cancel.isPending,
+            error: cancel.error,
+            onConfirm: (reason) => cancel.mutate(reason),
+          }}
+        />
       )}
       <Button asChild variant="outline" className="h-12 w-full">
         <Link to={`/b/${slug}#book`}>{t("public.bookAnother")}</Link>
       </Button>
+      {booking.data?.status === "cancelled" &&
+        wasOpen.current &&
+        !cancel.isSuccess && (
+          <CancelledNotice
+            booking={booking.data}
+            slug={slug}
+            phone={business.phone}
+          />
+        )}
     </main>
   )
 }

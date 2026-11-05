@@ -148,6 +148,14 @@ export const router = createBrowserRouter([
                 }),
               },
               {
+                path: "bookings/:id",
+                lazy: async () => ({
+                  Component: (
+                    await import("@/features/account/AccountBookingPage")
+                  ).AccountBookingPage,
+                }),
+              },
+              {
                 path: "profile",
                 lazy: async () => ({
                   Component: (await import("@/features/account/ProfilePage"))
