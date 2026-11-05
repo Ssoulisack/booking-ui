@@ -32,6 +32,7 @@ import { useSession } from "@/stores/session"
 
 import { useLiveBranches, usePublicCompany } from "./api"
 import { BrandRings } from "@/features/public/BrandRings"
+import { LanguageToggle } from "@/components/LanguageToggle"
 
 /** From this many branches on, the list gets a search, sport chips and a province picker */
 const MANY = 5
@@ -153,6 +154,7 @@ function TopBar({ company }: { company: PublicCompany }) {
           />
           <span className="truncate display-tight text-lg">{company.name}</span>
         </Link>
+        <LanguageToggle />
         <ThemeToggle />
         {user ? (
           // logged in: the profile circle, whose menu has My bookings and My account

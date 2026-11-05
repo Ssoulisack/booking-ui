@@ -32,6 +32,7 @@ import { dashMode, useHtmlMode } from "@/lib/color-mode"
 import { Breadcrumbs } from "./Breadcrumbs"
 import type { Crumb } from "./crumbs"
 import { UserMenu } from "./UserMenu"
+import { LanguageToggle } from "@/components/LanguageToggle"
 
 export interface NavItem {
   to: string
@@ -186,6 +187,7 @@ export function AppShell({
           )}
           {area && <AreaTag area={area} />}
           <div className="min-w-0 flex-1">{context}</div>
+          <LanguageToggle />
           {customer ? <ThemeToggle /> : <ModeToggle store={dashMode} />}
           <UserMenu allBranches={!!back} />
         </header>

@@ -15,7 +15,12 @@ import { z } from "zod"
 import { ErrorAlert, TextField } from "@/components/form"
 import HoldButton from "@/components/reactbits/HoldButton"
 import { Button } from "@/components/ui/button"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { ApiError } from "@/lib/api/client"
@@ -377,14 +382,19 @@ export function CheckoutPage() {
               registration={form.register("phone")}
               error={errors.phone}
             />
-            <TextField
-              label={t("public.emailOptional")}
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              registration={form.register("email")}
-              error={errors.email}
-            />
+            <div>
+              <TextField
+                label={t("public.emailOptional")}
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                registration={form.register("email")}
+                error={errors.email}
+              />
+              <FieldDescription className="mt-1.5">
+                {t("public.emailWhy")}
+              </FieldDescription>
+            </div>
             <Field>
               <FieldLabel htmlFor="notes">{t("public.notes")}</FieldLabel>
               <Textarea

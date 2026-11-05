@@ -18,7 +18,8 @@ function savedLanguage(): Language {
   return LANGUAGES.includes(saved as Language) ? (saved as Language) : "en"
 }
 
-// Lao and Thai files are empty for now: every missing text falls back to English
+// Lao and Thai have no singular/plural, so their files only have the `_other` form of a plural key. Anything
+// missing from a Lao or Thai file falls back to English (the legal pages are English for now).
 void i18n.use(initReactI18next).init({
   resources: {
     en: { common: enCommon, errors: enErrors },

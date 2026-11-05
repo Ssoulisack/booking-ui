@@ -94,11 +94,9 @@ export function IdentityFields<T extends IdentityValues>({
               registration={reg("email")}
               error={err.email}
             />
-            {lao && (
-              <FieldDescription className="mt-1.5">
-                {t("identity.emailLaoHint")}
-              </FieldDescription>
-            )}
+            <FieldDescription className="mt-1.5">
+              {t(lao ? "identity.emailLaoHint" : "identity.emailForeignHint")}
+            </FieldDescription>
           </div>
         </>
       )}

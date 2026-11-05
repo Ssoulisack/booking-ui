@@ -284,6 +284,15 @@ html.pub.dark body {
   line-height: 0.95;
 }
 
+/* Thai and Lao stack vowel and tone marks above and below the line: the tight scoreboard headings need room
+   (no 0.95 line height, which cuts the marks off inside a truncated title) and normal letter spacing */
+html[lang="th"] .display-tight,
+html[lang="lo"] .display-tight {
+  line-height: 1.35;
+  letter-spacing: 0;
+  font-stretch: 100%;
+}
+
 /* The Gooey Nav sits above the booking bar while one is showing */
 html[data-booking-bar] .mobile-nav {
   bottom: calc(env(safe-area-inset-bottom) + 5.75rem);

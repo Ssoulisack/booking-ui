@@ -4,6 +4,7 @@ import { Link } from "react-router"
 import { CompanyLink } from "@/layouts/AuthLayout"
 import { CustomerTheme } from "@/features/public/CustomerTheme"
 import { ThemeToggle } from "@/features/public/ThemeToggle"
+import { LanguageToggle } from "@/components/LanguageToggle"
 
 /** Address for privacy and deletion requests; set VITE_CONTACT_EMAIL on the host */
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL as string | undefined
@@ -25,6 +26,7 @@ export function LegalPage({ page }: { page: "privacy" | "deletion" }) {
           <div className="mr-auto min-w-0">
             <CompanyLink />
           </div>
+          <LanguageToggle />
           <ThemeToggle />
         </div>
       </header>

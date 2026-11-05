@@ -20,6 +20,7 @@ import { PageSpark } from "./PageSpark"
 import type { PublicContext } from "./context"
 import { ThemeToggle } from "./ThemeToggle"
 import { useBrandOnPage, usePublicTheme } from "./theme"
+import { LanguageToggle } from "@/components/LanguageToggle"
 
 /** /b/:slug/* — a branch's public pages, in the company's brand colour and language */
 export function PublicLayout() {
@@ -89,6 +90,7 @@ function PublicTopBar({ business }: { business: PublicBranch }) {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2 lg:ml-2">
+          <LanguageToggle />
           <ThemeToggle />
           {user ? (
             // logged in: the profile circle, whose menu has My bookings, All branches, My account

@@ -514,6 +514,9 @@ export function EventPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       className={input}
                     />
+                    <p className="text-sm text-muted-foreground">
+                      {t("public.emailWhy")}
+                    </p>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {t("public.guestLinkNote")}
