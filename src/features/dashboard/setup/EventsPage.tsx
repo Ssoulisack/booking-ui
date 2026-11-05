@@ -218,9 +218,9 @@ function EventDialog({
     key: event?.ad_key ?? "",
     url: event?.ad_url ?? "",
   })
-  // the API counts minutes (0 = 24 hours); people think in hours
-  const [holdHours, setHoldHours] = useState(
-    String(Math.round((event?.hold_minutes || 1440) / 60)),
+  // minutes, as the API counts them (0 = the 24 hour default); the server allows 15 minutes to 7 days
+  const [holdMinutes, setHoldMinutes] = useState(
+    String(event?.hold_minutes || 1440),
   )
   const [price, setPrice] = useState(String(event?.default_price ?? 0))
   const [bigTables, setBigTables] = useState(
@@ -243,7 +243,10 @@ function EventDialog({
         ends_on: moreDays ? endsOn : "",
         background_key: background.key,
         ad_key: ad.key,
-        hold_minutes: Math.max(Number(holdHours) || 24, 1) * 60,
+        hold_minutes: Math.min(
+          Math.max(Math.round(Number(holdMinutes)) || 1440, 15),
+          10080,
+        ),
         big_booking_tables: Math.max(Number(bigTables) || 4, 1),
         big_hold_minutes: Math.max(Number(bigMinutes) || 60, 1),
         default_price: Math.max(Number(price) || 0, 0),
@@ -356,14 +359,15 @@ function EventDialog({
           </p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="ev-hold">{t("events.holdHours")}</Label>
+          <Label htmlFor="ev-hold">{t("events.holdMinutes")}</Label>
           <Input
             id="ev-hold"
             type="number"
             inputMode="numeric"
-            min={1}
-            value={holdHours}
-            onChange={(e) => setHoldHours(e.target.value)}
+            min={15}
+            max={10080}
+            value={holdMinutes}
+            onChange={(e) => setHoldMinutes(e.target.value)}
             className={input}
           />
           <p className="text-sm text-muted-foreground">

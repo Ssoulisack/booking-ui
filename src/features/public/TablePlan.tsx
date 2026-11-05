@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { ITEM_ICONS, itemLook } from "@/components/floor-plan/look"
 import type { PublicArea } from "@/lib/api/types"
 import { footprint } from "@/lib/floor-plan"
+import { ZoneOutline } from "@/components/floor-plan/ZoneOutline"
 import { cn } from "@/lib/utils"
 
 /** A table on the team's plan: free, taken (a group sits there) or booked (a group is coming) */
@@ -95,7 +96,8 @@ export function TablePlan({
           )}
           style={place(z)}
         >
-          <span className="truncate">{z.label}</span>
+          <ZoneOutline zone={z} />
+          <span className="relative truncate">{z.label}</span>
         </div>
       ))}
 

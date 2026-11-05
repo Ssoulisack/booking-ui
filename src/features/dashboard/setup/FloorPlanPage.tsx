@@ -33,11 +33,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type {
+  CutCorner,
   FloorItem,
   FloorItemKind,
   ManagedSport,
   ManagedTable,
   TableShape,
+  ZoneShape,
 } from "@/lib/api/types"
 import { cn } from "@/lib/utils"
 import {
@@ -49,13 +51,16 @@ import {
   inside,
   ITEM_SIZES,
   overlaps,
+  zoneHolds,
 } from "@/lib/floor-plan"
 import {
   ITEM_ICONS,
+  isLZone,
   itemLook,
   ZONE_COLORS,
   ZONE_STYLES,
 } from "@/components/floor-plan/look"
+import { ZoneOutline } from "@/components/floor-plan/ZoneOutline"
 import { useUnsaved } from "@/stores/unsaved"
 
 import {
@@ -66,8 +71,12 @@ import {
   keyOf,
   moveLimits,
   parseKey,
+  resizeBox,
+  zoneShapePatch,
+  fitCut,
   typingOrDialog,
   type Clip,
+  type ResizeEdge,
   type PieceKey,
   type PieceType,
   type Snap,
@@ -91,6 +100,9 @@ import {
 } from "../ui"
 
 const SHAPES: TableShape[] = ["square", "round", "long"]
+/** A zone is shaped like a table, or is an L */
+const ZONE_SHAPES: ZoneShape[] = ["square", "round", "long", "l"]
+const CUT_CORNERS: CutCorner[] = ["tl", "tr", "bl", "br"]
 const MAX_TABLE_SIZE = 12
 
 /**
@@ -502,7 +514,9 @@ function Editor({
   const update = (id: number, patch: Partial<ManagedTable>) =>
     setTables((list) => list.map((x) => (x.id === id ? { ...x, ...patch } : x)))
   const updateItem = (id: number, patch: Partial<FloorItem>) =>
-    setItems((list) => list.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+    setItems((list) =>
+      list.map((x) => (x.id === id ? fitCut({ ...x, ...patch }) : x)),
+    )
   const addItem = (kind: FloorItemKind) => {
     const [w, h] = ITEM_SIZES[kind]
     const item: FloorItem = {
@@ -515,6 +529,10 @@ function Editor({
       plan_w: Math.min(w, W),
       plan_h: Math.min(h, H),
       rotation: 0,
+      shape: "square",
+      cut_w: 0,
+      cut_h: 0,
+      cut_corner: "tr",
       // stairs lead to the next floor up (or down from the top floor)
       target_floor:
         kind === "stairs"
@@ -901,10 +919,8 @@ function Editor({
           onSelect={setSel}
           onBegin={remember}
           onMoveMany={moveMany}
-          onResize={(type, id, w, h) =>
-            type === "table"
-              ? update(id, { plan_w: w, plan_h: h })
-              : updateItem(id, { plan_w: w, plan_h: h })
+          onResize={(type, id, patch) =>
+            type === "table" ? update(id, patch) : updateItem(id, patch)
           }
         />
         <ShortcutHints />
@@ -1005,6 +1021,7 @@ function Editor({
       <div className="min-w-0 lg:col-start-1">
         <TableList
           tables={tables}
+          zones={items.filter((i) => i.kind === "zone")}
           selected={new Set(sel)}
           onSelect={(id) => setPicked({ type: "table", id })}
         />
@@ -1168,18 +1185,86 @@ function ItemPanel({
             </div>
           </fieldset>
         )}
+        {item.kind === "zone" && (
+          <fieldset className="space-y-1.5">
+            <legend className="text-sm font-medium">
+              {t("restaurant.table.shape")}
+            </legend>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {ZONE_SHAPES.map((shape) => (
+                <button
+                  key={shape}
+                  type="button"
+                  aria-pressed={item.shape === shape}
+                  onClick={() =>
+                    onChange(zoneShapePatch(item, shape, maxW, maxH))
+                  }
+                  className={cn(
+                    "h-11 rounded-lg text-sm ring-1 ring-border lg:h-9",
+                    item.shape === shape &&
+                      "bg-primary text-primary-foreground ring-primary",
+                  )}
+                >
+                  {t(`restaurant.shapes.${shape}`)}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
+        {isLZone(item) && (
+          <div className="space-y-3">
+            <fieldset className="space-y-1.5">
+              <legend className="text-sm font-medium">
+                {t("restaurant.items.cutCorner")}
+              </legend>
+              <div className="grid grid-cols-2 gap-2">
+                {CUT_CORNERS.map((corner) => (
+                  <button
+                    key={corner}
+                    type="button"
+                    aria-pressed={item.cut_corner === corner}
+                    onClick={() => onChange({ cut_corner: corner })}
+                    className={cn(
+                      "h-11 rounded-lg text-sm ring-1 ring-border lg:h-9",
+                      item.cut_corner === corner &&
+                        "bg-primary text-primary-foreground ring-primary",
+                    )}
+                  >
+                    {t(`restaurant.items.corners.${corner}`)}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <div className="grid grid-cols-2 gap-3">
+              <Stepper
+                label={t("restaurant.items.cutW")}
+                value={item.cut_w}
+                min={1}
+                max={item.plan_w - 1}
+                onChange={(cut_w) => onChange({ cut_w })}
+              />
+              <Stepper
+                label={t("restaurant.items.cutH")}
+                value={item.cut_h}
+                min={1}
+                max={item.plan_h - 1}
+                onChange={(cut_h) => onChange({ cut_h })}
+              />
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <Stepper
             label={t("restaurant.table.width")}
             value={item.plan_w}
-            min={1}
+            min={item.shape === "l" ? 2 : 1}
             max={maxW}
             onChange={(plan_w) => onChange({ plan_w })}
           />
           <Stepper
             label={t("restaurant.table.depth")}
             value={item.plan_h}
-            min={1}
+            min={item.shape === "l" ? 2 : 1}
             max={maxH}
             onChange={(plan_h) => onChange({ plan_h })}
           />
@@ -1243,7 +1328,12 @@ function Canvas({
     moves: Array<{ type: PieceType; id: number; x: number; y: number }>,
   ) => void
   /** the new plan_w × plan_h (before rotation), in grid squares */
-  onResize: (type: "table" | "item", id: number, w: number, h: number) => void
+  /** a new size, and a new position when the top or left edge was dragged */
+  onResize: (
+    type: "table" | "item",
+    id: number,
+    patch: { plan_w: number; plan_h: number; plan_x?: number; plan_y?: number },
+  ) => void
 }) {
   const { t } = useTranslation()
   const box = useRef<HTMLDivElement>(null)
@@ -1477,40 +1567,56 @@ function Canvas({
     }
   }
 
-  // resizing the one selected piece: which edge, where the pointer started, the size it had
+  // resizing the one selected piece: which edge, where the pointer started, the rectangle it had
   const sizing = useRef<{
-    edge: "right" | "bottom" | "corner"
+    edge: ResizeEdge
     px: number
     py: number
+    x: number
+    y: number
     w: number
     h: number
   } | null>(null)
   const only = selected.size === 1 ? pieceOf([...selected][0]) : null
-  const resizeHandle = (p: Piece, edge: "right" | "bottom" | "corner") => {
+  const resizeHandle = (p: Piece, edge: ResizeEdge) => {
     const f = footprint(p)
     const turned = p.rotation === 90 || p.rotation === 270
     const maxSide =
       p.type === "table" ? MAX_TABLE_SIZE : Math.max(width, height)
+    // an L zone needs a box of at least 2 x 2 for its cut-out
+    const minSide =
+      p.type === "item" && items.find((x) => x.id === p.id)?.shape === "l"
+        ? 2
+        : 1
     return {
       onPointerDown: (e: PointerEvent<HTMLSpanElement>) => {
         e.stopPropagation()
         e.currentTarget.setPointerCapture(e.pointerId)
         onBegin("resize")
-        sizing.current = { edge, px: e.clientX, py: e.clientY, w: f.w, h: f.h }
+        sizing.current = { edge, px: e.clientX, py: e.clientY, ...f }
       },
       onPointerMove: (e: PointerEvent<HTMLSpanElement>) => {
         const s = sizing.current
         if (!s || cell === 0) return
-        let fw = s.w
-        let fh = s.h
-        if (edge !== "bottom") fw = s.w + Math.round((e.clientX - s.px) / cell)
-        if (edge !== "right") fh = s.h + Math.round((e.clientY - s.py) / cell)
-        fw = Math.max(1, Math.min(maxSide, width - f.x, fw))
-        fh = Math.max(1, Math.min(maxSide, height - f.y, fh))
-        if (fw === f.w && fh === f.h) return
+        const box = resizeBox(
+          edge,
+          s,
+          Math.round((e.clientX - s.px) / cell),
+          Math.round((e.clientY - s.py) / cell),
+          maxSide,
+          width,
+          height,
+          minSide,
+        )
+        if (box.x === f.x && box.y === f.y && box.w === f.w && box.h === f.h)
+          return
         // the footprint is turned; plan_w / plan_h are the size before turning
-        if (turned) onResize(p.type, p.id, fh, fw)
-        else onResize(p.type, p.id, fw, fh)
+        onResize(p.type, p.id, {
+          plan_w: turned ? box.h : box.w,
+          plan_h: turned ? box.w : box.h,
+          plan_x: box.x,
+          plan_y: box.y,
+        })
       },
       onPointerUp: () => {
         sizing.current = null
@@ -1565,11 +1671,12 @@ function Canvas({
         )}
         style={place({ type: "item", ...item })}
       >
+        <ZoneOutline zone={item} />
         {item.kind !== "zone" && item.kind !== "label" && roomy && (
           <Icon className="size-3.5 shrink-0" />
         )}
         {(item.kind === "zone" || item.kind === "label" || f.w * cell > 48) && (
-          <span className="truncate px-0.5">{item.label}</span>
+          <span className="relative truncate px-0.5">{item.label}</span>
         )}
       </button>
     )
@@ -1793,8 +1900,8 @@ function ShortcutHints() {
 }
 
 /**
- * Handles around the selected table or object: drag the right edge, the bottom edge or the corner.
- * The frame itself lets clicks through, so the piece under it can still be dragged.
+ * Handles around the selected table or object: drag any side or any corner. The frame itself lets clicks through,
+ * so the piece under it can still be dragged.
  */
 function ResizeFrame({
   place,
@@ -1803,78 +1910,164 @@ function ResizeFrame({
 }: {
   place: { left: number; top: number; width: number; height: number }
   handle: (
-    edge: "right" | "bottom" | "corner",
+    edge: ResizeEdge,
   ) => Record<string, (e: PointerEvent<HTMLSpanElement>) => void>
   label: string
 }) {
   const dot =
     "pointer-events-auto absolute size-3.5 touch-none rounded-sm border-2 border-primary bg-background shadow before:absolute before:-inset-3 before:content-['']"
+  // the sides first, the corners last (on top), so a corner wins where their touch areas meet
+  const handles: [ResizeEdge, string][] = [
+    ["e", "top-1/2 -right-1.5 -translate-y-1/2 cursor-ew-resize"],
+    ["w", "top-1/2 -left-1.5 -translate-y-1/2 cursor-ew-resize"],
+    ["s", "-bottom-1.5 left-1/2 -translate-x-1/2 cursor-ns-resize"],
+    ["n", "-top-1.5 left-1/2 -translate-x-1/2 cursor-ns-resize"],
+    ["se", "-right-1.5 -bottom-1.5 cursor-nwse-resize"],
+    ["nw", "-top-1.5 -left-1.5 cursor-nwse-resize"],
+    ["ne", "-top-1.5 -right-1.5 cursor-nesw-resize"],
+    ["sw", "-bottom-1.5 -left-1.5 cursor-nesw-resize"],
+  ]
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute z-40"
       style={{ ...place, cursor: undefined }}
     >
-      <span
-        title={label}
-        {...handle("right")}
-        className={cn(
-          dot,
-          "top-1/2 -right-1.5 -translate-y-1/2 cursor-ew-resize",
-        )}
-      />
-      <span
-        title={label}
-        {...handle("bottom")}
-        className={cn(
-          dot,
-          "-bottom-1.5 left-1/2 -translate-x-1/2 cursor-ns-resize",
-        )}
-      />
-      <span
-        title={label}
-        {...handle("corner")}
-        className={cn(dot, "-right-1.5 -bottom-1.5 cursor-nwse-resize")}
-      />
+      {handles.map(([edge, where]) => (
+        <span
+          key={edge}
+          title={label}
+          {...handle(edge)}
+          className={cn(dot, where)}
+        />
+      ))}
     </div>
   )
 }
 
-/** Every table as a row: easy to find and pick on a phone */
-function TableList({
+/**
+ * Every table as a small tile, grouped by size: first by the number of seats, and inside each size by the zone
+ * the table stands in (when the plan has zones). Far shorter than a row per table, and easy to hit on a phone.
+ */
+export function TableList({
   tables,
+  zones,
   selected,
   onSelect,
 }: {
   tables: ManagedTable[]
+  zones: FloorItem[]
   selected: Set<PieceKey>
   onSelect: (id: number) => void
 }) {
   const { t } = useTranslation()
   if (tables.length === 0) return null
+  const byName = (a: ManagedTable, b: ManagedTable) =>
+    a.name.localeCompare(b.name, undefined, { numeric: true })
+  // the zone a table stands in (the first one that holds its centre)
+  const zoneOf = (x: ManagedTable) => zones.find((z) => zoneHolds(z, x))
+  const sizes = [...new Set(tables.map((x) => x.seats))].sort((a, b) => a - b)
+  const anyZone = tables.some((x) => zoneOf(x))
   return (
-    <ul className="divide-y rounded-xl bg-background ring-1 ring-border">
-      {tables.map((x) => (
-        <li key={x.id}>
-          <button
-            type="button"
-            onClick={() => onSelect(x.id)}
-            className={cn(
-              "flex min-h-12 w-full items-center justify-between gap-3 px-4 text-left hover:bg-muted",
-              selected.has(keyOf("table", x.id)) && "bg-muted",
-            )}
+    <div className="space-y-4">
+      {sizes.map((seats) => {
+        const group = tables.filter((x) => x.seats === seats).sort(byName)
+        // inside a size: one block per zone (zones in plan order), then the tables outside every zone
+        const parts: {
+          id: number | "none"
+          zone?: FloorItem
+          list: ManagedTable[]
+        }[] = []
+        if (anyZone) {
+          for (const z of zones) {
+            const list = group.filter((x) => zoneOf(x)?.id === z.id)
+            if (list.length) parts.push({ id: z.id, zone: z, list })
+          }
+          const rest = group.filter((x) => !zoneOf(x))
+          if (rest.length) parts.push({ id: "none", list: rest })
+        } else parts.push({ id: "none", list: group })
+        return (
+          <section
+            key={seats}
+            className="rounded-xl bg-background p-3 ring-1 ring-border"
           >
-            <span className="font-medium">{x.name}</span>
-            <span className="text-sm text-muted-foreground">
-              {t("restaurant.table.seatsShort", { count: x.seats })}
-              {x.extra_chairs > 0 &&
-                ` · ${t("restaurant.table.extraShort", { count: x.extra_chairs })}`}
-              {!x.active && ` · ${t("restaurant.table.off")}`}
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
+            <h3 className="mb-2 flex items-baseline gap-2 text-sm font-semibold">
+              {t("restaurant.table.seatsShort", { count: seats })}
+              <span className="font-normal text-muted-foreground">
+                {t("restaurant.table.groupCount", { count: group.length })}
+              </span>
+            </h3>
+            <div className="space-y-3">
+              {parts.map((blk) => (
+                <div key={blk.id}>
+                  {anyZone && (
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "size-2.5 rounded-full border",
+                          blk.zone?.color
+                            ? ZONE_STYLES[blk.zone.color]
+                            : "border-border bg-muted",
+                        )}
+                      />
+                      {blk.zone
+                        ? blk.zone.label.trim() ||
+                          t("restaurant.table.zoneUnnamed")
+                        : t("restaurant.table.noZone")}
+                      <span className="font-normal">· {blk.list.length}</span>
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {blk.list.map((x) => {
+                      const zone = zoneOf(x)
+                      return (
+                        <button
+                          key={x.id}
+                          type="button"
+                          onClick={() => onSelect(x.id)}
+                          aria-pressed={selected.has(keyOf("table", x.id))}
+                          title={[
+                            x.name,
+                            t("restaurant.table.seatsShort", {
+                              count: x.seats,
+                            }),
+                            x.extra_chairs > 0
+                              ? t("restaurant.table.extraShort", {
+                                  count: x.extra_chairs,
+                                })
+                              : "",
+                            x.active ? "" : t("restaurant.table.off"),
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                          className={cn(
+                            "relative flex min-h-11 min-w-14 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors hover:brightness-95",
+                            zone?.color
+                              ? ZONE_STYLES[zone.color]
+                              : "border-border bg-card",
+                            !x.active && "border-dashed opacity-55",
+                            selected.has(keyOf("table", x.id)) &&
+                              "ring-2 ring-primary ring-offset-1 ring-offset-background",
+                          )}
+                        >
+                          {x.name}
+                          {x.extra_chairs > 0 && (
+                            <span className="ml-1 text-xs font-normal opacity-70">
+                              +{x.extra_chairs}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )
+      })}
+    </div>
   )
 }
 

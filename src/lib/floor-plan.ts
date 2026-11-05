@@ -1,4 +1,10 @@
-import type { FloorItem, FloorItemKind, ManagedTable } from "@/lib/api/types"
+import type {
+  CutCorner,
+  FloorItem,
+  FloorItemKind,
+  ManagedTable,
+  ZoneShape,
+} from "@/lib/api/types"
 
 // Restaurant floor plans: the same rules as the backend (domain/restaurant.go)
 
@@ -41,6 +47,8 @@ const BLOCKS: Record<FloorItemKind, boolean> = {
   label: false,
   zone: false,
   stairs: true,
+  cashier: true,
+  dj: true,
 }
 
 export const FLOOR_ITEM_KINDS = Object.keys(BLOCKS) as FloorItemKind[]
@@ -57,6 +65,8 @@ export const ITEM_SIZES: Record<FloorItemKind, [number, number]> = {
   label: [4, 1],
   zone: [8, 5],
   stairs: [2, 3],
+  cashier: [2, 2],
+  dj: [3, 2],
 }
 
 /** Floors an area can be on, lowest first */
@@ -159,14 +169,109 @@ export function checkTables(
   return { ok: true, seats, extraUsed: true }
 }
 
+/** What decides a zone's form: its box, its shape and, for an L, the cut-out corner */
+export type ZoneLike = Placed & {
+  kind: string
+  shape?: ZoneShape
+  cut_w?: number
+  cut_h?: number
+  cut_corner?: CutCorner
+}
+
+/** The cut-out corner of an L zone, in plan squares; null for any other zone */
+export function zoneCut(zone: ZoneLike) {
+  if (zone.kind !== "zone" || zone.shape !== "l") return null
+  const cw = zone.cut_w ?? 0
+  const ch = zone.cut_h ?? 0
+  if (cw < 1 || ch < 1) return null
+  const z = footprint(zone)
+  const right = zone.cut_corner === "tr" || zone.cut_corner === "br"
+  const bottom = zone.cut_corner === "bl" || zone.cut_corner === "br"
+  return {
+    x: right ? z.x + z.w - cw : z.x,
+    y: bottom ? z.y + z.h - ch : z.y,
+    w: cw,
+    h: ch,
+  }
+}
+
+/**
+ * The outline of an L zone as points in plan squares, measured from the corner of its box (clockwise); null for
+ * any other zone. The cut-out corner is the one missing from the box.
+ */
+export function zoneOutline(zone: ZoneLike): [number, number][] | null {
+  const cut = zoneCut(zone)
+  if (!cut) return null
+  const z = footprint(zone)
+  const cx = cut.x - z.x
+  const cy = cut.y - z.y
+  switch (zone.cut_corner) {
+    case "tl":
+      return [
+        [cut.w, 0],
+        [z.w, 0],
+        [z.w, z.h],
+        [0, z.h],
+        [0, cut.h],
+        [cut.w, cut.h],
+      ]
+    case "bl":
+      return [
+        [0, 0],
+        [z.w, 0],
+        [z.w, z.h],
+        [cut.w, z.h],
+        [cut.w, cy],
+        [0, cy],
+      ]
+    case "br":
+      return [
+        [0, 0],
+        [z.w, 0],
+        [z.w, cy],
+        [cx, cy],
+        [cx, z.h],
+        [0, z.h],
+      ]
+    default: // "tr"
+      return [
+        [0, 0],
+        [cx, 0],
+        [cx, cut.h],
+        [z.w, cut.h],
+        [z.w, z.h],
+        [0, z.h],
+      ]
+  }
+}
+
 /** A zone holds a table when the table's centre lies inside the zone (as domain.FloorItem.Holds) */
-export function zoneHolds(zone: Placed & { kind: string }, table: Placed) {
+export function zoneHolds(zone: ZoneLike, table: Placed) {
   if (zone.kind !== "zone") return false
   const z = footprint(zone)
   const t = footprint(table)
   const cx = 2 * t.x + t.w
   const cy = 2 * t.y + t.h
-  return (
-    cx > 2 * z.x && cx < 2 * (z.x + z.w) && cy > 2 * z.y && cy < 2 * (z.y + z.h)
+  if (!(
+    cx > 2 * z.x &&
+    cx < 2 * (z.x + z.w) &&
+    cy > 2 * z.y &&
+    cy < 2 * (z.y + z.h)
+  ))
+    return false
+  if (zone.shape === "round") {
+    // inside the ellipse, not only inside its box (centre and half sides doubled)
+    const dx = cx - (2 * z.x + z.w)
+    const dy = cy - (2 * z.y + z.h)
+    return dx * dx * z.h * z.h + dy * dy * z.w * z.w < z.w * z.w * z.h * z.h
+  }
+  // an L zone does not hold what stands in its cut-out corner
+  const cut = zoneCut(zone)
+  return !(
+    cut &&
+    cx > 2 * cut.x &&
+    cx < 2 * (cut.x + cut.w) &&
+    cy > 2 * cut.y &&
+    cy < 2 * (cut.y + cut.h)
   )
 }

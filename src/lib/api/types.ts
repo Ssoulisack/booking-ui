@@ -469,9 +469,35 @@ export interface TableFields {
 export type ManagedTable = ManagedResource & TableFields
 
 export type FloorItemKind =
-  "bar" | "pole" | "stage" | "toilet" | "entry" | "label" | "zone" | "stairs"
+  | "bar"
+  | "pole"
+  | "stage"
+  | "toilet"
+  | "entry"
+  | "label"
+  | "zone"
+  | "stairs"
+  | "cashier"
+  | "dj"
 
-export type ZoneColor = "green" | "blue" | "amber" | "rose" | "violet" | "slate"
+export type ZoneColor =
+  | "green"
+  | "blue"
+  | "amber"
+  | "rose"
+  | "violet"
+  | "slate"
+  | "orange"
+  | "black"
+  | "teal"
+  | "lime"
+  | "brown"
+
+/** The shape of a zone: like a table (square, round, long) or an L (its box with one corner cut out) */
+export type ZoneShape = "square" | "round" | "long" | "l"
+
+/** The corner of its box an L zone is cut at: top-left, top-right, bottom-left, bottom-right */
+export type CutCorner = "tl" | "tr" | "bl" | "br"
 
 /** Something drawn on the floor plan that is not booked (customers see it too) */
 export interface FloorItem {
@@ -488,6 +514,11 @@ export interface FloorItem {
   rotation: 0 | 90 | 180 | 270
   /** stairs only: the floor they lead to */
   target_floor: number | null
+  /** zones only: the shape; for an L, the cut-out corner is cut_w × cut_h squares at cut_corner */
+  shape: ZoneShape
+  cut_w: number
+  cut_h: number
+  cut_corner: CutCorner
 }
 
 /** A restaurant area as customers see it */

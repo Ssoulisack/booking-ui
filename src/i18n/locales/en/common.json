@@ -1609,12 +1609,17 @@
       "seatsShort_one": "{{count}} seat",
       "seatsShort_other": "{{count}} seats",
       "extraShort": "+{{count}} chairs",
+      "groupCount_one": "{{count}} table",
+      "groupCount_other": "{{count}} tables",
+      "noZone": "Outside any zone",
+      "zoneUnnamed": "Unnamed zone",
       "off": "off"
     },
     "shapes": {
       "square": "Square",
       "round": "Round",
-      "long": "Long"
+      "long": "Long",
+      "l": "L shape"
     },
     "hours": {
       "title": "Opening hours",
@@ -1679,7 +1684,9 @@
         "entry": "Entrance",
         "label": "Text label",
         "zone": "Zone",
-        "stairs": "Stairs"
+        "stairs": "Stairs",
+        "cashier": "Cashier",
+        "dj": "DJ"
       },
       "default": {
         "bar": "Bar",
@@ -1689,15 +1696,31 @@
         "entry": "Entrance",
         "label": "Window",
         "zone": "Smoking",
-        "stairs": "Stairs"
+        "stairs": "Stairs",
+        "cashier": "Cashier",
+        "dj": "DJ"
       },
+      "cutCorner": "Cut-out corner",
+      "corners": {
+        "tl": "Top left",
+        "tr": "Top right",
+        "bl": "Bottom left",
+        "br": "Bottom right"
+      },
+      "cutW": "Cut-out width",
+      "cutH": "Cut-out depth",
       "colors": {
         "green": "Green",
         "blue": "Blue",
         "amber": "Yellow",
         "rose": "Red",
         "violet": "Purple",
-        "slate": "Grey"
+        "slate": "Grey",
+        "orange": "Orange",
+        "black": "Black",
+        "teal": "Teal",
+        "lime": "Light green",
+        "brown": "Brown"
       },
       "blocksHint": "Takes floor space: no table can stand on it. Customers see it on the plan.",
       "freeHint": "Only a mark on the plan: tables can stand on it or inside it. Customers see it too."
@@ -1780,8 +1803,8 @@
     "adHint": "The ad shows on the home and branch pages while the event is published. Without one, the background is used.",
     "defaultPrice": "Table price",
     "defaultPriceHint": "Every table without its own price. 0 = not for sale.",
-    "holdHours": "Hold for payment (hours)",
-    "holdHint": "Unpaid tables go back on sale after this. Staff can cancel any time.",
+    "holdMinutes": "Hold for payment (minutes)",
+    "holdHint": "Unpaid tables go back on sale after this: 15 minutes up to 7 days (60 = 1 hour, 1440 = 1 day). Staff can cancel any time.",
     "bigTables": "Big booking from (tables)",
     "bigMinutes": "Big booking hold (minutes)",
     "bigHint": "More than {{n}} tables must be paid within {{m}} minutes.",

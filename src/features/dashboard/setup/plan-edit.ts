@@ -1,4 +1,4 @@
-import type { FloorItem, ManagedTable } from "@/lib/api/types"
+import type { FloorItem, ManagedTable, ZoneShape } from "@/lib/api/types"
 import { footprint, overlaps } from "@/lib/floor-plan"
 
 // Editing several tables and objects of a floor plan at once: selection, copies, shortcuts
@@ -129,4 +129,95 @@ export function copyOffset(
     dx: clamp(dx, lim.minDx, lim.maxDx),
     dy: clamp(dy, lim.minDy, lim.maxDy),
   }
+}
+
+/** Which edge or corner of the selected piece is being dragged (compass points: n = top, w = left…) */
+export type ResizeEdge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw"
+
+/**
+ * The piece's rectangle (in grid cells) after dragging an edge or corner by (dx, dy) cells. The edge opposite the
+ * one dragged stays where it is: dragging the left or top edge moves the piece's position as well as its size.
+ * The piece stays on the plan (0..width, 0..height), at least `minSide` cells (1; an L zone needs 2) and at most
+ * `maxSide` cells on a side.
+ */
+export function resizeBox(
+  edge: ResizeEdge,
+  start: { x: number; y: number; w: number; h: number },
+  dx: number,
+  dy: number,
+  maxSide: number,
+  width: number,
+  height: number,
+  minSide = 1,
+) {
+  let { x, y, w, h } = start
+  if (edge.includes("e"))
+    w = Math.max(minSide, Math.min(maxSide, width - x, start.w + dx))
+  if (edge.includes("s"))
+    h = Math.max(minSide, Math.min(maxSide, height - y, start.h + dy))
+  if (edge.includes("w")) {
+    const right = start.x + start.w
+    x = Math.max(0, right - maxSide, Math.min(right - minSide, start.x + dx))
+    w = right - x
+  }
+  if (edge.includes("n")) {
+    const bottom = start.y + start.h
+    y = Math.max(0, bottom - maxSide, Math.min(bottom - minSide, start.y + dy))
+    h = bottom - y
+  }
+  return { x, y, w, h }
+}
+
+/**
+ * An L zone keeps its cut-out inside its box: at least 1 square, and always less than the box on both sides (so an
+ * L is left). Anything that is not an L zone comes back as it was.
+ */
+export function fitCut<
+  T extends {
+    shape?: string
+    plan_w: number
+    plan_h: number
+    cut_w?: number
+    cut_h?: number
+  },
+>(item: T): T {
+  if (item.shape !== "l") return item
+  return {
+    ...item,
+    cut_w: Math.max(1, Math.min(item.cut_w ?? 1, item.plan_w - 1)),
+    cut_h: Math.max(1, Math.min(item.cut_h ?? 1, item.plan_h - 1)),
+  }
+}
+
+/**
+ * What changes when a zone is given another shape (the same choices as a table, and an L). Long is wider than deep,
+ * as for a table; an L needs a box of at least 2 x 2 and starts with a cut of half the box in the top-right corner
+ * (or the corner it had); the other shapes have no cut-out.
+ */
+export function zoneShapePatch(
+  item: {
+    plan_w: number
+    plan_h: number
+    cut_corner?: FloorItem["cut_corner"]
+  },
+  shape: ZoneShape,
+  maxW: number,
+  maxH: number,
+): Partial<FloorItem> {
+  if (shape === "l") {
+    const w = Math.min(maxW, Math.max(2, item.plan_w))
+    const h = Math.min(maxH, Math.max(2, item.plan_h))
+    return {
+      shape,
+      plan_w: w,
+      plan_h: h,
+      cut_w: Math.max(1, Math.floor(w / 2)),
+      cut_h: Math.max(1, Math.floor(h / 2)),
+      cut_corner: item.cut_corner ?? "tr",
+    }
+  }
+  const plain = { shape, cut_w: 0, cut_h: 0 }
+  return shape === "long" && item.plan_w <= item.plan_h
+    ? { ...plain, plan_w: Math.min(maxW, item.plan_h + 1) }
+    : plain
 }
