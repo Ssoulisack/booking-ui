@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   CheckCircle2Icon,
   ClockIcon,
@@ -14,6 +14,7 @@ import { ErrorAlert } from "@/components/form"
 import { Button } from "@/components/ui/button"
 import type { Booking, EventPay } from "@/lib/api/types"
 import { dayIn, money, timeIn } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 import { publicKeys, slipApi, usePaymentOptions, usePublicPayInfo } from "./api"
 import { PayOnline } from "./PayOnline"
@@ -120,7 +121,7 @@ export function EventPayPanel({
     : info?.pay
   const total = pay?.total ?? booking.total_price
   const currency = pay?.currency ?? booking.currency
-  const holdUntil = pay?.hold_until ?? booking.pay_by
+  const holdUntil = booking.pay_by ?? pay?.hold_until
   const slipSent = !!(booking.slip_sent_at ?? slip.data?.slip_sent_at)
   const whatsapp = (pay?.whatsapp ?? "").replace(/[^\d]/g, "")
   // the admin can turn the branch's own way to pay off (this device may not know: then it is shown)
@@ -151,26 +152,19 @@ export function EventPayPanel({
           {money(total, currency)}
         </p>
       </div>
-      {holdUntil && !slipSent && (
-        <p className="flex items-start gap-2 text-sm font-medium">
-          <ClockIcon className="mt-0.5 size-4 shrink-0" />
-          {t("public.events.pay.before", {
-            when: `${dayIn(holdUntil, tz)}, ${timeIn(holdUntil, tz)}`,
-          })}
-          {pay?.big_booking && (
-            <span className="font-normal text-muted-foreground">
-              {" "}
-              ·{" "}
-              {t("public.events.pay.bigHold", {
-                when: timeIn(holdUntil, tz),
-              })}
-            </span>
-          )}
-        </p>
+      {/* the clock: until when the tables are held, and what happens when it runs out */}
+      {holdUntil && (
+        <HoldClock
+          until={holdUntil}
+          tz={tz}
+          slipSent={slipSent}
+          slipSentAt={booking.slip_sent_at ?? slip.data?.slip_sent_at}
+          big={!!pay?.big_booking}
+        />
       )}
       {/* step 3: choose how to pay. Online (a bank app QR) confirms by itself; the branch's own QR or a
           transfer is checked by the team, who are told on WhatsApp. */}
-      {hasOnline && transferOn && (
+      {!slipSent && hasOnline && transferOn && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium">
             {t("public.events.pay.method")}
@@ -199,7 +193,7 @@ export function EventPayPanel({
           ))}
         </fieldset>
       )}
-      {hasOnline && shownMethod === "online" && (
+      {!slipSent && hasOnline && shownMethod === "online" && (
         <PayOnline
           slug={slug}
           booking={booking}
@@ -207,15 +201,15 @@ export function EventPayPanel({
           onPaid={() => setPaidOnline(true)}
         />
       )}
-      {!hasOnline && !transferOn && (
+      {!slipSent && !hasOnline && !transferOn && (
         // both ways are off: the customer cannot pay here; the team confirms by hand
         <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-400/15 dark:text-amber-200">
           {t("public.events.pay.noWay", { phone })}
         </p>
       )}
-      {transferOn && shownMethod === "manual" && (
+      {transferOn && (shownMethod === "manual" || slipSent) && (
         <>
-          {pay ? (
+          {slipSent ? null : pay ? (
             <>
               {pay?.qr_url && (
                 <figure className="flex flex-col items-center gap-2">
@@ -280,12 +274,7 @@ export function EventPayPanel({
           {/* paid outside the system: the customer talks to the team on WhatsApp, which is faster than waiting
           for someone to look at the website. Tapping the button also tells the system a slip was sent, so
           the hold stops running out and the team sees "slip sent" on their list. */}
-          {slipSent && (
-            <p className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 text-sm font-medium">
-              <CheckCircle2Icon className="size-5 shrink-0" />
-              {t("public.events.pay.slipDone")}
-            </p>
-          )}
+          {/* the slip message is the clock box above: no second one here */}
           {whatsapp ? (
             <Button
               asChild
@@ -362,6 +351,96 @@ function AccountRow({
         label={t("public.events.pay.copy", { what: label })}
         doneLabel={t("public.events.pay.copied")}
       />
+    </div>
+  )
+}
+
+/** Format a number of seconds as "1 d 3 h", "2 h 05 min" or "04:59" */
+function left(seconds: number) {
+  const s = Math.max(seconds, 0)
+  const d = Math.floor(s / 86400)
+  const h = Math.floor((s % 86400) / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  if (d > 0) return `${d} d ${h} h`
+  if (h > 0) return `${h} h ${pad(m)} min`
+  return `${pad(m)}:${pad(s % 60)}`
+}
+
+/**
+ * How long the tables are held, counting down, and the plain warning that the booking cancels itself when
+ * the time is up (unless the customer has sent the slip: then the team decides). Amber in the last 15 minutes.
+ */
+export function HoldClock({
+  until,
+  tz,
+  slipSent,
+  slipSentAt,
+  big,
+  compact,
+}: {
+  until: string
+  tz: string
+  slipSent: boolean
+  /** when the slip was sent, to say so */
+  slipSentAt?: string
+  big: boolean
+  /** smaller, for a booking card in the list */
+  compact?: boolean
+}) {
+  const { t } = useTranslation()
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+  const seconds = Math.floor((Date.parse(until) - now) / 1000)
+  const when = `${dayIn(until, tz)}, ${timeIn(until, tz)}`
+
+  if (slipSent)
+    return (
+      // soft tint of the theme's button yellow, normal text
+      <p className="flex items-start gap-2 rounded-lg bg-primary/10 p-3 text-sm font-medium text-foreground ring-1 ring-primary/30">
+        <ClockIcon className="mt-0.5 size-4 shrink-0" />
+        {slipSentAt
+          ? t("public.events.pay.heldWhileCheckingAt", {
+              when: `${dayIn(slipSentAt, tz)}, ${timeIn(slipSentAt, tz)}`,
+            })
+          : t("public.events.pay.heldWhileChecking")}
+      </p>
+    )
+  const urgent = seconds <= 15 * 60
+  return (
+    <div
+      className={cn(
+        // a soft tint of the button's yellow on the theme background; stronger in the last 15 minutes
+        "space-y-1 rounded-lg bg-primary/10 p-3 text-foreground ring-1",
+        urgent ? "bg-primary/20 ring-2 ring-primary" : "ring-primary/30",
+      )}
+      role="timer"
+      aria-live="off"
+    >
+      <p className="flex items-center gap-2 text-sm font-medium">
+        <ClockIcon className="size-4 shrink-0" />
+        {t("public.events.pay.timeLeft")}
+      </p>
+      <p
+        className={cn(
+          // the number in the readable shade of the button colour (dark amber on light, pale amber on dark)
+          "display-tight text-[var(--primary-ink)] tabular-nums",
+          compact ? "text-2xl" : "text-3xl",
+        )}
+      >
+        {seconds > 0 ? left(seconds) : t("public.events.pay.timeUp")}
+      </p>
+      <p className="text-sm text-muted-foreground">
+        {seconds > 0
+          ? t("public.events.pay.cancelWarning", { when })
+          : t("public.events.pay.releasing")}
+        {big &&
+          seconds > 0 &&
+          ` ${t("public.events.pay.bigHold", { when: timeIn(until, tz) })}`}
+      </p>
     </div>
   )
 }

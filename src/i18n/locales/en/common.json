@@ -481,7 +481,13 @@
         "accountNote": "More details",
         "copy": "Copy {{what}}",
         "copied": "Copied",
-        "noWay": "Online payment is not open for this event. Please contact the branch to pay: {{phone}}."
+        "noWay": "Online payment is not open for this event. Please contact the branch to pay: {{phone}}.",
+        "timeLeft": "Time left to pay",
+        "timeUp": "Time is up",
+        "cancelWarning": "If you do not pay, or do not send us your slip, this booking is cancelled automatically at {{when}} and the tables are released to other customers.",
+        "releasing": "The time is up. This booking is being cancelled and the tables are released.",
+        "heldWhileChecking": "Slip sent. Your tables are held while the team checks it. They will confirm on WhatsApp.",
+        "heldWhileCheckingAt": "Slip sent {{when}}. Your tables are held while the team checks it. They will confirm on WhatsApp."
       },
       "steps": {
         "tables": "Tables",
@@ -1864,6 +1870,7 @@
     "refundAsked": "Refund asked. It shows as refunded when the bank confirms.",
     "attentionTitle": "Online payments to look at",
     "attentionLead": "Money to give back, amounts that did not match, disputes and refunds in progress. Tap the code to open the booking.",
-    "refundTitle": "Refund {{amount}}?"
+    "refundTitle": "Refund {{amount}}?",
+    "banksTried": "The customer tried {{count}} banks: {{banks}}"
   }
 }

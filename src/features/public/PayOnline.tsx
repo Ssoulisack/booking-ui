@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next"
 
 import { ErrorAlert } from "@/components/form"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import type { Booking, OnlinePayment, PaymentOption } from "@/lib/api/types"
 import { money } from "@/lib/format"
@@ -27,6 +28,8 @@ export function payableOnline(b: Booking) {
   return (
     b.total_price > 0 &&
     b.payment_status === "unpaid" &&
+    // a customer who sent a slip does not pay a second way: the team checks the slip
+    !b.slip_sent_at &&
     (b.status === "pending" || b.status === "confirmed")
   )
 }
@@ -133,6 +136,9 @@ export function PayOnline({
             start.reset()
           }}
         />
+      ) : resume.isPending && !payment && !released ? (
+        // still asking whether a payment is open: do not flash the bank list before the QR comes back
+        <Skeleton className="h-40 rounded-lg" />
       ) : (
         <>
           {current && <Ended payment={current} />}

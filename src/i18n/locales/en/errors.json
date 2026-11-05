@@ -228,5 +228,6 @@
   "TOO_MANY_GUESTS_FOR_TABLES": "That is more people than these tables seat. Choose more tables or fewer people.",
   "PAYMENT_LIMIT_REACHED": "Online payment has reached its limit for today. Please pay with the branch's QR or transfer, or try again tomorrow.",
   "ONLINE_PAYMENT_OFF": "Online payment is switched off at this branch. Please use the branch's QR or transfer.",
-  "PAYMENT_PROVIDER_ERROR": "The bank's payment service could not start this payment. Please try another bank, or try again in a moment."
+  "PAYMENT_PROVIDER_ERROR": "The bank's payment service could not start this payment. Please try another bank, or try again in a moment.",
+  "SLIP_ALREADY_SENT": "You already sent a payment slip for this booking. The team is checking it."
 }

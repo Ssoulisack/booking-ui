@@ -4,10 +4,10 @@ import { Link } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import type { Booking } from "@/lib/api/types"
-import { dayIn, timeIn } from "@/lib/format"
 
 import { usePaymentOptions } from "./api"
 import { zoneOf } from "./booking-utils"
+import { HoldClock } from "./EventPay"
 import { payableOnline } from "./PayOnline"
 
 /** An event booking that still waits for the money (the tables are held until it is paid or the time runs out) */
@@ -27,19 +27,26 @@ export function ContinuePayment({ booking }: { booking: Booking }) {
   if (!waitingForMoney(booking) && !canPayOnline) return null
   const tz = zoneOf(booking.starts_at)
   return (
-    <div className="space-y-1.5">
-      <Button asChild size="lg" className="h-12 w-full text-base">
-        <Link to={`/account/bookings/${booking.id}`}>
-          <WalletIcon />
-          {t("account.continuePay")}
-        </Link>
-      </Button>
-      {waitingForMoney(booking) && booking.pay_by && !booking.slip_sent_at && (
-        <p className="text-center text-xs text-muted-foreground">
-          {t("account.payBefore", {
-            when: `${dayIn(booking.pay_by, tz)}, ${timeIn(booking.pay_by, tz)}`,
-          })}
-        </p>
+    <div className="space-y-3">
+      {/* the same clock as on the pay step: until when the tables are held, and what happens after */}
+      {waitingForMoney(booking) && booking.pay_by && (
+        <HoldClock
+          until={booking.pay_by}
+          tz={tz}
+          slipSent={!!booking.slip_sent_at}
+          slipSentAt={booking.slip_sent_at}
+          big={false}
+          compact
+        />
+      )}
+      {/* after a slip is sent there is nothing more to pay: the team checks it (the box above says so) */}
+      {!booking.slip_sent_at && (
+        <Button asChild size="lg" className="h-12 w-full text-base">
+          <Link to={`/account/bookings/${booking.id}`}>
+            <WalletIcon />
+            {t("account.continuePay")}
+          </Link>
+        </Button>
       )}
     </div>
   )

@@ -1020,7 +1020,7 @@ export type OnlinePaymentStatus =
   | "refund_requested"
   | "refunded"
 
-/** One attempt to pay a booking online: what to scan or open, and where it stands */
+/** What the customer pays a booking with online: what to scan or open (of the bank chosen last), and where it stands */
 export interface OnlinePayment {
   id: number
   provider: string
@@ -1034,8 +1034,20 @@ export interface OnlinePayment {
   expires_at: string
 }
 
-/** A payment as the team sees it */
+/** One try at the gateway: a bank the customer picked */
+export interface PaymentCharge {
+  id: number
+  provider: string
+  method: string
+  status: "pending" | "paid" | "expired" | "failed"
+  provider_ref: string
+  expires_at: string
+  created_at: string
+}
+
+/** A payment as the team sees it; `charges` are the banks the customer tried, newest first */
 export interface StaffPayment extends OnlinePayment {
+  charges: PaymentCharge[]
   booking_id: number
   order_no: string
   provider_ref: string
