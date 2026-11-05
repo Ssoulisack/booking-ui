@@ -44,8 +44,9 @@ export function kindOf(spaces: Array<{ kind: string }>): string {
 }
 
 /**
- * Where "Start over" takes the customer of an event booking: the event page with the same day, tables and group
- * size already chosen, on the confirm step. "" when this is not an event booking with tables.
+ * Where "Start over" takes the customer of an event booking: the event page on the choose-tables step, with the
+ * same day, tables and group size already picked (they can change them). "" when this is not an event booking
+ * with tables.
  */
 export function eventStartOverUrl(slug: string, b: Booking, tz: string) {
   const tables = b.items
@@ -54,5 +55,5 @@ export function eventStartOverUrl(slug: string, b: Booking, tz: string) {
   if (!b.event_id || tables.length === 0) return ""
   const day = todayIn(tz, new Date(b.starts_at))
   const guests = b.guests ? `&guests=${b.guests}` : ""
-  return `/b/${slug}/events/${b.event_id}?date=${day}&tables=${tables.join("-")}${guests}&step=confirm`
+  return `/b/${slug}/events/${b.event_id}?date=${day}&tables=${tables.join("-")}${guests}`
 }

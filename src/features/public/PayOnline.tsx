@@ -12,6 +12,14 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router"
 
 import { ErrorAlert } from "@/components/form"
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
@@ -67,6 +75,10 @@ export function PayOnline({
   const [payment, setPayment] = useState<OnlinePayment | null>(null)
   // someone who left the page and came back carries on with the payment that is still open (same QR)
   const [released, setReleased] = useState(false)
+  // the bank tapped, waiting for "yes": the way to pay is final once its QR is made
+  const [pick, setPick] = useState<{ provider: string; method: string } | null>(
+    null,
+  )
   const resume = useQuery({
     queryKey: ["public", slug, "open-payment", guestToken ?? booking.id],
     queryFn: () => payApi.open(slug, who),
@@ -205,9 +217,7 @@ export function PayOnline({
                 <Methods
                   options={options.data}
                   pending={false}
-                  onPick={(provider, method) =>
-                    start.mutate({ provider, method })
-                  }
+                  onPick={(provider, method) => setPick({ provider, method })}
                 />
               )}
               <ErrorAlert error={start.error} />
@@ -215,6 +225,15 @@ export function PayOnline({
           )}
         </>
       )}
+      <ConfirmBank
+        method={pick?.method ?? null}
+        options={options.data}
+        onCancel={() => setPick(null)}
+        onConfirm={() => {
+          if (pick) start.mutate(pick)
+          setPick(null)
+        }}
+      />
     </section>
   )
 }
@@ -498,6 +517,62 @@ function Charge({
         !ended && startOver
       )}
     </div>
+  )
+}
+
+/** "Pay with this bank?": asked before the QR is made, because the way to pay cannot be changed afterwards */
+function ConfirmBank({
+  method,
+  options,
+  onCancel,
+  onConfirm,
+}: {
+  method: string | null
+  options: PaymentOption[]
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const { t } = useTranslation()
+  const link = method === "link"
+  const label = options
+    .flatMap((o) => o.methods)
+    .find((m) => m.key === method)?.label
+  const name = link ? t("payOnline.otherBank") : (label ?? method ?? "")
+  return (
+    <AlertDialog open={method !== null} onOpenChange={(o) => !o && onCancel()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          {method && LOGOS.has(method) && (
+            <img
+              src={`/banks/${method}.png`}
+              alt=""
+              className="mx-auto h-12 w-auto max-w-32 rounded-md bg-white object-contain p-1 ring-1 ring-border"
+            />
+          )}
+          <AlertDialogTitle>
+            {t(link ? "payOnline.confirmTitleLink" : "payOnline.confirmTitle", {
+              bank: name,
+            })}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {t(link ? "payOnline.confirmLeadLink" : "payOnline.confirmLead")}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11"
+            onClick={onCancel}
+          >
+            {t("payOnline.confirmBack")}
+          </Button>
+          <Button type="button" className="h-11" onClick={onConfirm}>
+            {t("payOnline.confirmYes")}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
 

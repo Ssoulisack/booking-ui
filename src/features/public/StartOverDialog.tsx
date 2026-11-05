@@ -47,14 +47,15 @@ export function StartOverDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <ErrorAlert error={error} />
-        <AlertDialogFooter>
-          <AlertDialogCancel className="h-11">
+        {/* stacked on every screen: the hold button has a fixed height and its text never wraps, so it needs the full width */}
+        <AlertDialogFooter className="sm:flex-col-reverse">
+          <AlertDialogCancel className="h-11 w-full">
             {t("booking.keep")}
           </AlertDialogCancel>
           {/* hold, not tap: the tables are released. Not AlertDialogAction, which would close the dialog
               before the answer arrives; on an error it resets so they can retry */}
           <HoldButton
-            className="w-full sm:w-auto"
+            className="w-full"
             backgroundColor="#fee2e2"
             textColor="#991b1b"
             fillColor="#dc2626"
