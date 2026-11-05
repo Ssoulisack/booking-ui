@@ -1842,8 +1842,12 @@
     "openApp": "Open my bank app",
     "openPage": "Open the payment page",
     "waiting": "Waiting for your payment · {{time}} left",
-    "timeUp": "Time is up — checking one last time…",
+    "timeUp": "Time is up. Please do not pay this QR any more.",
     "changeBank": "Choose another bank",
+    "timeUpFinal": "Time is up. Your booking is being cancelled and the tables are released. Please do not pay this QR any more.",
+    "newQr": "Choose a bank to get a new QR",
+    "preparingTitle": "Getting ready",
+    "preparing": "Creating your {{bank}} QR. This takes a few seconds…",
     "paid": "Paid — thank you! Your booking is confirmed.",
     "ended": {
       "expired": "That payment ran out of time. Choose a bank to try again.",

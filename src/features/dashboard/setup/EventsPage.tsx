@@ -50,8 +50,8 @@ import {
 } from "../ui"
 import { useInvalidate } from "./shared"
 
-/** Minutes a customer may have to pay once they chose a bank (5 to 120) */
-const WINDOWS = [5, 10, 15, 20, 30, 45, 60, 90, 120]
+/** Minutes a customer may have to pay once they chose a bank (5 to 30, as the API allows) */
+const WINDOWS = [5, 10, 15, 20, 30]
 
 const input = "h-11 text-base lg:h-9 lg:text-sm"
 

@@ -71,7 +71,12 @@ export function PayOnline({
   const start = useMutation({
     mutationFn: (p: { provider: string; method: string }) =>
       payApi.start(slug, who, p),
-    onSuccess: setPayment,
+    onSuccess: (data) => {
+      setPayment(data)
+      // A booking keeps ONE payment whichever bank is chosen, and the status check is cached by payment id: put
+      // the new bank in it, or the page would keep showing the previous bank's QR until the next poll
+      queryClient.setQueryData(["public", slug, "payment", data.id], data)
+    },
   })
 
   // the page does not wait for the webhook: it asks every few seconds while the payment is open
@@ -99,6 +104,9 @@ export function PayOnline({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paid])
 
+  // the booking's hold (the last QR's countdown, or the event's own) has passed: it is being cancelled
+  const holdOver = !!booking.pay_by && Date.parse(booking.pay_by) <= Date.now()
+
   if (!options.data?.length) return null
   if (paid)
     return (
@@ -125,6 +133,7 @@ export function PayOnline({
       {current && current.status === "pending" ? (
         <Charge
           payment={current}
+          final={!!booking.pay_by}
           bankName={
             options.data
               .flatMap((o) => o.methods)
@@ -142,12 +151,31 @@ export function PayOnline({
       ) : (
         <>
           {current && <Ended payment={current} />}
-          <Methods
-            options={options.data}
-            pending={start.isPending}
-            onPick={(provider, method) => start.mutate({ provider, method })}
-          />
-          <ErrorAlert error={start.error} />
+          {holdOver ? (
+            // the booking is held only until its countdown ends: it is being cancelled, a new QR is refused
+            <p className="rounded-lg bg-amber-50 p-3 text-center text-sm font-medium text-amber-900 dark:bg-amber-400/15 dark:text-amber-200">
+              {t("payOnline.timeUpFinal")}
+            </p>
+          ) : (
+            <>
+              {start.isPending ? (
+                // asking the gateway for the QR takes a few seconds: say so, in the chosen bank's look
+                <Preparing
+                  method={start.variables?.method ?? ""}
+                  options={options.data}
+                />
+              ) : (
+                <Methods
+                  options={options.data}
+                  pending={false}
+                  onPick={(provider, method) =>
+                    start.mutate({ provider, method })
+                  }
+                />
+              )}
+              <ErrorAlert error={start.error} />
+            </>
+          )}
         </>
       )}
     </section>
@@ -257,11 +285,14 @@ function Methods({
 function Charge({
   payment: p,
   bankName,
+  final,
   onChange,
 }: {
   payment: OnlinePayment
   /** the bank's name as the gateway lists it (BCEL One, JDB…) */
   bankName?: string
+  /** the booking is held only as long as this QR lives: when the time is up it is cancelled, no second try */
+  final: boolean
   onChange: () => void
 }) {
   const { t } = useTranslation()
@@ -284,6 +315,8 @@ function Charge({
   }, [])
 
   const left = Math.max(Math.floor((Date.parse(p.expires_at) - now) / 1000), 0)
+  // our time is up: the QR is taken off the screen, so nobody pays a code for a booking we may have released
+  const ended = left === 0
   const mmss = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`
 
   const theme = bankTheme(p.method)
@@ -344,7 +377,7 @@ function Charge({
           {money(p.amount, p.currency)}
         </p>
       </div>
-      {qr && (
+      {!ended && qr && (
         <figure className="flex flex-col items-center gap-2">
           <img
             src={qr}
@@ -357,7 +390,7 @@ function Charge({
           </figcaption>
         </figure>
       )}
-      {p.qr_code && (
+      {!ended && p.qr_code && (
         <div className="space-y-1.5">
           <Button
             type="button"
@@ -382,7 +415,7 @@ function Charge({
           </p>
         </div>
       )}
-      <div className="grid gap-2">
+      <div className={cn("grid gap-2", ended && "hidden")}>
         {p.deeplink && (
           <Button asChild size="lg" className="h-12 text-base">
             <a href={p.deeplink}>
@@ -400,23 +433,92 @@ function Charge({
           </Button>
         )}
       </div>
-      <p
-        className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
-        aria-live="polite"
+      {ended ? (
+        <p
+          className="rounded-lg bg-amber-50 p-3 text-center text-sm font-medium text-amber-900 dark:bg-amber-400/15 dark:text-amber-200"
+          aria-live="polite"
+        >
+          {t(final ? "payOnline.timeUpFinal" : "payOnline.timeUp")}
+        </p>
+      ) : (
+        <p
+          className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
+          aria-live="polite"
+        >
+          <Spinner />
+          {t("payOnline.waiting", { time: mmss })}
+        </p>
+      )}
+      {!(ended && final) && (
+        <Button
+          type="button"
+          variant={ended ? "default" : "ghost"}
+          className="h-11 w-full"
+          onClick={onChange}
+        >
+          {ended ? t("payOnline.newQr") : t("payOnline.changeBank")}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+/** Shown while the QR of the chosen bank is being made: the bank, a QR-sized placeholder and a spinner */
+function Preparing({
+  method,
+  options,
+}: {
+  method: string
+  options: PaymentOption[]
+}) {
+  const { t } = useTranslation()
+  const label = options
+    .flatMap((o) => o.methods)
+    .find((m) => m.key === method)?.label
+  const name = method === "link" ? t("payOnline.otherBank") : (label ?? method)
+  const theme = bankTheme(method)
+  return (
+    <div
+      className={cn("space-y-4", theme?.className)}
+      style={theme?.style}
+      role="status"
+      aria-live="polite"
+    >
+      <div
+        className="flex items-center gap-3 rounded-lg border p-3"
+        style={
+          theme
+            ? {
+                borderColor: "color-mix(in srgb, var(--c) 55%, transparent)",
+                backgroundColor:
+                  "color-mix(in srgb, var(--c) 10%, var(--card))",
+              }
+            : undefined
+        }
       >
-        <Spinner />
-        {left > 0
-          ? t("payOnline.waiting", { time: mmss })
-          : t("payOnline.timeUp")}
+        {LOGOS.has(method) && (
+          <img
+            src={`/banks/${method}.png`}
+            alt=""
+            className="h-11 w-auto max-w-24 shrink-0 rounded-md bg-white object-contain p-1"
+          />
+        )}
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">
+            {t("payOnline.preparingTitle")}
+          </p>
+          <p className="truncate text-lg font-semibold">{name}</p>
+        </div>
+      </div>
+      <div
+        className="mx-auto grid size-64 animate-pulse place-items-center rounded-lg border-4 bg-muted/50"
+        style={theme ? { borderColor: "var(--c)" } : undefined}
+      >
+        <Spinner className="size-9" />
+      </div>
+      <p className="text-center text-sm text-muted-foreground">
+        {t("payOnline.preparing", { bank: name })}
       </p>
-      <Button
-        type="button"
-        variant="ghost"
-        className="h-11 w-full"
-        onClick={onChange}
-      >
-        {t("payOnline.changeBank")}
-      </Button>
     </div>
   )
 }
