@@ -1886,7 +1886,6 @@
     "refundAsked": "Refund asked. It shows as refunded when the bank confirms.",
     "attentionTitle": "Online payments to look at",
     "attentionLead": "Money to give back, amounts that did not match, disputes and refunds in progress. Tap the code to open the booking.",
-    "refundTitle": "Refund {{amount}}?",
-    "banksTried": "The customer tried {{count}} banks: {{banks}}"
+    "refundTitle": "Refund {{amount}}?"
   }
 }

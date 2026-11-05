@@ -54,13 +54,6 @@ export function PaymentRow({
   const refund = useRefundPayment()
   const [open, setOpen] = useState(false)
   const when = p.paid_at ?? p.created_at
-  // the customer changed bank: show every bank they tried, oldest first
-  const tried = [...(p.charges ?? [])]
-    .reverse()
-    .filter((c) => c.status !== "failed")
-    .map((c) =>
-      c.method === "link" ? t("payOnline.otherBank") : c.method.toUpperCase(),
-    )
   return (
     <li className="space-y-1.5 py-2">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -109,14 +102,6 @@ export function PaymentRow({
           />
         )}
       </div>
-      {tried.length > 1 && (
-        <p className="text-xs text-muted-foreground">
-          {t("payStatus.banksTried", {
-            count: tried.length,
-            banks: tried.join(" → "),
-          })}
-        </p>
-      )}
       {p.note && <p className="text-xs text-muted-foreground">{p.note}</p>}
     </li>
   )

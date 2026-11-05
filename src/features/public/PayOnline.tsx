@@ -91,12 +91,7 @@ export function PayOnline({
   const start = useMutation({
     mutationFn: (p: { provider: string; method: string }) =>
       payApi.start(slug, who, p),
-    onSuccess: (data) => {
-      setPayment(data)
-      // A booking keeps ONE payment whichever bank is chosen, and the status check is cached by payment id: put
-      // the new bank in it, or the page would keep showing the previous bank's QR until the next poll
-      queryClient.setQueryData(["public", slug, "payment", data.id], data)
-    },
+    onSuccess: setPayment,
   })
 
   const navigate = useNavigate()
