@@ -86,7 +86,11 @@ export function EventPage() {
   const setChosen = (ids: number[]) =>
     change({ tables: ids.length ? ids.join("-") : undefined, step: undefined })
 
-  const [guestsPick, setGuestsPick] = useState<number | null>(null)
+  // the group size can come from the address ("Start over" after a wrong bank), then it follows the tables' capacity
+  const [guestsPick, setGuestsPick] = useState<number | null>(() => {
+    const g = Number(params.get("guests"))
+    return g > 0 ? g : null
+  })
   const [floorPick, setFloorPick] = useState<number | null>(null)
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")

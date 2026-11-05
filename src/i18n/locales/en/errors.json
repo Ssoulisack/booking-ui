@@ -229,6 +229,7 @@
   "PAYMENT_LIMIT_REACHED": "Online payment has reached its limit for today. Please pay with the branch's QR or transfer, or try again tomorrow.",
   "ONLINE_PAYMENT_OFF": "Online payment is switched off at this branch. Please use the branch's QR or transfer.",
   "PAYMENT_PROVIDER_ERROR": "The bank's payment service could not start this payment. Please try another bank, or try again in a moment.",
+  "PAYMENT_METHOD_LOCKED": "A payment is already open for this booking, so the way to pay cannot change. To use another bank, cancel this booking and book again.",
   "PAY_TIME_UP": "Time is up for this booking. It is being cancelled and the tables are released.",
   "SLIP_ALREADY_SENT": "You already sent a payment slip for this booking. The team is checking it."
 }

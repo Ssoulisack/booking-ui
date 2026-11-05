@@ -1,4 +1,5 @@
 import type { Booking } from "@/lib/api/types"
+import { todayIn } from "@/lib/format"
 
 /** The time zone written in a backend time ("…+07:00"), so a booking shows the venue's local time */
 export function zoneOf(iso: string): string {
@@ -40,4 +41,18 @@ export function kindOf(spaces: Array<{ kind: string }>): string {
   const kinds = new Set(spaces.map((r) => r.kind))
   const [only] = kinds
   return kinds.size === 1 && NAMED_KINDS.includes(only) ? only : "space"
+}
+
+/**
+ * Where "Start over" takes the customer of an event booking: the event page with the same day, tables and group
+ * size already chosen, on the confirm step. "" when this is not an event booking with tables.
+ */
+export function eventStartOverUrl(slug: string, b: Booking, tz: string) {
+  const tables = b.items
+    .filter((i) => i.kind === "resource" && i.resource_id && i.active !== false)
+    .map((i) => i.resource_id)
+  if (!b.event_id || tables.length === 0) return ""
+  const day = todayIn(tz, new Date(b.starts_at))
+  const guests = b.guests ? `&guests=${b.guests}` : ""
+  return `/b/${slug}/events/${b.event_id}?date=${day}&tables=${tables.join("-")}${guests}&step=confirm`
 }

@@ -17,6 +17,7 @@ import { dayIn, money, timeIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 import { publicKeys, slipApi, usePaymentOptions, usePublicPayInfo } from "./api"
+import { eventStartOverUrl } from "./booking-utils"
 import { PayOnline } from "./PayOnline"
 import { CopyButton } from "@/components/CopyButton"
 import { saveImage } from "./save-image"
@@ -198,6 +199,7 @@ export function EventPayPanel({
           slug={slug}
           booking={booking}
           guestToken={guestToken}
+          startOverUrl={eventStartOverUrl(slug, booking, tz)}
           onPaid={() => setPaidOnline(true)}
         />
       )}

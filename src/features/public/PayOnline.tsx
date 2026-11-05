@@ -7,8 +7,9 @@ import {
   SmartphoneIcon,
 } from "lucide-react"
 import QRCode from "qrcode"
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router"
 
 import { ErrorAlert } from "@/components/form"
 import { Button } from "@/components/ui/button"
@@ -18,8 +19,9 @@ import type { Booking, OnlinePayment, PaymentOption } from "@/lib/api/types"
 import { money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { payApi, publicKeys, usePaymentOptions } from "./api"
+import { bookingApi, payApi, publicKeys, usePaymentOptions } from "./api"
 import { saveImage } from "./save-image"
+import { StartOverDialog } from "./StartOverDialog"
 
 type Who = { token: string } | { bookingId: number }
 
@@ -43,11 +45,17 @@ export function PayOnline({
   slug,
   booking,
   guestToken,
+  startOverUrl,
   onPaid,
 }: {
   slug: string
   booking: Booking
   guestToken?: string
+  /**
+   * An event booking: once a QR is made the way to pay is final, so a customer who chose the wrong bank cancels
+   * this unpaid booking and goes here to book the same tables again
+   */
+  startOverUrl?: string
   onPaid?: () => void
 }) {
   const { t } = useTranslation()
@@ -76,6 +84,26 @@ export function PayOnline({
       // A booking keeps ONE payment whichever bank is chosen, and the status check is cached by payment id: put
       // the new bank in it, or the page would keep showing the previous bank's QR until the next poll
       queryClient.setQueryData(["public", slug, "payment", data.id], data)
+    },
+  })
+
+  const navigate = useNavigate()
+  const startOver = useMutation({
+    mutationFn: () =>
+      "token" in who
+        ? bookingApi.cancelGuest(
+            slug,
+            who.token,
+            "Customer started over (wrong bank)",
+          )
+        : bookingApi.cancelMine(
+            who.bookingId,
+            "Customer started over (wrong bank)",
+          ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["public", slug] })
+      void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
+      if (startOverUrl) void navigate(startOverUrl)
     },
   })
 
@@ -134,6 +162,15 @@ export function PayOnline({
         <Charge
           payment={current}
           final={!!booking.pay_by}
+          startOver={
+            startOverUrl ? (
+              <StartOverDialog
+                pending={startOver.isPending}
+                error={startOver.error}
+                onConfirm={() => startOver.mutate()}
+              />
+            ) : null
+          }
           bankName={
             options.data
               .flatMap((o) => o.methods)
@@ -286,6 +323,7 @@ function Charge({
   payment: p,
   bankName,
   final,
+  startOver,
   onChange,
 }: {
   payment: OnlinePayment
@@ -293,6 +331,9 @@ function Charge({
   bankName?: string
   /** the booking is held only as long as this QR lives: when the time is up it is cancelled, no second try */
   final: boolean
+  /** "Wrong bank? Start over" (event bookings): the way to pay is final while this QR is open */
+  startOver: ReactNode
+  /** a booking with no hold: after the QR ran out the customer may choose a bank again */
   onChange: () => void
 }) {
   const { t } = useTranslation()
@@ -449,15 +490,12 @@ function Charge({
           {t("payOnline.waiting", { time: mmss })}
         </p>
       )}
-      {!(ended && final) && (
-        <Button
-          type="button"
-          variant={ended ? "default" : "ghost"}
-          className="h-11 w-full"
-          onClick={onChange}
-        >
-          {ended ? t("payOnline.newQr") : t("payOnline.changeBank")}
+      {ended && !final ? (
+        <Button type="button" className="h-11 w-full" onClick={onChange}>
+          {t("payOnline.newQr")}
         </Button>
+      ) : (
+        !ended && startOver
       )}
     </div>
   )
