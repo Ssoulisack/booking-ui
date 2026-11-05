@@ -26,6 +26,7 @@ import { useFloorPlans, useTableAvailability } from "./api"
 import { DateStrip, Step } from "./BookingPanel"
 import { usePublic } from "./context"
 import { dayBrandStyle } from "./day-colors"
+import { EventWhen } from "./EventProgram"
 import { selectionQuery, tableIdsOf, useSelection } from "./selection"
 import { TablePlan, type StaffTable } from "./TablePlan"
 
@@ -188,8 +189,36 @@ export function TableBookingPanel() {
             )}
           </Step>
 
-          {avail.data?.event && !avail.isPlaceholderData ? (
-            // an event takes the day over: its tables are sold, not booked free
+          {/* an event held in some areas: say so, the other areas are booked below as usual */}
+          {avail.data?.event &&
+            !avail.isPlaceholderData &&
+            avail.data.event.areas.length > 0 && (
+              <div className="space-y-3 rounded-xl bg-card p-4 ring-1 ring-border">
+                <p>
+                  {t("public.events.eventDayPartial", {
+                    date: dayIn(`${date}T12:00:00+00:00`, "UTC"),
+                    name: avail.data.event.name,
+                    areas: avail.data.event.areas.map((a) => a.name).join(", "),
+                  })}
+                </p>
+                <EventWhen
+                  start={avail.data.event.start_time}
+                  end={avail.data.event.end_time}
+                  areas={[]}
+                />
+                <Button asChild variant="outline" className="h-11">
+                  <Link
+                    to={`/b/${slug}/events/${avail.data.event.id}?date=${date}`}
+                  >
+                    {t("public.events.seeEvent")}
+                  </Link>
+                </Button>
+              </div>
+            )}
+          {avail.data?.event &&
+          !avail.isPlaceholderData &&
+          avail.data.event.areas.length === 0 ? (
+            // an event held everywhere takes the day over: its tables are sold, not booked free
             <div className="space-y-3 rounded-xl bg-card p-4 ring-1 ring-border">
               <p>
                 {t("public.events.eventDay", {
@@ -197,6 +226,11 @@ export function TableBookingPanel() {
                   name: avail.data.event.name,
                 })}
               </p>
+              <EventWhen
+                start={avail.data.event.start_time}
+                end={avail.data.event.end_time}
+                areas={[]}
+              />
               <Button asChild className="h-11">
                 <Link
                   to={`/b/${slug}/events/${avail.data.event.id}?date=${date}`}
@@ -292,7 +326,11 @@ export function TableBookingPanel() {
           <Button
             size="lg"
             className="h-12 w-full bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
-            disabled={!time || tooMany || !!avail.data?.event}
+            disabled={
+              !time ||
+              tooMany ||
+              (!!avail.data?.event && avail.data.event.areas.length === 0)
+            }
             onClick={next}
           >
             {t("public.tables.next")}

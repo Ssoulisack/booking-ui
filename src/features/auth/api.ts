@@ -24,14 +24,12 @@ export interface LoginInput {
 export interface RegisterInput {
   name: string
   password: string
-  nationality: string
-  phone?: string
+  phone: string
   email?: string
 }
 
 export interface ProfileInput {
   name: string
-  nationality: string
   phone: string
   email: string
 }

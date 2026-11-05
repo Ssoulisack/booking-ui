@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { PageError } from "@/components/page-state"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { TimeInput } from "@/components/time-input"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -240,13 +241,10 @@ function ClosureDialog({ tz, onClose }: { tz: string; onClose: () => void }) {
             className={input}
           />
           {!allDay && (
-            <Input
-              type="time"
-              step={1800}
-              aria-label={t("setup.classes.start")}
+            <TimeInput
+              label={t("setup.classes.start")}
               value={start}
-              onChange={(e) => setStart(e.target.value)}
-              className={input}
+              onChange={(v) => setStart(v)}
             />
           )}
         </div>
@@ -261,13 +259,10 @@ function ClosureDialog({ tz, onClose }: { tz: string; onClose: () => void }) {
             className={input}
           />
           {!allDay && (
-            <Input
-              type="time"
-              step={1800}
-              aria-label={t("setup.classes.end")}
+            <TimeInput
+              label={t("setup.classes.end")}
               value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              className={input}
+              onChange={(v) => setEnd(v)}
             />
           )}
         </div>

@@ -6,6 +6,7 @@ import { ErrorAlert } from "@/components/form"
 import { PageError } from "@/components/page-state"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { TimeInput } from "@/components/time-input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
@@ -95,13 +96,11 @@ function Form({ initial }: { initial: TableSettings }) {
               <Label htmlFor="ts-arrive">
                 {t("restaurant.settings.arriveByTime")}
               </Label>
-              <Input
+              <TimeInput
                 id="ts-arrive"
-                type="time"
-                step={300}
+                label={t("restaurant.settings.arriveByTime")}
                 value={f.arrive_by_time}
-                onChange={(e) => set({ arrive_by_time: e.target.value })}
-                className="h-11 w-36 text-base lg:h-9 lg:text-sm"
+                onChange={(v) => set({ arrive_by_time: v })}
               />
               <p className="text-sm text-muted-foreground">
                 {t("restaurant.settings.arriveByHint", {

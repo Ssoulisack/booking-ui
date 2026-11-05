@@ -25,8 +25,10 @@ import { useSession } from "@/stores/session"
 
 import { useBuyEventTables, useEventDetail, useFloorPlans } from "./api"
 import { usePublic } from "./context"
-import { eventDays } from "./EventAds"
+import { EventLineup, EventWhen } from "./EventProgram"
+import { eventDays } from "./event-program"
 import { rememberPay } from "./EventPay"
+import { PhoneNeeded } from "./PhoneNeeded"
 import { Plans, StepBar } from "./TableBookingPanel"
 
 /** Tables of one price share a colour; the cheapest first */
@@ -100,8 +102,10 @@ export function EventPage() {
 
   const mode = business.booking_mode
   const asCustomer = !!user && mode !== "guest"
-  const needsLogin = !user && mode === "account"
   const ev = detail.data
+  // the branch may allow only accounts, or this event may (customers without an account cannot buy its tables)
+  const needsLogin =
+    !user && (mode === "account" || ev?.accept_guests === false)
   const areas = plans.data ?? []
 
   const sale = useMemo(
@@ -173,7 +177,10 @@ export function EventPage() {
   }
 
   const details = asCustomer || (name.trim() !== "" && phone.trim().length >= 6)
-  const canBuy = picked.length > 0 && guests >= 1 && details && !needsLogin
+  // the team must be able to call the customer: an account buys event tables only with a phone number saved
+  const needsPhone = asCustomer && !needsLogin && !user?.phone
+  const canBuy =
+    picked.length > 0 && guests >= 1 && details && !needsLogin && !needsPhone
   const taken =
     buy.error instanceof ApiError && buy.error.code === "TABLE_NOT_AVAILABLE"
 
@@ -267,6 +274,12 @@ export function EventPage() {
             <div className="relative space-y-1 p-6 sm:p-8">
               <p className="text-sm font-medium opacity-90">{eventDays(ev)}</p>
               <h1 className="display-tight text-4xl sm:text-5xl">{ev.name}</h1>
+              <EventWhen
+                start={ev.start_time}
+                end={ev.end_time}
+                areas={ev.areas}
+                className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-sm opacity-95"
+              />
               {step === "tables" && ev.description && (
                 <p className="max-w-prose whitespace-pre-line opacity-90">
                   {ev.description}
@@ -277,6 +290,7 @@ export function EventPage() {
 
           {step === "tables" && (
             <>
+              <EventLineup lineup={ev.lineup} day={ev.date} />
               {ev.days.length > 1 && (
                 <section className="space-y-2">
                   <h2 className="font-semibold">{t("public.events.days")}</h2>
@@ -460,7 +474,13 @@ export function EventPage() {
 
               {needsLogin ? (
                 <div className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-4 ring-1 ring-border">
-                  <p className="flex-1">{t("public.events.needsLogin")}</p>
+                  <p className="flex-1">
+                    {t(
+                      ev?.accept_guests === false
+                        ? "public.events.needsLoginEvent"
+                        : "public.events.needsLogin",
+                    )}
+                  </p>
                   <Button asChild>
                     <Link
                       to={`/login?next=${encodeURIComponent(`/b/${slug}/events/${id}?${params.toString()}`)}`}
@@ -469,6 +489,8 @@ export function EventPage() {
                     </Link>
                   </Button>
                 </div>
+              ) : needsPhone ? (
+                <PhoneNeeded />
               ) : asCustomer ? (
                 <p className="text-sm text-muted-foreground">
                   {t("public.events.bookingAs", {
@@ -583,7 +605,7 @@ export function EventPage() {
                   radius={10}
                   holdTime={HOLD_MS}
                   resetAfter={600}
-                  disabled={buy.isPending || needsLogin}
+                  disabled={buy.isPending || needsLogin || needsPhone}
                   doneLabel={t("public.confirming")}
                   hint={t("public.confirmHint", { seconds: HOLD_MS / 1000 })}
                   onHold={submit}

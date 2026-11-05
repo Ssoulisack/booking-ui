@@ -21,6 +21,8 @@ import type {
   StaffBookingInput,
   UnpaidRow,
   Utilisation,
+  EventReport,
+  TableReport,
 } from "@/lib/api/types"
 
 import { useBiz } from "../api"
@@ -292,5 +294,37 @@ export function useRefundPayment() {
       void queryClient.invalidateQueries({ queryKey: key("payments") })
       void queryClient.invalidateQueries({ queryKey: key("bookings") })
     },
+  })
+}
+
+/** The booking reports ask again every minute while the page is open (and the button asks at once) */
+export const REPORT_REFRESH_MS = 60_000
+
+/** The filters of the table and event booking reports (empty ones are left out) */
+export type BookingRowsFilter = Record<string, string | number | undefined>
+
+const clean = (f: BookingRowsFilter) =>
+  Object.fromEntries(Object.entries(f).filter(([, v]) => v !== "" && v != null))
+
+export function useTableReport(f: BookingRowsFilter) {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("reports", "table-bookings", f),
+    queryFn: () =>
+      api<TableReport>(`${base}/reports/table-bookings`, { query: clean(f) }),
+    placeholderData: keepPreviousData,
+    refetchInterval: REPORT_REFRESH_MS,
+  })
+}
+
+export function useEventReport(f: BookingRowsFilter, enabled = true) {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("reports", "event-bookings", f),
+    queryFn: () =>
+      api<EventReport>(`${base}/reports/event-bookings`, { query: clean(f) }),
+    enabled,
+    placeholderData: keepPreviousData,
+    refetchInterval: REPORT_REFRESH_MS,
   })
 }

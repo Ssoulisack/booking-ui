@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm, useWatch } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useSearchParams } from "react-router"
 
@@ -24,20 +24,18 @@ export function RegisterPage() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
-      nationality: "",
       phone: "",
       email: "",
       password: "",
     },
   })
   const { errors } = form.formState
-  const nationality = useWatch({ control: form.control, name: "nationality" })
 
   const onSubmit = form.handleSubmit((values) =>
     register.mutate(
       {
         ...values,
-        phone: values.phone || undefined,
+        phone: values.phone,
         email: values.email || undefined,
       },
       {
@@ -62,10 +60,9 @@ export function RegisterPage() {
             error={errors.name}
           />
           <IdentityFields
-            control={form.control}
             register={form.register}
             errors={errors}
-            nationality={nationality}
+            requirePhone
           />
           <TextField
             label={t("fields.password")}

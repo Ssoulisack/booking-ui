@@ -6,6 +6,7 @@ import {
   ImagesIcon,
   LayoutDashboardIcon,
   QrCodeIcon,
+  SendIcon,
   SettingsIcon,
   UsersRoundIcon,
   WrenchIcon,
@@ -90,10 +91,10 @@ const NAV: Array<
     key: "reports",
     icon: BarChart3Icon,
     min: "manager",
-    sportOnly: true,
   },
   { path: "share", key: "share", icon: QrCodeIcon, min: "staff" },
   { path: "media", key: "media", icon: ImagesIcon, min: "manager" },
+  { path: "telegram", key: "telegram", icon: SendIcon, min: "admin" },
   { path: "settings", key: "branchSettings", icon: SettingsIcon, min: "admin" },
 ]
 
@@ -107,6 +108,7 @@ const DASHBOARD_CRUMBS: Record<string, string> = {
   reports: "nav.reports",
   share: "nav.share",
   media: "nav.media",
+  telegram: "nav.telegram",
   settings: "nav.branchSettings",
   sports: "setup.tabs.sports",
   spaces: "setup.tabs.spaces",

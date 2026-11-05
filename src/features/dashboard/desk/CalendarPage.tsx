@@ -44,6 +44,9 @@ import { AgendaList, Timeline } from "./Timeline"
 
 const HOUR_PX = 56
 
+/** More areas / sports than this: the filter is a dropdown, not a row of buttons that runs off the screen */
+const MAX_GROUP_CHIPS = 6
+
 const shiftDay = (ymd: string, days: number, tz: string) =>
   formatInTimeZone(
     addDays(fromZonedTime(`${ymd}T12:00:00`, tz), days),
@@ -267,24 +270,45 @@ export function CalendarPage() {
 
       {view === "day" && lanes.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          {allGroups.length > 1 && (
-            <div
-              role="radiogroup"
-              aria-label={t(restaurant ? "desk.area" : "desk.sport")}
-              className="-mx-4 no-scrollbar flex max-w-[calc(100%+2rem)] gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0"
-            >
-              {[{ key: "all", label: t("desk.groupAll") }, ...allGroups].map(
-                (g) => (
-                  <Chip
-                    key={g.key}
-                    on={group === g.key}
-                    onClick={() => set({ group: g.key })}
-                  >
-                    {g.label}
-                  </Chip>
-                ),
-              )}
-            </div>
+          {allGroups.length > MAX_GROUP_CHIPS ? (
+            // many areas / sports: one dropdown instead of a row of buttons that runs off the screen
+            <Select value={group} onValueChange={(v) => set({ group: v })}>
+              <SelectTrigger
+                aria-label={t(restaurant ? "desk.area" : "desk.sport")}
+                className="h-11 w-48 lg:h-9"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[{ key: "all", label: t("desk.groupAll") }, ...allGroups].map(
+                  (g) => (
+                    <SelectItem key={g.key} value={g.key}>
+                      {g.label}
+                    </SelectItem>
+                  ),
+                )}
+              </SelectContent>
+            </Select>
+          ) : (
+            allGroups.length > 1 && (
+              <div
+                role="radiogroup"
+                aria-label={t(restaurant ? "desk.area" : "desk.sport")}
+                className="-mx-4 no-scrollbar flex max-w-[calc(100%+2rem)] gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+              >
+                {[{ key: "all", label: t("desk.groupAll") }, ...allGroups].map(
+                  (g) => (
+                    <Chip
+                      key={g.key}
+                      on={group === g.key}
+                      onClick={() => set({ group: g.key })}
+                    >
+                      {g.label}
+                    </Chip>
+                  ),
+                )}
+              </div>
+            )
           )}
           {isToday && (
             <Chip

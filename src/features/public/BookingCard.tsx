@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 
 import { bookingTitle, zoneOf } from "./booking-utils"
 import { CopyCode } from "./CopyCode"
+import { eventBookingWhen } from "./event-program"
 
 const STATUS_STYLE: Record<Booking["status"], string> = {
   pending:
@@ -93,12 +94,29 @@ export function BookingCard({
         {booking.guests ? (
           // a table: when, how many, and the time to be there by (no length or price)
           <>
+            {booking.event_name && (
+              <>
+                <dt className="text-muted-foreground">
+                  {t("public.events.event")}
+                </dt>
+                <dd className="font-medium">{booking.event_name}</dd>
+              </>
+            )}
             <dt className="text-muted-foreground">{t("booking.when")}</dt>
             <dd className="font-medium">
-              {dayIn(booking.starts_at, zone)}
-              {/* a bar booking is for the evening: only the arrive-by time matters */}
-              {booking.booking_style !== "arrive_by" &&
-                `, ${timeIn(booking.starts_at, zone)}`}
+              {booking.event_id
+                ? // an event day: the event's own time, not the hours the tables are held for
+                  eventBookingWhen(
+                    dayIn(booking.starts_at, zone),
+                    booking.event_start_time,
+                    booking.event_end_time,
+                  )
+                : `${dayIn(booking.starts_at, zone)}${
+                    // a bar booking is for the evening: only the arrive-by time matters
+                    booking.booking_style !== "arrive_by"
+                      ? `, ${timeIn(booking.starts_at, zone)}`
+                      : ""
+                  }`}
             </dd>
             <dt className="text-muted-foreground">
               {t("public.tables.people")}

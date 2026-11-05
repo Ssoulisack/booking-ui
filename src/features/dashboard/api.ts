@@ -33,6 +33,9 @@ import type {
   SettingsInput,
   EffectiveRule,
   EventInput,
+  TelegramGroups,
+  TelegramInput,
+  TelegramSettings,
   EventItem,
   EventPrices,
   EventPricesInput,
@@ -185,6 +188,15 @@ export function usePaymentSettings() {
   return useQuery({
     queryKey: key("payment-settings"),
     queryFn: () => api<PaymentSettings>(`${base}/payment-settings`),
+    refetchOnWindowFocus: false,
+  })
+}
+
+export function useTelegram() {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("telegram"),
+    queryFn: () => api<TelegramSettings>(`${base}/telegram`),
     refetchOnWindowFocus: false,
   })
 }
@@ -439,6 +451,14 @@ export const manage = {
         tables: p.tables,
       },
     }),
+  saveTelegram: (base: string, body: TelegramInput) =>
+    api<TelegramSettings>(`${base}/telegram`, { method: "PUT", body }),
+  findTelegramGroups: (base: string, _: void) =>
+    api<TelegramGroups>(`${base}/telegram/find-groups`, { method: "POST" }),
+  testTelegram: (base: string, _: void) =>
+    api<TelegramSettings>(`${base}/telegram/test`, { method: "POST" }),
+  disconnectTelegram: (base: string, _: void) =>
+    apiMessage(`${base}/telegram`, { method: "DELETE" }),
   savePayInfo: (base: string, body: PayInfo) =>
     api<PayInfo>(`${base}/event-pay`, { method: "PUT", body }),
   savePaymentSettings: (

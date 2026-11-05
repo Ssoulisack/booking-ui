@@ -8,7 +8,7 @@ import { BrandHome } from "./BrandHome"
 
 /**
  * "/" — the company's brand home, for guests and customers. Team members go to their own
- * area; an account without a nationality answers that question first.
+ * area.
  */
 export function Home() {
   const user = useSession((s) => s.user)
@@ -20,9 +20,6 @@ export function Home() {
   if (branches.isPending) return <PageLoader />
   if (usableBranches(branches.data).length > 0) {
     return <Navigate to="/dashboard" replace />
-  }
-  if (!user.nationality) {
-    return <Navigate to="/account/profile?complete=1&next=%2F" replace />
   }
   return <BrandHome />
 }

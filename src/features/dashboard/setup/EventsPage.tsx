@@ -38,6 +38,7 @@ import {
   useEvents,
   usePayInfo,
   usePaymentSettings,
+  useSportsList,
 } from "../api"
 import {
   ActiveSwitch,
@@ -48,6 +49,7 @@ import {
   PageHeader,
   Panel,
 } from "../ui"
+import { AreaPicker, LineupEditor, TimeFields } from "./EventProgramFields"
 import { useInvalidate } from "./shared"
 
 /** Minutes a customer may have to pay once they chose a bank (5 to 30, as the API allows) */
@@ -192,6 +194,21 @@ function EventRow({ event, onEdit }: { event: EventItem; onEdit: () => void }) {
   )
 }
 
+/** Every day from one date to another (YYYY-MM-DD), at most 31 */
+function eachDay(from: string, to: string) {
+  const out: string[] = []
+  const d = new Date(`${from}T12:00:00Z`)
+  while (
+    !Number.isNaN(d.getTime()) &&
+    d.toISOString().slice(0, 10) <= to &&
+    out.length < 31
+  ) {
+    out.push(d.toISOString().slice(0, 10))
+    d.setUTCDate(d.getUTCDate() + 1)
+  }
+  return out
+}
+
 function EventDialog({
   event,
   onClose,
@@ -230,7 +247,15 @@ function EventDialog({
     String(event?.big_hold_minutes || 60),
   )
   const [published, setPublished] = useState(event?.published ?? false)
+  const [acceptGuests, setAcceptGuests] = useState(event?.accept_guests ?? true)
+  const [startTime, setStartTime] = useState(event?.start_time ?? "")
+  const [endTime, setEndTime] = useState(event?.end_time ?? "")
+  const [areaIds, setAreaIds] = useState<number[]>(event?.area_ids ?? [])
+  const [lineup, setLineup] = useState(event?.lineup ?? [])
+  const areas = useSportsList().data ?? []
   const save = useChange(manage.saveEvent, ["events"])
+  // the days of a several-day event: a lineup line can belong to one of them
+  const days = eachDay(startsOn, moreDays ? endsOn : startsOn)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -251,6 +276,18 @@ function EventDialog({
         big_hold_minutes: Math.max(Number(bigMinutes) || 60, 1),
         default_price: Math.max(Number(price) || 0, 0),
         published,
+        accept_guests: acceptGuests,
+        start_time: startTime,
+        end_time: startTime ? endTime : "",
+        area_ids: areaIds,
+        // lines left empty are dropped; a line for a day the event no longer has becomes an every-day line
+        lineup: lineup
+          .filter((r) => r.title.trim() && r.start_time)
+          .map((r) => ({
+            ...r,
+            title: r.title.trim(),
+            day: days.includes(r.day) ? r.day : "",
+          })),
       },
       {
         onSuccess: () => {
@@ -325,6 +362,14 @@ function EventDialog({
         label={t("events.moreDays")}
         hint={t("events.moreDaysHint")}
       />
+      <TimeFields
+        start={startTime}
+        end={endTime}
+        onStart={setStartTime}
+        onEnd={setEndTime}
+      />
+      <AreaPicker areas={areas} value={areaIds} onChange={setAreaIds} />
+      <LineupEditor rows={lineup} days={days} onChange={setLineup} />
       <ImageField
         label={t("events.background")}
         folder="branding"
@@ -407,6 +452,13 @@ function EventDialog({
           m: Number(bigMinutes) || 60,
         })}
       </p>
+      <ActiveSwitch
+        id="ev-guests"
+        checked={acceptGuests}
+        onChange={setAcceptGuests}
+        label={t("events.acceptGuests")}
+        hint={t("events.acceptGuestsHint")}
+      />
       <ActiveSwitch
         id="ev-published"
         checked={published}

@@ -22,15 +22,6 @@ export function RequireUser() {
     return <Navigate to={signedOut ? "/login" : loginPath(location)} replace />
   }
   if (me.isPending) return <PageLoader />
-  // accounts made before nationality existed, or through an invitation, answer once
-  if (
-    me.data &&
-    !me.data.nationality &&
-    location.pathname !== "/account/profile"
-  ) {
-    const next = encodeURIComponent(location.pathname + location.search)
-    return <Navigate to={`/account/profile?complete=1&next=${next}`} replace />
-  }
   return <Outlet />
 }
 

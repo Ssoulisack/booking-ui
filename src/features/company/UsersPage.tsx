@@ -116,7 +116,6 @@ function UserRow({ user: u, onReset }: { user: User; onReset: () => void }) {
     u.member_no,
     u.phone && displayPhone(u.phone),
     u.email_generated ? t("company.noEmail") : u.email,
-    u.nationality,
   ].filter(Boolean)
 
   return (

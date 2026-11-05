@@ -107,18 +107,28 @@ export function TonightPlan() {
   }
 
   return (
-    <Panel
-      title={t("tonight.title")}
-      lead={t("tonight.leadNow", {
-        free: free.size,
-        taken: all.filter((x) => seated.has(x.id)).length,
-        total: all.length,
-      })}
-    >
+    <Panel title={t("tonight.title")}>
       {shown.length === 0 ? (
         <p className="text-muted-foreground">{t("tonight.empty")}</p>
       ) : (
         <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <CountCard
+              label={t("tonight.free")}
+              value={free.size}
+              tone="border-[var(--brand)]/60"
+            />
+            <CountCard
+              label={t("tonight.taken")}
+              value={all.filter((x) => seated.has(x.id)).length}
+              tone="border-rose-600/70"
+            />
+            <CountCard
+              label={t("tonight.cardTotal")}
+              value={all.length}
+              tone="border-border"
+            />
+          </div>
           <Plans
             areas={shown}
             floors={floors}
@@ -157,6 +167,26 @@ export function TonightPlan() {
       )}
       <BookingSheet id={open} onClose={() => setOpen(null)} />
     </Panel>
+  )
+}
+
+/** One of the three counts above the plan: free, taken, all tables */
+function CountCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: number
+  tone: string
+}) {
+  return (
+    <div className={cn("rounded-xl border-2 bg-card px-3 py-2.5", tone)}>
+      <p className="text-2xl leading-none font-semibold tabular-nums">
+        {value}
+      </p>
+      <p className="mt-1 text-sm text-muted-foreground">{label}</p>
+    </div>
   )
 }
 

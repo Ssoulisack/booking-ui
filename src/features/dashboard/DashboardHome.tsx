@@ -36,7 +36,6 @@ import { useDashboard } from "./context"
 import { GoLiveGuide, type GuideStep } from "./GoLiveGuide"
 import { TonightPlan } from "./TonightPlan"
 import { UpcomingBookings } from "./UpcomingBookings"
-import { LiveStrip } from "./LiveStrip"
 import { EventPayments } from "./EventPayments"
 import { PaymentsAttention } from "./PaymentsAttention"
 import { PageHeader, Panel } from "./ui"
@@ -123,13 +122,11 @@ function PagePanel() {
   if (settings.isPending) return <Skeleton className="h-64 rounded-xl" />
   if (!settings.data) return <ErrorAlert error={settings.error} />
   const s = settings.data
-  const url = `${window.location.origin}${s.public_path}`
 
   if (s.status === "published") {
-    // live: what is coming up; the link and QR code have their own Share page
+    // live: what is coming up (the booking page link and QR code are on the Share page)
     return (
       <div className="space-y-6">
-        <LiveStrip url={url} to="share" />
         {branch.type === "restaurant" && <EventPayments />}
         {roleAtLeast(branch.role, "manager") && <PaymentsAttention />}
         {branch.type === "restaurant" ? <OverviewTabs /> : <UpcomingBookings />}

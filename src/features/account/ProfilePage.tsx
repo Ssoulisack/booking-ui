@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useForm, useWatch } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useSearchParams } from "react-router"
 import { toast } from "sonner"
@@ -79,13 +79,11 @@ function ProfileForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user.name,
-      nationality: user.nationality,
       phone: user.phone ? displayPhone(user.phone) : "",
       // a stand-in address is never shown: the field stays empty until a real one is added
       email: user.email_generated ? "" : user.email,
     },
   })
-  const nationality = useWatch({ control: form.control, name: "nationality" })
   const save = useMutation({
     mutationFn: authApi.updateMe,
     onSuccess: (updated) => {
@@ -111,10 +109,8 @@ function ProfileForm({
           error={form.formState.errors.name}
         />
         <IdentityFields
-          control={form.control}
           register={form.register}
           errors={form.formState.errors}
-          nationality={nationality}
         />
       </FieldGroup>
       {completing ? (

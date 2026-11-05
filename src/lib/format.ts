@@ -4,6 +4,17 @@ import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 // Times are always shown in the business's time zone, whatever the phone is set to
 
 /** 150000 LAK → "₭150,000" */
+/**
+ * A Lao phone number as people write it, without the country code or the leading 0: "+8562055557040" and
+ * "020 5555 7040" both give "2055557040". "-" and anything that is not a number are left as they are.
+ */
+export function shortPhone(phone: string) {
+  const digits = phone.replace(/\D/g, "")
+  if (digits.length < 8) return phone
+  const local = digits.startsWith("856") ? digits.slice(3) : digits
+  return local.replace(/^0+/, "")
+}
+
 export function money(amount: number, currency: string, locale = "en") {
   try {
     return new Intl.NumberFormat(locale, {
@@ -15,6 +26,25 @@ export function money(amount: number, currency: string, locale = "en") {
   } catch {
     return `${amount.toLocaleString(locale)} ${currency}`
   }
+}
+
+/** "05-11-2026 17:58:07": day-month-year hour:minute:second, in the branch time zone (reports) */
+export function stampIn(iso: string, tz: string) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: tz,
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(iso))
+      .map((p) => [p.type, p.value]),
+  )
+  return `${parts.day}-${parts.month}-${parts.year} ${parts.hour}:${parts.minute}:${parts.second}`
 }
 
 /** "18:00" */

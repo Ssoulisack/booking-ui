@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { TimeInput } from "@/components/time-input"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -494,24 +495,21 @@ function ClassDialog({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="cls-start">{t("setup.classes.start")}</Label>
-            <Input
+            <TimeInput
               id="cls-start"
-              type="time"
-              step={900}
+              label={t("setup.classes.start")}
               value={f.start}
-              onChange={(e) => set({ start: e.target.value })}
-              className={input}
+              onChange={(v) => set({ start: v })}
             />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="cls-end">{t("setup.classes.end")}</Label>
-            <Input
+            <TimeInput
               id="cls-end"
-              type="time"
-              step={900}
+              label={t("setup.classes.end")}
               value={f.end}
-              onChange={(e) => set({ end: e.target.value })}
-              className={input}
+              onChange={(v) => set({ end: v })}
+              midnightEnd
             />
           </div>
         </div>

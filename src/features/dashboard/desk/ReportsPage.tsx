@@ -30,10 +30,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { FinanceTotals, Money } from "@/lib/api/types"
 import { dayIn, money, todayIn } from "@/lib/format"
 
+import { useDashboard } from "../context"
 import { useSettings } from "../api"
 import { PageHeader, Panel } from "../ui"
 import { useCsv, useReport } from "./api"
 import { BookingSheet } from "./BookingSheet"
+import { EventBookingsView, TableBookingsView } from "./BookingRowsReports"
 
 // validated pair (categorical slots 1 and 2): magnitude in blue, money collected in orange
 const BLUE = "#2a78d6"
@@ -92,13 +94,58 @@ export function ReportsPage() {
     params.get("from"),
     params.get("to"),
   )
-  const tab = params.get("tab") ?? "bookings"
+  // a restaurant has no courts or takings to add up: its reports are the table and event booking lists
+  const restaurant = useDashboard().branch.type === "restaurant"
+  const tab = params.get("tab") ?? (restaurant ? "tableBookings" : "bookings")
   const set = (patch: Record<string, string>) =>
     setParams({ ...Object.fromEntries(params), ...patch }, { replace: true })
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("nav.reports")} lead={t("reports.lead")} />
+      <PageHeader
+        title={t("nav.reports")}
+        lead={restaurant ? t("reports.rows.lead") : t("reports.lead")}
+      />
+      {restaurant ? (
+        <Tabs value={tab} onValueChange={(v) => set({ tab: v })}>
+          <TabsList className="h-11 lg:h-9">
+            {["tableBookings", "eventBookings"].map((k) => (
+              <TabsTrigger key={k} value={k} className="px-3">
+                {t(`reports.tabs.${k}`)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent value="tableBookings" className="mt-4">
+            <TableBookingsView />
+          </TabsContent>
+          <TabsContent value="eventBookings" className="mt-4">
+            <EventBookingsView />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <CourtReports tab={tab} set={set} period={period} from={from} to={to} />
+      )}
+    </div>
+  )
+}
+
+/** The reports of a court / sport branch: bookings, money, space use and unpaid for a period */
+function CourtReports({
+  tab,
+  set,
+  period,
+  from,
+  to,
+}: {
+  tab: string
+  set: (patch: Record<string, string>) => void
+  period: Period
+  from: string
+  to: string
+}) {
+  const { t } = useTranslation()
+  return (
+    <>
       <div className="flex flex-wrap items-center gap-2">
         <div
           role="radiogroup"
@@ -163,7 +210,7 @@ export function ReportsPage() {
           <UnpaidView from={from} to={to} />
         </TabsContent>
       </Tabs>
-    </div>
+    </>
   )
 }
 

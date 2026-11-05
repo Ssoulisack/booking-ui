@@ -1,6 +1,5 @@
 import { z } from "zod"
 
-import { LAOS } from "@/lib/countries"
 import { isLaoPhone } from "@/lib/phone"
 
 // Messages are i18n keys, translated where they are shown (TextField)
@@ -18,54 +17,47 @@ export const loginSchema = z.object({
   password: z.string().min(1, "validation.required"),
 })
 
-// Nationality decides what is needed: Lao → phone (email optional); others → email (phone optional)
-const identityFields = {
-  nationality: z.string().min(1, "identity.nationalityRequired"),
-  phone: z.string().trim(),
-  email: z
-    .string()
-    .trim()
-    .refine(
-      (v) => v === "" || z.email().safeParse(v).success,
-      "validation.email",
-    ),
-}
+// A new account always has a Lao mobile phone (20xxxxxxxx); the email is optional. There is no nationality.
+const emailField = z
+  .string()
+  .trim()
+  .refine((v) => v === "" || z.email().safeParse(v).success, "validation.email")
 
-function identityRules(
-  v: { nationality: string; phone: string; email: string },
-  ctx: z.RefinementCtx,
-) {
-  const lao = v.nationality === LAOS
-  // account phones are Lao mobiles only, for every nationality (a foreigner without one leaves it empty)
-  if (v.phone && !isLaoPhone(v.phone)) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["phone"],
-      message: "identity.phoneInvalid",
-    })
-  } else if (lao && !v.phone) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["phone"],
-      message: "identity.phoneRequired",
-    })
-  }
-  if (v.nationality && !lao && !v.email) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["email"],
-      message: "identity.emailRequired",
-    })
-  }
-}
+const phoneRequired = z
+  .string()
+  .trim()
+  .superRefine((v, ctx) => {
+    if (!v) ctx.addIssue({ code: "custom", message: "identity.phoneRequired" })
+    else if (!isLaoPhone(v))
+      ctx.addIssue({ code: "custom", message: "identity.phoneInvalid" })
+  })
 
-export const registerSchema = z
-  .object({ name, password, ...identityFields })
-  .superRefine(identityRules)
+export const registerSchema = z.object({
+  name,
+  password,
+  phone: phoneRequired,
+  email: emailField,
+})
 
+// My account: an older account may have no phone yet; it then needs an email, so there is always a way to reach it
 export const profileSchema = z
-  .object({ name, ...identityFields })
-  .superRefine(identityRules)
+  .object({
+    name,
+    phone: z
+      .string()
+      .trim()
+      .refine((v) => v === "" || isLaoPhone(v), "identity.phoneInvalid"),
+    email: emailField,
+  })
+  .superRefine((v, ctx) => {
+    if (!v.phone && !v.email) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["phone"],
+        message: "identity.phoneRequired",
+      })
+    }
+  })
 
 export const forgotSchema = z.object({ email })
 

@@ -347,6 +347,10 @@ export interface Booking {
   area_floor?: number
   /** the zones the tables stand in (e.g. "Smoking"), when booked */
   zones?: string
+  /** an event booking: the event's name and the time of day it runs (HH:MM; "" = not said) */
+  event_name?: string
+  event_start_time?: string
+  event_end_time?: string
   /** event days: the event the tables were bought for, pay before, and when the customer said "I sent the slip" */
   event_id?: number
   pay_by?: string
@@ -546,7 +550,14 @@ export interface TableAvailability {
   late_minutes: number
   booking_style: BookingStyle
   /** an event takes this day over: its tables are sold, not booked free */
-  event?: { id: number; name: string }
+  event?: {
+    id: number
+    name: string
+    start_time: string
+    end_time: string
+    /** the areas it is held in; empty = the whole branch (then no table is free that day) */
+    areas: Array<{ id: number; name: string }>
+  }
   times: Array<{
     starts_at: string
     /** not there by then: the table goes to others */
@@ -890,6 +901,16 @@ export interface DirectoryBranch {
 
 // ---------- events (restaurant event days) ----------
 
+/** One line of an event's program: "19:00 – 20:30 Brand show" */
+export interface LineupItem {
+  /** "" = every day of the event, or one date (YYYY-MM-DD) */
+  day: string
+  start_time: string
+  /** "" = until the end */
+  end_time: string
+  title: string
+}
+
 /** An event as the team sees it, with how its bookings stand */
 export interface EventItem {
   id: number
@@ -907,6 +928,14 @@ export interface EventItem {
   default_price: number
   published: boolean
   currency: string
+  /** the time of day it runs (HH:MM, "" = not said); an end before the start means after midnight */
+  start_time: string
+  end_time: string
+  /** customers without an account may buy tables */
+  accept_guests: boolean
+  /** the areas it is held in; none = every area */
+  area_ids: number[]
+  lineup: LineupItem[]
   waiting: number
   paid: number
   cancelled: number
@@ -989,6 +1018,13 @@ export interface PublicEvent {
   /** the cheapest table for sale (0: none) */
   from_price: number
   currency: string
+  start_time: string
+  end_time: string
+  /** false: only customers with an account can buy tables (guests log in first) */
+  accept_guests: boolean
+  /** the areas it is held in; empty = the whole branch */
+  areas: Array<{ id: number; name: string }>
+  lineup: LineupItem[]
 }
 
 /** One table of the event day: its price (0: not for sale) and whether it is taken */
@@ -1084,4 +1120,84 @@ export interface PublicPayInfo {
   account_name: string
   account_number: string
   transfer_enabled: boolean
+}
+
+// ---------- booking reports (restaurant branches) ----------
+
+/** One booking of the table or event report; a cell with nothing to show is "-" */
+export interface BookingReportRow {
+  index: number
+  table_number: string
+  book_code: string
+  fullname: string
+  phone: string
+  email: string
+  customer_type: "guest" | "customer" | "staff" | "admin"
+  book_time: string
+  status: BookingStatus
+}
+
+export interface TableReport {
+  cards: {
+    date: string
+    total_tables: number
+    tables_taken: number
+    available: number
+  }
+  items: BookingReportRow[]
+  meta: PageMeta
+}
+
+export interface EventReportRow extends BookingReportRow {
+  payment_status: string
+  bank: string
+  amount: number
+  currency: string
+}
+
+export interface EventReport {
+  totals: Array<{
+    currency: string
+    success_amount: number
+    cancelled_amount: number
+  }>
+  items: EventReportRow[]
+  meta: PageMeta
+}
+
+// ---------- Telegram (the team's group gets a message for new bookings) ----------
+
+/** A branch's Telegram connection. The bot token and the group id are secret: they are never in an answer. */
+export interface TelegramSettings {
+  has_bot: boolean
+  /** "@my_bot" */
+  bot_name: string
+  has_group: boolean
+  chat_title: string
+  /** the master switch (on only once a bot and a group are connected) */
+  enabled: boolean
+  on_booking: boolean
+  on_event: boolean
+  on_payment: boolean
+  on_cancel: boolean
+  hide_phone: boolean
+  /** what Telegram said when the last message failed; "" = fine */
+  last_error: string
+  last_ok_at?: string
+}
+
+/** A group the bot recently saw; pick one to send to */
+export interface TelegramGroups {
+  groups: Array<{ id: string; title: string; current: boolean }>
+}
+
+export interface TelegramInput {
+  bot_token?: string
+  chat_id?: string
+  enabled?: boolean
+  on_booking?: boolean
+  on_event?: boolean
+  on_payment?: boolean
+  on_cancel?: boolean
+  hide_phone?: boolean
 }

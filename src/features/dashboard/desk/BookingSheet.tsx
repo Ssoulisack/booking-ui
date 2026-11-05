@@ -18,6 +18,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { StatusBadge } from "@/features/public/BookingCard"
 import { bookingTitle, currentItems } from "@/features/public/booking-utils"
+import { eventBookingWhen } from "@/features/public/event-program"
 import type { Booking, PaymentMethod } from "@/lib/api/types"
 import { floorName } from "@/lib/floor-plan"
 import { dayIn, duration, money, timeIn } from "@/lib/format"
@@ -129,8 +130,25 @@ function Details({ booking: b }: { booking: Booking }) {
       </div>
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+        {b.event_name && (
+          <>
+            <dt className="text-muted-foreground">
+              {t("public.events.event")}
+            </dt>
+            <dd className="font-medium">{b.event_name}</dd>
+          </>
+        )}
         <dt className="text-muted-foreground">{t("booking.when")}</dt>
-        {isTable ? (
+        {isEvent ? (
+          // an event day: the event's own time, not the hours the tables are held for
+          <dd className="font-medium">
+            {eventBookingWhen(
+              dayIn(b.starts_at, tz),
+              b.event_start_time,
+              b.event_end_time,
+            )}
+          </dd>
+        ) : isTable ? (
           <dd className="font-medium">
             {dayIn(b.starts_at, tz)}
             {b.booking_style !== "arrive_by" && `, ${timeIn(b.starts_at, tz)}`}

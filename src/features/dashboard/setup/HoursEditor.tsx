@@ -5,7 +5,7 @@ import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/form"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { TimeInput } from "@/components/time-input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
@@ -112,30 +112,25 @@ function WeekForm({
                 )}
                 {week[day].map((interval, i) => (
                   <div key={i} className="flex flex-wrap items-center gap-2">
-                    <Input
-                      type="time"
-                      step={1800}
-                      aria-label={t("setup.hours.opens")}
+                    <TimeInput
+                      label={t("setup.hours.opens")}
                       value={interval.open}
-                      onChange={(e) =>
+                      onChange={(v) =>
                         update((w) => {
-                          w[day][i].open = e.target.value
+                          w[day][i].open = v
                         })
                       }
-                      className="h-11 w-32 lg:h-9"
                     />
                     <span aria-hidden>–</span>
-                    <Input
-                      type="time"
-                      step={1800}
-                      aria-label={t("setup.hours.closes")}
+                    <TimeInput
+                      label={t("setup.hours.closes")}
                       value={interval.close}
-                      onChange={(e) =>
+                      onChange={(v) =>
                         update((w) => {
-                          w[day][i].close = e.target.value
+                          w[day][i].close = v
                         })
                       }
-                      className="h-11 w-32 lg:h-9"
+                      midnightEnd
                     />
                     {week[day].length > 1 && (
                       <Button

@@ -107,7 +107,8 @@
     "companySettings": "Company settings",
     "branchSettings": "Branch settings",
     "home": "Home",
-    "share": "Share page"
+    "share": "Share page",
+    "telegram": "Telegram"
   },
   "look": {
     "mode": {
@@ -505,7 +506,16 @@
       "seatsN_one": "{{count}} seat",
       "seatsN_other": "{{count}} seats",
       "guestsMax_one": "Up to {{count}} person at these tables",
-      "guestsMax_other": "Up to {{count}} people at these tables"
+      "guestsMax_other": "Up to {{count}} people at these tables",
+      "details": "Details",
+      "lineup": "Lineup",
+      "untilEnd": "until the end",
+      "heldIn": "Held in {{areas}}",
+      "eventDayPartial": "On {{date}} there is an event, “{{name}}”, in {{areas}}. Tables there are sold for the event. Tables in the other areas are booked as usual, below.",
+      "needsLoginEvent": "This event is for customers with an account. Log in to buy tables.",
+      "needsPhone": "Add your phone number to buy tables. The team needs it to reach you about your booking.",
+      "savePhone": "Save and continue",
+      "phoneSaved": "Phone number saved."
     },
     "cancelledNotice": {
       "title": "This booking was cancelled",
@@ -1179,7 +1189,9 @@
       "bookings": "Bookings",
       "money": "Money",
       "courts": "Space use",
-      "unpaid": "Unpaid"
+      "unpaid": "Unpaid",
+      "tableBookings": "Table bookings",
+      "eventBookings": "Event bookings"
     },
     "bookings": "Bookings",
     "bookedValue": "Booked value",
@@ -1210,7 +1222,64 @@
     "hoursOf": "{{booked}} of {{open}} hours",
     "unpaidTitle": "Unpaid after the booking ended",
     "unpaidLead": "Contact these customers or mark the payment when it comes in.",
-    "noUnpaid": "Everything that ended in this period is paid."
+    "noUnpaid": "Everything that ended in this period is paid.",
+    "rows": {
+      "lead": "Who booked which table, and how events are selling.",
+      "index": "#",
+      "table": "Table",
+      "code": "Code",
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "type": "Customer type",
+      "bookTime": "Booked at",
+      "status": "Status",
+      "paymentStatus": "Payment",
+      "bank": "Bank",
+      "amount": "Amount",
+      "from": "From",
+      "to": "To",
+      "allStatuses": "All statuses",
+      "allBanks": "All banks",
+      "allPayments": "All payments",
+      "sortBy": "Sort by booking time",
+      "newest": "Newest first",
+      "oldest": "Oldest first",
+      "event": "Event",
+      "totalTables": "Total tables",
+      "tablesTaken": "Tables taken",
+      "available": "Available",
+      "cardsDay": "On {{date}} (the first day chosen)",
+      "successTotal": "Booked and completed",
+      "successHint": "Confirmed and completed bookings",
+      "cancelledTotal": "Cancelled",
+      "totalsHint": "Follows the filters, except the status",
+      "tableLead": "One row per booking, events not included.",
+      "eventLead": "One row per event booking.",
+      "empty": "No bookings for these filters.",
+      "page": "Page {{page}} of {{total}}",
+      "prev": "Previous page",
+      "next": "Next page",
+      "types": {
+        "guest": "Guest",
+        "customer": "Customer",
+        "staff": "Staff",
+        "admin": "Admin"
+      },
+      "pay": {
+        "unpaid": "Not paid",
+        "paid": "Paid",
+        "refunded": "Refunded"
+      },
+      "details": "Details",
+      "detailsLead": "Everything about this booking.",
+      "seeDetails": "See details of {{code}}",
+      "search": "Search",
+      "searchHint": "Table, code, phone or name",
+      "refresh": "Refresh",
+      "updatedAt": "Updated {{time}}.",
+      "autoRefresh": "Refreshes every minute."
+    }
   },
   "cashup": {
     "title": "Cash-up",
@@ -1486,9 +1555,7 @@
         },
         {
           "h": "Contact",
-          "p": [
-            "Questions about this policy: {{email}}."
-          ]
+          "p": ["Questions about this policy: {{email}}."]
         }
       ]
     },
@@ -1759,7 +1826,6 @@
     "empty": "No tables yet. Add them in Setup → Floor plan.",
     "free": "Free",
     "booked": "Booked today",
-    "leadNow": "{{free}} free · {{taken}} taken · {{total}} tables",
     "taken": "Taken",
     "tapHint": "Tap a table to change it.",
     "seatLead_one": "{{count}} seat. Guests sit down now.",
@@ -1770,7 +1836,8 @@
     "takenSince_other": "Taken since {{time}} · {{count}} people",
     "freeTable": "Free table (bill closed)",
     "freed": "{{name}} is free again.",
-    "details": "Booking details"
+    "details": "Booking details",
+    "cardTotal": "Tables"
   },
   "events": {
     "title": "Events",
@@ -1848,7 +1915,25 @@
       "windowN_other": "{{count}} minutes",
       "windowHint_one": "The QR stays open for {{count}} minute and the tables are held that long (plus a few minutes). Then the customer picks a bank again.",
       "windowHint_other": "The QR stays open for {{count}} minutes and the tables are held that long (plus a few minutes). Then the customer picks a bank again."
-    }
+    },
+    "startTime": "Starts at",
+    "endTime": "Ends at",
+    "timeHint": "Optional, the same every day. An end earlier than the start means after midnight (19:00 – 01:00).",
+    "areasTitle": "Held in",
+    "areasAll": "Nothing ticked: the whole branch. Normal table booking is off that day.",
+    "areasSome": "Areas you do not tick are booked the normal way that day.",
+    "lineupTitle": "Lineup",
+    "lineupHint": "The program customers see. Leave “To” empty for “until the end”.",
+    "noLineup": "No lineup yet.",
+    "addRow": "Add a line",
+    "removeRow": "Remove this line",
+    "rowStart": "From",
+    "rowEnd": "To (optional)",
+    "rowTitle": "What happens",
+    "rowDay": "Day",
+    "everyDay": "Every day",
+    "acceptGuests": "Accept bookings without an account",
+    "acceptGuestsHint": "On: anyone can buy tables, as the branch allows. Off: customers must log in first. A branch that takes accounts only always needs a login."
   },
   "eventPay": {
     "title": "Waiting for payment",
@@ -1916,5 +2001,57 @@
     "attentionTitle": "Online payments to look at",
     "attentionLead": "Money to give back, amounts that did not match, disputes and refunds in progress. Tap the code to open the booking.",
     "refundTitle": "Refund {{amount}}?"
+  },
+  "telegram": {
+    "title": "Telegram",
+    "lead": "Send new bookings to your team's Telegram group.",
+    "connection": "Connection",
+    "step1": "In Telegram, talk to @BotFather, make a bot and copy its token.",
+    "step2": "Paste the token below and press Connect bot.",
+    "step3": "Add the bot to your staff group, and add your staff and admins to that group.",
+    "step4": "Press “Find my groups” and pick your group from the list.",
+    "step5": "Press “Send a test message”, then switch the messages on.",
+    "token": "Bot token",
+    "tokenHint": "The token is kept encrypted on the server and is never shown again. Anyone with it can use your bot, so do not share it.",
+    "botSaved": "Bot connected.",
+    "connectBot": "Connect bot",
+    "changeBot": "Change bot",
+    "botConnected": "Connected as {{name}}",
+    "group": "Group",
+    "noGroup": "No group chosen yet. Add the bot to your staff group first, then press the button (the bot only sees groups from the last day).",
+    "groupConnected": "Group: {{name}}",
+    "findGroup": "Find my groups",
+    "findAgain": "Look for groups again",
+    "sendTest": "Send a test message",
+    "testSent": "Test message sent. Look in your group.",
+    "manualGroup": "Type the group id yourself",
+    "groupId": "Group id",
+    "saveGroup": "Save group",
+    "groupSaved": "Group saved.",
+    "lastError": "The last message failed: {{error}}",
+    "lastOk": "Last message sent {{time}}.",
+    "disconnect": "Disconnect",
+    "disconnectTitle": "Disconnect Telegram?",
+    "disconnectLead": "The bot token and the group are forgotten and the group stops getting messages. You can connect again any time.",
+    "keep": "Keep it",
+    "disconnected": "Telegram disconnected.",
+    "messages": "Messages",
+    "messagesLead": "What the group hears about. Bookings that staff make themselves are not sent.",
+    "enabled": "Send messages to the group",
+    "enabledHint": "The master switch. Off: nothing is sent.",
+    "notReady": "Connect a bot and a group first.",
+    "booking": "New bookings",
+    "bookingHint": "A customer books a court, a class or a table.",
+    "event": "New event bookings",
+    "eventHint": "A customer buys tables for an event.",
+    "payment": "Payments and slips",
+    "paymentHint": "An online payment arrives, or a customer says they sent the slip.",
+    "cancel": "Cancellations",
+    "cancelHint": "A customer cancels, or an unpaid event booking is released.",
+    "hidePhone": "Hide customer phone and email",
+    "hidePhoneHint": "Leave the customer's phone number and email out of the messages.",
+    "groupsFound": "Groups the bot saw (latest first). Pick the one for this branch:",
+    "useGroup": "Use this group",
+    "inUse": "in use"
   }
 }

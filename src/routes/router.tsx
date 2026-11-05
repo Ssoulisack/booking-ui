@@ -269,7 +269,10 @@ export const router = createBrowserRouter([
                   const { RequireRole } = await dashboard()
                   return { element: <RequireRole min="admin" /> }
                 },
-                children: [page("settings", "SettingsPage")],
+                children: [
+                  page("settings", "SettingsPage"),
+                  page("telegram", "TelegramPage"),
+                ],
               },
             ],
           },
