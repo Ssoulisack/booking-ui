@@ -230,6 +230,10 @@
   "ONLINE_PAYMENT_OFF": "Online payment is switched off at this branch. Please use the branch's QR or transfer.",
   "PAYMENT_PROVIDER_ERROR": "The bank's payment service could not start this payment. Please try another bank, or try again in a moment.",
   "PAYMENT_METHOD_LOCKED": "A payment is already open for this booking, so the way to pay cannot change. To use another bank, cancel this booking and book again.",
+  "NO_BOOKING_WITH_CODE_AND_YOUR_PHONE": "No booking found with this code and the phone number on your account. The booking must have been made with that phone number.",
+  "ADD_PHONE_TO_ADD_BOOKING": "Add your phone number to your account first (My account), then try again.",
+  "CODE_REQUIRED": "Enter the booking code.",
+  "BOOKING_ALREADY_LINKED": "This booking is already added to an account.",
   "PAY_TIME_UP": "Time is up for this booking. It is being cancelled and the tables are released.",
   "SLIP_ALREADY_SENT": "You already sent a payment slip for this booking. The team is checking it."
 }

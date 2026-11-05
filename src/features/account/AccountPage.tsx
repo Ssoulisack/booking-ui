@@ -20,6 +20,8 @@ import type { Booking } from "@/lib/api/types"
 import { dayIn, timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
+import { AddBookingDialog } from "./AddBookingDialog"
+
 /** /account — the customer's bookings at every branch, with a branch filter once there are two */
 export function AccountPage() {
   const { t } = useTranslation()
@@ -113,6 +115,7 @@ export function AccountPage() {
               {t("account.clearFilters")}
             </Button>
           )}
+          <AddBookingDialog />
         </div>
         {searching && (
           <p className="mb-3 text-sm text-muted-foreground" aria-live="polite">

@@ -212,6 +212,9 @@ export const bookingApi = {
     }),
   myBookings: (status?: string) =>
     apiPage<Booking>("/me/bookings", { query: { limit: 100, status } }),
+  /** add a booking made as a guest to this account: it must have been made with the phone on the account */
+  claim: (code: string) =>
+    api<Booking>("/me/bookings/claim", { method: "POST", body: { code } }),
   cancelMine: (id: number, reason: string) =>
     api<Booking>(`/me/bookings/${id}/cancel`, {
       method: "POST",
