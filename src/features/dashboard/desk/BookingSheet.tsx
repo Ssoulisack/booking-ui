@@ -25,6 +25,7 @@ import type { Booking, PaymentMethod } from "@/lib/api/types"
 import { floorName } from "@/lib/floor-plan"
 import { dayIn, duration, money, timeIn } from "@/lib/format"
 import { displayPhone, telHref } from "@/lib/phone"
+import { cn } from "@/lib/utils"
 
 import { useSettings } from "../api"
 import {
@@ -420,7 +421,8 @@ function Details({ booking: b }: { booking: Booking }) {
 
       {active && (
         <section className="space-y-3">
-          <div className="flex flex-wrap gap-2">
+          {/* while the team is cancelling, only the cancel form shows: no Confirm, Arrived or Move table beside it */}
+          <div className={cn("flex flex-wrap gap-2", cancelling && "hidden")}>
             {b.status === "pending" && !isEvent && (
               <Button
                 className="h-11 lg:h-9"
@@ -495,7 +497,7 @@ function Details({ booking: b }: { booking: Booking }) {
             )}
           </div>
           {/* what each desk button does, in plain words (owners asked: "what is Move table? what is No show?") */}
-          {b.status === "confirmed" && (isTable || started) && (
+          {b.status === "confirmed" && (isTable || started) && !cancelling && (
             <ul className="space-y-1 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
               {isTable && !b.arrived_at && (
                 <li>
