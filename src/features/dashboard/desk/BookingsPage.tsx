@@ -106,11 +106,14 @@ export function BookingsPage() {
       <PageHeader
         title={t("nav.bookings")}
         lead={params.get("q") ? t("desk.searchAll") : undefined}
+        // a restaurant has no desk reservation form (the court form does not fit a table): walk-ins are on the Calendar
         actions={
-          <Button className="h-11 lg:h-9" onClick={() => setAdding(true)}>
-            <PlusIcon />
-            {t("desk.newBooking")}
-          </Button>
+          restaurant ? undefined : (
+            <Button className="h-11 lg:h-9" onClick={() => setAdding(true)}>
+              <PlusIcon />
+              {t("desk.newBooking")}
+            </Button>
+          )
         }
       />
       <Tabs
