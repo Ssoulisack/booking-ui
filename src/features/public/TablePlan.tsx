@@ -1,3 +1,4 @@
+import { FootprintsIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -9,7 +10,7 @@ import { cn } from "@/lib/utils"
 
 /** A table on the team's plan: free, taken (a group sits there) or booked (a group is coming) */
 export interface StaffTable {
-  tone: "free" | "taken" | "booked"
+  tone: "free" | "taken" | "booked" | "kept"
   /** a short line under the name: "Taken", "19:30" */
   note?: string
 }
@@ -18,7 +19,13 @@ const STAFF_TONE: Record<StaffTable["tone"], string> = {
   free: "border-[var(--brand)]/60 bg-card text-foreground shadow-sm active:bg-[var(--brand-soft)]",
   taken: "border-rose-600 bg-rose-500 text-white shadow-sm",
   booked: "border-dashed border-amber-500 bg-amber-50 text-amber-950",
+  // kept for walk-ins: free for the desk to seat, not bookable online
+  kept: "border-sky-500 bg-sky-50 text-sky-950 shadow-sm active:bg-sky-100",
 }
+
+// what customers see on a table kept for walk-ins: not taken, not pickable
+const KEPT_LOOK =
+  "cursor-not-allowed border-sky-400 bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-200"
 
 /**
  * A restaurant area's plan for customers: zones behind, objects (bar, stage, toilet, stairs…)
@@ -107,6 +114,8 @@ export function TablePlan({
         const f = footprint(table)
         const staff = staffLook?.(table.id)
         const color = isFree && !isChosen ? tint?.(table.id) : undefined
+        // a table kept for walk-ins is said so (it is not "taken")
+        const kept = !!table.walk_in_only && !staff && !isFree
         return (
           <button
             key={table.id}
@@ -116,12 +125,14 @@ export function TablePlan({
             aria-label={
               staff
                 ? `${table.name} · ${t(`tonight.${staff.tone}`)}${staff.note ? ` · ${staff.note}` : ""}`
-                : t(
-                    isFree
-                      ? "public.tables.tableFree"
-                      : "public.tables.tableTaken",
-                    { name: table.name, count: table.seats },
-                  )
+                : kept
+                  ? t("public.tables.tableKept", { name: table.name })
+                  : t(
+                      isFree
+                        ? "public.tables.tableFree"
+                        : "public.tables.tableTaken",
+                      { name: table.name, count: table.seats },
+                    )
             }
             onClick={() => onToggle(table.id)}
             className={cn(
@@ -133,7 +144,9 @@ export function TablePlan({
                   ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)] shadow-md"
                   : isFree
                     ? "border-[var(--brand)]/60 bg-card text-foreground shadow-sm active:bg-[var(--brand-soft)]"
-                    : "cursor-not-allowed border-dashed border-border bg-muted text-muted-foreground",
+                    : kept
+                      ? KEPT_LOOK
+                      : "cursor-not-allowed border-dashed border-border bg-muted text-muted-foreground",
             )}
             style={{
               ...place(table),
@@ -148,16 +161,24 @@ export function TablePlan({
             <span className="max-w-full truncate px-0.5 text-[11px] font-semibold sm:text-sm">
               {table.name}
             </span>
+            {(kept || staff?.tone === "kept") && (
+              <FootprintsIcon
+                aria-hidden
+                className="absolute top-0.5 right-0.5 size-3 opacity-70"
+              />
+            )}
             {/* small tables on a phone: just the number of seats under the name */}
             {f.h * cell > 30 && (
               <span className="text-[10px] leading-none opacity-80 sm:text-xs">
                 {staff?.note
                   ? staff.note
-                  : priceLabel?.(table.id)
-                    ? priceLabel(table.id)
-                    : f.w * cell >= 60
-                      ? t("public.tables.seatsShort", { count: table.seats })
-                      : table.seats}
+                  : kept
+                    ? t("public.tables.keptShort")
+                    : priceLabel?.(table.id)
+                      ? priceLabel(table.id)
+                      : f.w * cell >= 60
+                        ? t("public.tables.seatsShort", { count: table.seats })
+                        : table.seats}
               </span>
             )}
           </button>

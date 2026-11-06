@@ -1,4 +1,10 @@
-import { MinusIcon, PlusIcon } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MinusIcon,
+  PlusIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -12,16 +18,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Switch } from "@/components/ui/switch"
 import { Spinner } from "@/components/ui/spinner"
 import { currentItems } from "@/features/public/booking-utils"
 import { Plans } from "@/features/public/TableBookingPanel"
 import type { StaffTable } from "@/features/public/TablePlan"
-import type { Booking, PublicArea, PublicTable } from "@/lib/api/types"
+import type {
+  Booking,
+  ManagedTable,
+  PublicArea,
+  PublicTable,
+} from "@/lib/api/types"
 import { timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { useAllFloorPlans, useSettings, useSportsList } from "./api"
+import {
+  manage,
+  useAllFloorPlans,
+  useBiz,
+  useSettings,
+  useSportsList,
+} from "./api"
 import { useBookingList, useChangeStatus, useWalkIn } from "./desk/api"
 import { BookingSheet } from "./desk/BookingSheet"
 import { Panel } from "./ui"
@@ -35,10 +54,14 @@ export function TonightPlan() {
   const { t } = useTranslation()
   const tz = useSettings().data?.in_force.timezone ?? "Asia/Vientiane"
   const today = todayIn(tz)
+  // the day shown: today, or a later day to check what is booked (nobody sits there yet)
+  const [dayPick, setDayPick] = useState("")
+  const day = dayPick && dayPick >= today ? dayPick : today
+  const isToday = day === today
   const areas = useSportsList()
   const live = (areas.data ?? []).filter((a) => a.active)
   const plans = useAllFloorPlans(live.map((a) => a.id))
-  const bookings = useBookingList({ from: today, to: today, limit: 100 })
+  const bookings = useBookingList({ from: day, to: day, limit: 100 })
   const [now] = useState(() => Date.now())
   const [floorPick, setFloorPick] = useState<number | null>(null)
   const [seat, setSeat] = useState<PublicTable | null>(null)
@@ -58,10 +81,10 @@ export function TonightPlan() {
   const coming = new Map<number, Booking>()
   for (const b of bookings.data?.items ?? []) {
     if (b.status !== "pending" && b.status !== "confirmed") continue
-    if (Date.parse(b.ends_at) <= now) continue
+    if (isToday && Date.parse(b.ends_at) <= now) continue
     for (const i of currentItems(b)) {
       const id = i.resource_id ?? 0
-      if (b.arrived_at) seated.set(id, b)
+      if (isToday && b.arrived_at) seated.set(id, b)
       else if (
         !coming.has(id) ||
         b.starts_at < (coming.get(id)?.starts_at ?? "")
@@ -69,11 +92,18 @@ export function TonightPlan() {
         coming.set(id, b)
     }
   }
+  const keptIds = new Set(
+    plans.flatMap((p) =>
+      (p.data?.tables ?? []).filter((x) => x.walk_in_only).map((x) => x.id),
+    ),
+  )
   const look = (id: number): StaffTable => {
     if (seated.has(id)) return { tone: "taken", note: t("tonight.taken") }
     const b = coming.get(id)
     if (b)
       return { tone: "booked", note: timeIn(b.arrive_by ?? b.starts_at, tz) }
+    // kept for walk-ins: free for the desk to seat, not bookable online
+    if (keptIds.has(id)) return { tone: "kept", note: t("tonight.keptShort") }
     return { tone: "free" }
   }
 
@@ -91,7 +121,9 @@ export function TonightPlan() {
     .sort((a, b) => a.floor - b.floor)
   const all = shown.flatMap((a) => a.tables)
   const free = new Set(
-    all.filter((x) => look(x.id).tone === "free").map((x) => x.id),
+    all
+      .filter((x) => ["free", "kept"].includes(look(x.id).tone))
+      .map((x) => x.id),
   )
   const floors = [...new Set(shown.map((a) => a.floor))]
   const floor =
@@ -107,7 +139,10 @@ export function TonightPlan() {
   }
 
   return (
-    <Panel title={t("tonight.title")}>
+    <Panel
+      title={isToday ? t("tonight.title") : t("tonight.titleOn", { date: day })}
+      actions={<DayPicker day={day} today={today} onChange={setDayPick} />}
+    >
       {shown.length === 0 ? (
         <p className="text-muted-foreground">{t("tonight.empty")}</p>
       ) : (
@@ -119,8 +154,12 @@ export function TonightPlan() {
               tone="border-[var(--brand)]/60"
             />
             <CountCard
-              label={t("tonight.taken")}
-              value={all.filter((x) => seated.has(x.id)).length}
+              label={isToday ? t("tonight.taken") : t("tonight.booked")}
+              value={
+                isToday
+                  ? all.filter((x) => seated.has(x.id)).length
+                  : all.filter((x) => coming.has(x.id)).length
+              }
               tone="border-rose-600/70"
             />
             <CountCard
@@ -149,11 +188,21 @@ export function TonightPlan() {
             <Swatch className="border-2 border-dashed border-amber-500 bg-amber-50 dark:bg-amber-400/15">
               {t("tonight.booked")}
             </Swatch>
+            <Swatch className="border-2 border-sky-500 bg-sky-50 dark:bg-sky-400/15">
+              {t("tonight.kept")}
+            </Swatch>
             <span>{t("tonight.tapHint")}</span>
           </p>
         </div>
       )}
-      {seat && <SeatDialog table={seat} onClose={() => setSeat(null)} />}
+      {seat && (
+        <SeatDialog
+          table={seat}
+          canSeat={isToday}
+          kept={keptIds.has(seat.id)}
+          onClose={() => setSeat(null)}
+        />
+      )}
       {freeing && (
         <FreeDialog
           table={freeing.table}
@@ -205,16 +254,53 @@ function Swatch({
   )
 }
 
-/** A free table: mark it taken in one tap (how many people is filled in with its seats) */
+/** Keep a table for walk-ins, or give it back to online booking (it stays so until switched: no day or time) */
+function useKeepForWalkIns() {
+  const { base, key } = useBiz()
+  const queryClient = useQueryClient()
+  const { t } = useTranslation()
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<unknown>(null)
+  const set = async (table: PublicTable, keep: boolean, done: () => void) => {
+    setPending(true)
+    setError(null)
+    try {
+      await manage.saveResource(base, {
+        ...(table as ManagedTable),
+        kind: "table",
+        walk_in_only: keep,
+      })
+      void queryClient.invalidateQueries({ queryKey: key("plan") })
+      void queryClient.invalidateQueries({ queryKey: ["public"] })
+      toast.success(
+        t(keep ? "tonight.keptOn" : "tonight.keptOff", { name: table.name }),
+      )
+      done()
+    } catch (e) {
+      setError(e)
+    } finally {
+      setPending(false)
+    }
+  }
+  return { set, pending, error }
+}
+
+/** A free table: mark it taken in one tap (today only), and keep it for walk-ins or not */
 function SeatDialog({
   table,
+  canSeat,
+  kept,
   onClose,
 }: {
   table: PublicTable
+  /** today only: nobody sits down on a later day */
+  canSeat: boolean
+  kept: boolean
   onClose: () => void
 }) {
   const { t } = useTranslation()
   const walkIn = useWalkIn()
+  const keep = useKeepForWalkIns()
   const [guests, setGuests] = useState(Math.max(1, table.seats))
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -222,58 +308,83 @@ function SeatDialog({
         <DialogHeader>
           <DialogTitle>{table.name}</DialogTitle>
           <DialogDescription>
-            {t("tonight.seatLead", { count: table.seats })}
+            {canSeat
+              ? t("tonight.seatLead", { count: table.seats })
+              : t("tonight.laterLead", { count: table.seats })}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex items-center justify-between">
-          <span className="text-sm">{t("public.tables.people")}</span>
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-11 rounded-full"
-              aria-label={t("public.fewerSeats")}
-              disabled={guests <= 1}
-              onClick={() => setGuests(guests - 1)}
-            >
-              <MinusIcon />
-            </Button>
-            <span className="w-8 text-center text-xl font-semibold tabular-nums">
-              {guests}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-11 rounded-full"
-              aria-label={t("public.moreSeats")}
-              disabled={guests >= 99}
-              onClick={() => setGuests(guests + 1)}
-            >
-              <PlusIcon />
-            </Button>
+        <div className="flex items-start justify-between gap-4 rounded-lg border px-3 py-3">
+          <div>
+            <label htmlFor="keep-walkin" className="text-sm font-medium">
+              {t("tonight.keepLabel")}
+            </label>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("tonight.keepHint")}
+            </p>
           </div>
+          <Switch
+            id="keep-walkin"
+            checked={kept}
+            disabled={keep.pending}
+            onCheckedChange={(on) => void keep.set(table, on, onClose)}
+          />
         </div>
-        <ErrorAlert error={walkIn.error} />
-        <Button
-          className="h-12 w-full bg-rose-600 text-base text-white hover:bg-rose-700"
-          disabled={walkIn.isPending}
-          onClick={() =>
-            walkIn.mutate(
-              { table_ids: [table.id], guests },
-              {
-                onSuccess: () => {
-                  toast.success(t("tonight.markedTaken", { name: table.name }))
-                  onClose()
+        <ErrorAlert error={keep.error} />
+        {canSeat && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm">{t("public.tables.people")}</span>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-11 rounded-full"
+                aria-label={t("public.fewerSeats")}
+                disabled={guests <= 1}
+                onClick={() => setGuests(guests - 1)}
+              >
+                <MinusIcon />
+              </Button>
+              <span className="w-8 text-center text-xl font-semibold tabular-nums">
+                {guests}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-11 rounded-full"
+                aria-label={t("public.moreSeats")}
+                disabled={guests >= 99}
+                onClick={() => setGuests(guests + 1)}
+              >
+                <PlusIcon />
+              </Button>
+            </div>
+          </div>
+        )}
+        {canSeat && <ErrorAlert error={walkIn.error} />}
+        {canSeat && (
+          <Button
+            className="h-12 w-full bg-rose-600 text-base text-white hover:bg-rose-700"
+            disabled={walkIn.isPending}
+            onClick={() =>
+              walkIn.mutate(
+                { table_ids: [table.id], guests },
+                {
+                  onSuccess: () => {
+                    toast.success(
+                      t("tonight.markedTaken", { name: table.name }),
+                    )
+                    onClose()
+                  },
                 },
-              },
-            )
-          }
-        >
-          {walkIn.isPending && <Spinner />}
-          {t("tonight.markTaken")}
-        </Button>
+              )
+            }
+          >
+            {walkIn.isPending && <Spinner />}
+            {t("tonight.markTaken")}
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   )
@@ -334,5 +445,67 @@ function FreeDialog({
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** Back and forward by a day, or a date: today by default; later days show what is booked */
+function DayPicker({
+  day,
+  today,
+  onChange,
+}: {
+  day: string
+  today: string
+  onChange: (day: string) => void
+}) {
+  const { t } = useTranslation()
+  const shift = (n: number) => {
+    const d = new Date(`${day}T12:00:00`)
+    d.setDate(d.getDate() + n)
+    const next = d.toLocaleDateString("en-CA")
+    onChange(next < today ? today : next)
+  }
+  return (
+    <div className="flex items-center gap-1.5">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="size-11 lg:size-9"
+        aria-label={t("tonight.prevDay")}
+        disabled={day <= today}
+        onClick={() => shift(-1)}
+      >
+        <ChevronLeftIcon />
+      </Button>
+      <Input
+        type="date"
+        aria-label={t("tonight.pickDay")}
+        value={day}
+        min={today}
+        onChange={(e) => e.target.value && onChange(e.target.value)}
+        className="h-11 w-40 lg:h-9"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="size-11 lg:size-9"
+        aria-label={t("tonight.nextDay")}
+        onClick={() => shift(1)}
+      >
+        <ChevronRightIcon />
+      </Button>
+      {day !== today && (
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-11 lg:h-9"
+          onClick={() => onChange(today)}
+        >
+          {t("tonight.today")}
+        </Button>
+      )}
+    </div>
   )
 }

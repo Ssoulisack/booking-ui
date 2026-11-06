@@ -549,6 +549,8 @@ export interface PublicArea {
 export interface PublicTable extends TableFields {
   id: number
   name: string
+  /** kept for walk-ins: the booking page says so instead of drawing it as taken */
+  walk_in_only?: boolean
 }
 
 /** The free start times of a day for a group, with the tables free at each */

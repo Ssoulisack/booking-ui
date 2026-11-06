@@ -365,7 +365,9 @@ export function TableBookingPanel() {
               onToggle={toggle}
             />
           )}
-          <Legend />
+          <Legend
+            kept={areas.some((a) => a.tables.some((x) => x.walk_in_only))}
+          />
           {time.extra_chairs_allowed && (
             <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-400/15 dark:text-amber-200">
               {t("public.tables.extraOnly")}
@@ -567,7 +569,7 @@ export function Plans({
   )
 }
 
-function Legend() {
+function Legend({ kept }: { kept: boolean }) {
   const { t } = useTranslation()
   const dot = "inline-block size-3.5 rounded border-2"
   return (
@@ -584,6 +586,12 @@ function Legend() {
         <span className={cn(dot, "border-dashed border-black/20 bg-muted")} />
         {t("public.tables.legendTaken")}
       </span>
+      {kept && (
+        <span className="flex items-center gap-1.5">
+          <span className={cn(dot, "border-sky-400 bg-sky-50")} />
+          {t("public.tables.legendKept")}
+        </span>
+      )}
     </p>
   )
 }
