@@ -5,6 +5,7 @@ const SPORT_TABS = [
   "spaces",
   "coaches",
   "classes",
+  "packages",
   "closures",
   "rules",
 ] as const

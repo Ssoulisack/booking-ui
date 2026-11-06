@@ -8,6 +8,7 @@ import {
   QrCodeIcon,
   SendIcon,
   SettingsIcon,
+  TicketIcon,
   UsersRoundIcon,
   WrenchIcon,
 } from "lucide-react"
@@ -79,6 +80,13 @@ const NAV: Array<
   { path: "bookings", key: "bookings", icon: ClipboardListIcon, min: "staff" },
   { path: "customers", key: "customers", icon: UsersRoundIcon, min: "staff" },
   {
+    path: "packages",
+    key: "packages",
+    icon: TicketIcon,
+    min: "staff",
+    sportOnly: true,
+  },
+  {
     path: "cash-up",
     key: "cashUp",
     icon: HandCoinsIcon,
@@ -103,6 +111,7 @@ const DASHBOARD_CRUMBS: Record<string, string> = {
   calendar: "nav.calendar",
   bookings: "nav.bookings",
   customers: "nav.customers",
+  packages: "nav.packages",
   "cash-up": "nav.cashUp",
   setup: "nav.setup",
   reports: "nav.reports",

@@ -1,4 +1,4 @@
-import { TicketIcon, UserRoundIcon } from "lucide-react"
+import { TicketIcon, TicketPercentIcon, UserRoundIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Outlet } from "react-router"
 
@@ -28,6 +28,11 @@ export function AccountLayout() {
           label: t("nav.myBookings"),
           icon: TicketIcon,
           end: true,
+        },
+        {
+          to: "/account/packages",
+          label: t("nav.myPackages"),
+          icon: TicketPercentIcon,
         },
         {
           to: "/account/profile",

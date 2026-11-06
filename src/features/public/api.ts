@@ -13,9 +13,13 @@ import type {
   CreateBookingInput,
   BuyEventTablesInput,
   CreatedBooking,
+  CustomerPackage,
   OnlinePayment,
   PaymentOption,
+  PackageItem,
+  PackageVisit,
   PublicPayInfo,
+  SlipWay,
   PublicArea,
   PublicBranch,
   PublicCoach,
@@ -283,17 +287,37 @@ export function useBuyEventTables(slug: string, id: number) {
   })
 }
 
+/** What a customer sends with "I paid": on WhatsApp (nothing to upload) or the slip picture (goes to the team's Telegram group) */
+export interface SlipInput {
+  via: SlipWay
+  file?: Blob
+}
+
+function slipForm(s: SlipInput) {
+  const form = new FormData()
+  form.set("via", s.via)
+  if (s.file) form.set("slip", s.file, "slip.jpg")
+  return form
+}
+
 /** "I paid and sent the slip": by the private link, or for a logged-in customer's own booking */
 export const slipApi = {
-  guest: (slug: string, token: string) =>
+  guest: (slug: string, token: string, s: SlipInput = { via: "whatsapp" }) =>
     api<Booking>(
       `${pub(slug)}/bookings/${encodeURIComponent(token)}/slip-sent`,
-      {
-        method: "POST",
-      },
+      { method: "POST", form: slipForm(s) },
     ),
-  mine: (id: number) =>
-    api<Booking>(`/me/bookings/${id}/slip-sent`, { method: "POST" }),
+  mine: (id: number, s: SlipInput = { via: "whatsapp" }) =>
+    api<Booking>(`/me/bookings/${id}/slip-sent`, {
+      method: "POST",
+      form: slipForm(s),
+    }),
+  /** the same for a package the customer bought */
+  package: (id: number, s: SlipInput = { via: "whatsapp" }) =>
+    api<CustomerPackage>(`/me/packages/${id}/slip`, {
+      method: "POST",
+      form: slipForm(s),
+    }),
 }
 
 /** The ways to pay online at this branch (empty: online payment is off, pay at the place or by QR / transfer) */
@@ -309,35 +333,47 @@ export function usePaymentOptions(slug: string) {
 export const payApi = {
   start: (
     slug: string,
-    who: { token: string } | { bookingId: number },
+    who: { token: string } | { bookingId: number } | { packageId: number },
     body: { provider: string; method: string },
   ) =>
-    "token" in who
-      ? api<OnlinePayment>(
-          `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/pay`,
-          { method: "POST", body },
-        )
-      : api<OnlinePayment>(`/me/bookings/${who.bookingId}/pay`, {
+    "packageId" in who
+      ? api<OnlinePayment>(`/me/packages/${who.packageId}/pay`, {
           method: "POST",
           body,
-        }),
+        })
+      : "token" in who
+        ? api<OnlinePayment>(
+            `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/pay`,
+            { method: "POST", body },
+          )
+        : api<OnlinePayment>(`/me/bookings/${who.bookingId}/pay`, {
+            method: "POST",
+            body,
+          }),
   /** the payment still open for this booking (same QR, time left), the one just paid, or null */
-  open: (slug: string, who: { token: string } | { bookingId: number }) =>
-    "token" in who
-      ? api<OnlinePayment | null>(
-          `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/payment`,
-        )
-      : api<OnlinePayment | null>(`/me/bookings/${who.bookingId}/payment`),
+  open: (
+    slug: string,
+    who: { token: string } | { bookingId: number } | { packageId: number },
+  ) =>
+    "packageId" in who
+      ? api<OnlinePayment | null>(`/me/packages/${who.packageId}/payment`)
+      : "token" in who
+        ? api<OnlinePayment | null>(
+            `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/payment`,
+          )
+        : api<OnlinePayment | null>(`/me/bookings/${who.bookingId}/payment`),
   check: (
     slug: string,
-    who: { token: string } | { bookingId: number },
+    who: { token: string } | { bookingId: number } | { packageId: number },
     id: number,
   ) =>
-    "token" in who
-      ? api<OnlinePayment>(
-          `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/payments/${id}`,
-        )
-      : api<OnlinePayment>(`/me/bookings/${who.bookingId}/payments/${id}`),
+    "packageId" in who
+      ? api<OnlinePayment>(`/me/packages/${who.packageId}/payments/${id}`)
+      : "token" in who
+        ? api<OnlinePayment>(
+            `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/payments/${id}`,
+          )
+        : api<OnlinePayment>(`/me/bookings/${who.bookingId}/payments/${id}`),
 }
 
 /** How to pay the branch outside the system (QR, account, WhatsApp), for a page opened on any device */
@@ -348,4 +384,53 @@ export function usePublicPayInfo(slug: string, enabled = true) {
     enabled,
     staleTime: 60_000,
   })
+}
+
+// ---------- packages (course passes) ----------
+
+export const packageKeys = {
+  mine: ["me", "packages"] as const,
+  list: (slug: string) => ["public", slug, "packages"] as const,
+}
+
+/** What the branch sells as passes: active packages with their options on sale */
+export function usePublicPackages(slug: string, enabled = true) {
+  return useQuery({
+    queryKey: packageKeys.list(slug),
+    queryFn: () => api<PackageItem[]>(`${pub(slug)}/packages`),
+    enabled,
+    ...CATALOG,
+  })
+}
+
+/** Everything the logged-in customer bought, at every branch; kept fresh while one waits for payment */
+export function useMyPackages(enabled = true) {
+  return useQuery({
+    queryKey: packageKeys.mine,
+    queryFn: () => api<CustomerPackage[]>("/me/packages"),
+    enabled,
+    refetchOnWindowFocus: true,
+    refetchInterval: (q) =>
+      q.state.data?.some((p) => p.status === "pending_payment")
+        ? 10_000
+        : false,
+  })
+}
+
+export function useMyPackageVisits(id: number | null) {
+  return useQuery({
+    queryKey: [...packageKeys.mine, "visits", id] as const,
+    queryFn: () => api<PackageVisit[]>(`/me/packages/${id}/visits`),
+    enabled: id !== null,
+  })
+}
+
+export const myPackageApi = {
+  buy: (slug: string, packageId: number, optionId: number) =>
+    api<CustomerPackage>(`${pub(slug)}/packages/${packageId}/buy`, {
+      method: "POST",
+      body: { option_id: optionId },
+    }),
+  cancel: (id: number) =>
+    api<CustomerPackage>(`/me/packages/${id}/cancel`, { method: "POST" }),
 }

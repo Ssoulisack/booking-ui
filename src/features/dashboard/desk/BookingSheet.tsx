@@ -266,6 +266,19 @@ function Details({ booking: b }: { booking: Booking }) {
               {money(b.total_price, b.currency)}
             </span>
           </div>
+          {b.package && (
+            <p className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">
+                {t("booking.package")}
+              </span>
+              <span className="text-right font-medium">
+                {b.package}{" "}
+                <span className="font-mono text-xs text-muted-foreground">
+                  {b.package_code}
+                </span>
+              </span>
+            </p>
+          )}
           {waitingForMoney && (
             <p className="rounded-lg bg-muted/50 p-3 text-sm">
               {b.slip_sent_at
@@ -278,11 +291,27 @@ function Details({ booking: b }: { booking: Booking }) {
                 ` ${t("eventPay.payBy", { when: `${dayIn(b.pay_by, tz)} ${timeIn(b.pay_by, tz)}` })}`}
             </p>
           )}
-          {b.payment_status === "paid" ? (
+          {b.customer_package_id ? (
+            // paid with a package: nothing to take at the desk; to undo it, cancel the booking (the visit goes back)
+            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+              {t("desk.paidWith", {
+                method: `${t("desk.methods.package")}: ${b.package ?? ""} (${b.package_code ?? ""})`,
+                when: b.paid_at
+                  ? `${dayIn(b.paid_at, tz)} ${timeIn(b.paid_at, tz)}`
+                  : "",
+              })}
+              <span className="block text-xs font-normal text-muted-foreground">
+                {t("desk.packageUndo")}
+              </span>
+            </p>
+          ) : b.payment_status === "paid" ? (
             <div className="space-y-2">
               <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
                 {t("desk.paidWith", {
-                  method: t(`desk.methods.${b.payment_method ?? "other"}`),
+                  method:
+                    b.payment_method === "package" && b.package
+                      ? `${t("desk.methods.package")}: ${b.package} (${b.package_code})`
+                      : t(`desk.methods.${b.payment_method ?? "other"}`),
                   when: b.paid_at
                     ? `${dayIn(b.paid_at, tz)} ${timeIn(b.paid_at, tz)}`
                     : "",

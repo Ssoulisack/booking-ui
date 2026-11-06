@@ -23,15 +23,27 @@ import {
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
-import type { Booking, OnlinePayment, PaymentOption } from "@/lib/api/types"
+import type {
+  Booking,
+  CustomerPackage,
+  OnlinePayment,
+  PaymentOption,
+} from "@/lib/api/types"
 import { money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { bookingApi, payApi, publicKeys, usePaymentOptions } from "./api"
+import {
+  bookingApi,
+  myPackageApi,
+  packageKeys,
+  payApi,
+  publicKeys,
+  usePaymentOptions,
+} from "./api"
 import { saveImage } from "./save-image"
 import { StartOverDialog } from "./StartOverDialog"
 
-type Who = { token: string } | { bookingId: number }
+type Who = { token: string } | { bookingId: number } | { packageId: number }
 
 /** Whether a booking can be paid online now: something to pay, not paid, not cancelled */
 export function payableOnline(b: Booking) {
@@ -44,20 +56,33 @@ export function payableOnline(b: Booking) {
   )
 }
 
+/** Whether a package can be paid online now: it waits for payment and no slip was sent for it */
+export function packagePayableOnline(p: CustomerPackage) {
+  return (
+    p.status === "pending_payment" &&
+    p.payment_status === "unpaid" &&
+    !p.slip_sent_at
+  )
+}
+
 /**
- * Pay a booking online: pick a bank (or the payment page), scan the QR or open the bank app, and the
+ * Pay a booking (or a package) online: pick a bank (or the payment page), scan the QR or open the bank app, and the
  * page waits until the gateway says it is paid. Shows nothing when the branch has no online payment.
  * The booking confirms itself: no slip and no staff step.
  */
 export function PayOnline({
   slug,
   booking,
+  pkg,
   guestToken,
   startOverUrl,
   onPaid,
 }: {
   slug: string
-  booking: Booking
+  /** what is paid: a booking... */
+  booking?: Booking
+  /** ...or a package (course pass) the customer bought */
+  pkg?: CustomerPackage
   guestToken?: string
   /**
    * An event booking: once a QR is made the way to pay is final, so a customer who chose the wrong bank cancels
@@ -68,9 +93,27 @@ export function PayOnline({
 }) {
   const { t } = useTranslation()
   const options = usePaymentOptions(slug)
-  const who: Who = guestToken
-    ? { token: guestToken }
-    : { bookingId: booking.id }
+  // what is being paid, whichever it is
+  const subject = pkg
+    ? {
+        id: pkg.id,
+        total: pkg.price,
+        currency: pkg.currency,
+        payBy: undefined as string | undefined,
+        payable: packagePayableOnline(pkg),
+      }
+    : {
+        id: booking!.id,
+        total: booking!.total_price,
+        currency: booking!.currency,
+        payBy: booking!.pay_by,
+        payable: payableOnline(booking!),
+      }
+  const who: Who = pkg
+    ? { packageId: pkg.id }
+    : guestToken
+      ? { token: guestToken }
+      : { bookingId: booking!.id }
   const queryClient = useQueryClient()
   const [payment, setPayment] = useState<OnlinePayment | null>(null)
   // someone who left the page and came back carries on with the payment that is still open (same QR)
@@ -80,9 +123,14 @@ export function PayOnline({
     null,
   )
   const resume = useQuery({
-    queryKey: ["public", slug, "open-payment", guestToken ?? booking.id],
+    queryKey: [
+      "public",
+      slug,
+      "open-payment",
+      pkg ? `package-${pkg.id}` : (guestToken ?? booking!.id),
+    ],
     queryFn: () => payApi.open(slug, who),
-    enabled: payableOnline(booking),
+    enabled: subject.payable,
     staleTime: 0,
     refetchOnWindowFocus: false,
   })
@@ -95,18 +143,20 @@ export function PayOnline({
   })
 
   const navigate = useNavigate()
-  const startOver = useMutation({
+  const startOver = useMutation<unknown, Error, void>({
     mutationFn: () =>
-      "token" in who
-        ? bookingApi.cancelGuest(
-            slug,
-            who.token,
-            "Customer started over (wrong bank)",
-          )
-        : bookingApi.cancelMine(
-            who.bookingId,
-            "Customer started over (wrong bank)",
-          ),
+      "packageId" in who
+        ? myPackageApi.cancel(who.packageId)
+        : "token" in who
+          ? bookingApi.cancelGuest(
+              slug,
+              who.token,
+              "Customer started over (wrong bank)",
+            )
+          : bookingApi.cancelMine(
+              who.bookingId,
+              "Customer started over (wrong bank)",
+            ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["public", slug] })
       void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
@@ -131,6 +181,7 @@ export function PayOnline({
         queryKey: publicKeys.guestBooking(slug, guestToken),
       })
     void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
+    void queryClient.invalidateQueries({ queryKey: packageKeys.mine })
     // the confirmation page's live copy of the booking: it is confirmed now
     void queryClient.invalidateQueries({
       queryKey: ["public", slug, "live-booking"],
@@ -140,7 +191,7 @@ export function PayOnline({
   }, [paid])
 
   // the booking's hold (the last QR's countdown, or the event's own) has passed: it is being cancelled
-  const holdOver = !!booking.pay_by && Date.parse(booking.pay_by) <= Date.now()
+  const holdOver = !!subject.payBy && Date.parse(subject.payBy) <= Date.now()
 
   if (!options.data?.length) return null
   if (paid)
@@ -159,8 +210,8 @@ export function PayOnline({
           {t("payOnline.title")}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {t("payOnline.lead", {
-            total: money(booking.total_price, booking.currency),
+          {t(pkg ? "payOnline.leadPackage" : "payOnline.lead", {
+            total: money(subject.total, subject.currency),
           })}
         </p>
       </div>
@@ -168,7 +219,7 @@ export function PayOnline({
       {current && current.status === "pending" ? (
         <Charge
           payment={current}
-          final={!!booking.pay_by}
+          final={!!subject.payBy}
           startOver={
             startOverUrl ? (
               <StartOverDialog

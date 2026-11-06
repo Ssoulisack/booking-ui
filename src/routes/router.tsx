@@ -112,6 +112,10 @@ export const router = createBrowserRouter([
             lazy: async () => ({ Component: (await pub()).CheckoutPage }),
           },
           {
+            path: "package/:id",
+            lazy: async () => ({ Component: (await pub()).PackagePayPage }),
+          },
+          {
             path: "events/:eventId",
             lazy: async () => ({ Component: (await pub()).EventPage }),
           },
@@ -153,6 +157,13 @@ export const router = createBrowserRouter([
                   Component: (
                     await import("@/features/account/AccountBookingPage")
                   ).AccountBookingPage,
+                }),
+              },
+              {
+                path: "packages",
+                lazy: async () => ({
+                  Component: (await import("@/features/account/MyPackagesPage"))
+                    .MyPackagesPage,
                 }),
               },
               {
@@ -215,6 +226,7 @@ export const router = createBrowserRouter([
               page("calendar", "CalendarPage"),
               page("bookings", "BookingsPage"),
               page("customers", "CustomersPage"),
+              page("packages", "SoldPackagesPage"),
               page("share", "SharePage"),
               page("cash-up", "CashUpPage"),
               {
@@ -243,6 +255,7 @@ export const router = createBrowserRouter([
                       page("coaches", "CoachesPage"),
                       page("coaches/:coachId", "CoachDetailPage"),
                       page("classes", "ClassesPage"),
+                      page("packages", "PackagesPage"),
                       page("closures", "ClosuresPage"),
                       page("rules", "RulesPage"),
                       // restaurant branches

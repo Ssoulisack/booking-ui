@@ -1,26 +1,26 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
-import {
-  CheckCircle2Icon,
-  ClockIcon,
-  DownloadIcon,
-  MessageCircleIcon,
-  SendIcon,
-} from "lucide-react"
+import { CheckCircle2Icon, ClockIcon, DownloadIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { ErrorAlert } from "@/components/form"
 import { Button } from "@/components/ui/button"
 import type { Booking, EventPay } from "@/lib/api/types"
 import { dayIn, money, timeIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { publicKeys, slipApi, usePaymentOptions, usePublicPayInfo } from "./api"
+import {
+  publicKeys,
+  slipApi,
+  usePaymentOptions,
+  usePublicPayInfo,
+  type SlipInput,
+} from "./api"
 import { eventStartOverUrl } from "./booking-utils"
 import { PayOnline } from "./PayOnline"
 import { CopyButton } from "@/components/CopyButton"
 import { saveImage } from "./save-image"
+import { SlipSender } from "./SlipSender"
 
 /** What a buyer needs after buying: remembered on this device, so the booking page can show it again */
 interface Remembered {
@@ -79,8 +79,10 @@ export function EventPayPanel({
   // hook that is skipped on the next render crashes the page
   const remote = usePublicPayInfo(slug)
   const slip = useMutation({
-    mutationFn: () =>
-      guestToken ? slipApi.guest(slug, guestToken) : slipApi.mine(booking.id),
+    mutationFn: (input: SlipInput) =>
+      guestToken
+        ? slipApi.guest(slug, guestToken, input)
+        : slipApi.mine(booking.id, input),
     onSuccess: (updated) => {
       if (guestToken)
         queryClient.setQueryData(
@@ -272,47 +274,22 @@ export function EventPayPanel({
               {t("public.events.pay.noInfo", { phone })}
             </p>
           )}
-          <ErrorAlert error={slip.error} />
-          {/* paid outside the system: the customer talks to the team on WhatsApp, which is faster than waiting
-          for someone to look at the website. Tapping the button also tells the system a slip was sent, so
-          the hold stops running out and the team sees "slip sent" on their list. */}
-          {/* the slip message is the clock box above: no second one here */}
-          {whatsapp ? (
-            <Button
-              asChild
-              size="lg"
-              variant={slipSent ? "outline" : "default"}
-              className="h-12 text-base"
-            >
-              <a
-                href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => {
-                  if (!slipSent && !slip.isPending) slip.mutate()
-                }}
-              >
-                <MessageCircleIcon />
-                {slipSent
-                  ? t("public.events.pay.whatsappAgain")
-                  : t("public.events.pay.whatsapp")}
-              </a>
-            </Button>
-          ) : (
-            !slipSent && (
-              // no WhatsApp number set: the customer calls the branch, and this tells the team a slip is coming
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-12 text-base"
-                disabled={slip.isPending}
-                onClick={() => slip.mutate()}
-              >
-                <SendIcon />
-                {t("public.events.pay.slipSent")}
-              </Button>
-            )
-          )}
+          {/* paid outside the system: the customer sends the slip. The branch chooses the way: the picture uploaded
+              here (the team gets it in their group), WhatsApp with the message filled in, or both. Either way the
+              system learns a slip was sent: the hold stops running out and the team sees "slip sent". */}
+          <SlipSender
+            telegram={remote.data?.slip_telegram ?? false}
+            whatsappNumber={
+              remote.data?.slip_whatsapp === false ? "" : whatsapp
+            }
+            message={message}
+            sentAt={booking.slip_sent_at ?? slip.data?.slip_sent_at}
+            sentVia={booking.slip_via ?? slip.data?.slip_via}
+            pending={slip.isPending}
+            error={slip.error}
+            markOnly
+            onSend={(input) => slip.mutateAsync(input)}
+          />
         </>
       )}
     </section>
@@ -320,7 +297,7 @@ export function EventPayPanel({
 }
 
 /** One line of the branch's account (its name, number or extra text) with a copy button */
-function AccountRow({
+export function AccountRow({
   label,
   value,
   big,

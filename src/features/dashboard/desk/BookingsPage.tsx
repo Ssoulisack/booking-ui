@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StatusBadge } from "@/features/public/BookingCard"
 import { bookingTitle } from "@/features/public/booking-utils"
 import { dayIn, money, nextDays, timeIn, todayIn } from "@/lib/format"
@@ -22,7 +23,7 @@ import { dayIn, money, nextDays, timeIn, todayIn } from "@/lib/format"
 import { useSettings } from "../api"
 import { useDashboard } from "../context"
 import { PageHeader } from "../ui"
-import { useBookingList, type BookingFilters } from "./api"
+import { useBookingList, usePendingBookings, type BookingFilters } from "./api"
 import { BookingSheet } from "./BookingSheet"
 import { NewBookingDialog } from "./NewBookingDialog"
 
@@ -33,8 +34,8 @@ const STATUSES = [
   "no_show",
   "cancelled",
 ] as const
-// "pending" is the first view: every booking waiting for approval, whatever its date
-const PERIODS = ["pending", "today", "tomorrow", "week", "custom"] as const
+// the Bookings tab opens on today; bookings waiting for approval have a tab of their own (every date)
+const PERIODS = ["today", "tomorrow", "week", "custom"] as const
 
 /** /dashboard/:id/bookings — find and handle bookings; filters live in the address */
 export function BookingsPage() {
@@ -48,9 +49,16 @@ export function BookingsPage() {
   const restaurant = useDashboard().branch.type === "restaurant"
 
   const today = todayIn(tz)
-  const period = (params.get("period") ?? "pending") as (typeof PERIODS)[number]
+  // two tabs: the day's bookings (opens on today), and the ones waiting for approval. An old link with period=pending
+  // opens the second one.
+  const approval =
+    params.get("tab") === "approval" || params.get("period") === "pending"
+  const pending = usePendingBookings(useDashboard().branch.branch_id)
+  const period = approval
+    ? "pending"
+    : ((params.get("period") ?? "today") as (typeof PERIODS)[number])
   const range =
-    period === "today"
+    period === "today" || period === "pending"
       ? { from: today, to: today }
       : period === "tomorrow"
         ? { from: nextDays(tz, 2)[1], to: nextDays(tz, 2)[1] }
@@ -100,6 +108,32 @@ export function BookingsPage() {
           </Button>
         }
       />
+      <Tabs
+        value={approval ? "approval" : "bookings"}
+        onValueChange={(v) =>
+          set({
+            tab: v === "approval" ? "approval" : undefined,
+            period: undefined,
+            status: undefined,
+            from: undefined,
+            to: undefined,
+          })
+        }
+      >
+        <TabsList className="h-11 lg:h-9">
+          <TabsTrigger value="bookings" className="px-4">
+            {t("desk.tabs.bookings")}
+          </TabsTrigger>
+          <TabsTrigger value="approval" className="gap-2 px-4">
+            {t("desk.tabs.approval")}
+            {!!pending.data && (
+              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-semibold text-white">
+                {pending.data}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       <form
         className="flex flex-wrap items-end gap-2"
         onSubmit={(e) => {
@@ -121,15 +155,17 @@ export function BookingsPage() {
             className="h-11 pl-9 text-base lg:h-9 lg:text-sm"
           />
         </div>
-        <Filter
-          label={t("desk.period")}
-          value={period}
-          onChange={(v) => set({ period: v })}
-          options={PERIODS.map((p) => ({
-            value: p,
-            label: t(`desk.periods.${p}`),
-          }))}
-        />
+        {!approval && (
+          <Filter
+            label={t("desk.period")}
+            value={period}
+            onChange={(v) => set({ period: v })}
+            options={PERIODS.map((p) => ({
+              value: p,
+              label: t(`desk.periods.${p}`),
+            }))}
+          />
+        )}
         {period === "custom" && (
           <>
             <Input
@@ -149,21 +185,20 @@ export function BookingsPage() {
             />
           </>
         )}
-        <Filter
-          label={t("desk.status")}
-          value={
-            period === "pending" ? "pending" : (params.get("status") ?? "all")
-          }
-          disabled={period === "pending"}
-          onChange={(v) => set({ status: v === "all" ? undefined : v })}
-          options={[
-            { value: "all", label: t("desk.allStatuses") },
-            ...STATUSES.map((s) => ({
-              value: s,
-              label: t(`booking.status.${s}`),
-            })),
-          ]}
-        />
+        {!approval && (
+          <Filter
+            label={t("desk.status")}
+            value={params.get("status") ?? "all"}
+            onChange={(v) => set({ status: v === "all" ? undefined : v })}
+            options={[
+              { value: "all", label: t("desk.allStatuses") },
+              ...STATUSES.map((s) => ({
+                value: s,
+                label: t(`booking.status.${s}`),
+              })),
+            ]}
+          />
+        )}
         {!restaurant && (
           <Filter
             label={t("desk.payment")}
@@ -243,8 +278,9 @@ export function BookingsPage() {
                         b.payment_status === "paid" ? "outline" : "secondary"
                       }
                     >
-                      {money(b.total_price, b.currency)} ·{" "}
-                      {t(`desk.${b.payment_status}`)}
+                      {b.package
+                        ? `${b.package} · ${b.package_code}`
+                        : `${money(b.total_price, b.currency)} · ${t(`desk.${b.payment_status}`)}`}
                     </Badge>
                   )}
                 </span>

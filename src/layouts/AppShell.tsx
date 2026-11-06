@@ -332,9 +332,11 @@ function AccountNav({ nav }: { nav: NavItem[] }) {
       themed
       color={color}
       active={active}
-      items={nav.map((item) => ({
+      items={nav.map((item, i) => ({
         label: item.label,
         icon: item.icon,
+        // three or more items do not fit in one row on a phone: only the open page keeps its words
+        iconOnly: nav.length > 2 && i !== active,
         onSelect: () => navigate(item.to),
       }))}
     />

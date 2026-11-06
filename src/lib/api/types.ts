@@ -351,6 +351,12 @@ export interface Booking {
   event_name?: string
   event_start_time?: string
   event_end_time?: string
+  /** paid with a package (course pass): the customer's package, and which one ("Package A · 10 times", "P-0002") */
+  customer_package_id?: number
+  package?: string
+  package_code?: string
+  /** how the slip was sent: on WhatsApp, or uploaded here (sent to the team's Telegram group) */
+  slip_via?: SlipWay
   /** event days: the event the tables were bought for, pay before, and when the customer said "I sent the slip" */
   event_id?: number
   pay_by?: string
@@ -375,6 +381,8 @@ export interface CreateBookingInput {
   duration_min?: number
   class_session_id?: number
   seats?: number
+  /** pay with this package (course pass) of the customer: a class or a space, price 0 */
+  package_id?: number
   guest?: { name: string; phone: string; email?: string }
   notes?: string
 }
@@ -716,12 +724,15 @@ export interface Media {
 export interface MediaItem extends Media {
   size_bytes: number
   created_at: string
-  used_by: Array<{ kind: "sport" | "coach" | "cover" | "logo"; name: string }>
+  used_by: Array<{
+    kind: "sport" | "coach" | "cover" | "logo" | "pay_qr" | "event"
+    name: string
+  }>
 }
 
 // ---------- branch dashboard: desk and reports ----------
 
-export type PaymentMethod = "cash" | "transfer" | "qr" | "other"
+export type PaymentMethod = "cash" | "transfer" | "qr" | "other" | "package"
 
 export interface CalendarEntry {
   kind: "booking" | "class" | "closure"
@@ -994,6 +1005,11 @@ export interface PayInfo {
   account_number: string
   /** the branch's own way to pay (QR, transfer, WhatsApp) is on */
   transfer_enabled: boolean
+  /** the ways a customer can send the payment slip: on WhatsApp, or uploaded here and sent to the team's Telegram group */
+  slip_whatsapp: boolean
+  slip_telegram: boolean
+  /** the branch has a Telegram bot and group connected, so the Telegram way can be turned on (read only) */
+  telegram_ready?: boolean
 }
 
 /** Online payment on or off for the branch, and whether the server has a gateway at all */
@@ -1120,6 +1136,9 @@ export interface PublicPayInfo {
   account_name: string
   account_number: string
   transfer_enabled: boolean
+  /** the slip ways that work right now (WhatsApp: a number is set; Telegram: connected) */
+  slip_whatsapp: boolean
+  slip_telegram: boolean
 }
 
 // ---------- booking reports (restaurant branches) ----------
@@ -1200,4 +1219,146 @@ export interface TelegramInput {
   on_payment?: boolean
   on_cancel?: boolean
   hide_phone?: boolean
+}
+
+// ---------- packages (course passes) ----------
+
+export type SlipWay = "whatsapp" | "telegram"
+
+/** What a package covers: the group classes of its sport, or one space (a private class) */
+export type PackageCovers = "group_class" | "space"
+
+/** One way to buy a package: "10 times 900,000", "1 month 700,000" */
+export interface PackageOption {
+  id: number
+  kind: "times" | "months"
+  /** visits (times) or months (months) */
+  amount: number
+  price: number
+  /** a times option must be used within this many days of buying; 0 = no expiry */
+  valid_days: number
+  active: boolean
+}
+
+/** A package a branch sells (the team's and the public's view) */
+export interface PackageItem {
+  id: number
+  sport_id: number
+  sport_name: string
+  name: string
+  description: string
+  covers: PackageCovers
+  resource_id: number | null
+  resource_name: string
+  active: boolean
+  currency: string
+  options: PackageOption[]
+}
+
+export interface PackageInput {
+  sport_id: number
+  name: string
+  description: string
+  covers: PackageCovers
+  resource_id: number | null
+  active: boolean
+  /** an option with an id is changed, one without is added, one left out is removed */
+  options: {
+    id?: number
+    kind: "times" | "months"
+    amount: number
+    price: number
+    valid_days: number
+    active: boolean
+  }[]
+}
+
+export type CustomerPackageStatus =
+  "pending_payment" | "active" | "used_up" | "expired" | "cancelled"
+
+/** A package a customer bought (names, price and visits are copied at the time of buying) */
+export interface CustomerPackage {
+  id: number
+  /** "P-12": shown to people */
+  code: string
+  branch_id: number
+  branch_name?: string
+  branch_slug?: string
+  customer_id: number
+  customer_name?: string
+  customer_phone?: string
+  package_id: number
+  sport_id: number
+  name: string
+  covers: PackageCovers
+  resource_id: number | null
+  resource_name: string
+  kind: "times" | "months"
+  amount: number
+  price: number
+  currency: string
+  times_left: number
+  starts_on: string
+  ends_on: string
+  expires_on: string
+  status: CustomerPackageStatus
+  payment_status: "unpaid" | "paid"
+  payment_method: string
+  paid_at: string | null
+  slip_sent_at: string | null
+  slip_via: SlipWay | ""
+  sold_by: "customer" | "staff"
+  notes: string
+  created_at: string
+}
+
+/** One line of a package's log: a visit used (-1), given back or added (+1), a month visit or an extension (0) */
+export interface PackageVisit {
+  id: number
+  change: number
+  booking_id: number | null
+  note: string
+  by_name?: string
+  created_at: string
+}
+
+// ---------- transactions report ----------
+
+/** One line of the transactions table: money received, or a package visit used (no money) */
+export interface TransactionRow {
+  paid_at: string
+  kind: "booking" | "package" | "visit"
+  code: string
+  name: string
+  phone: string
+  /** the sport of a booking, or the package and its option */
+  what: string
+  /** a package visit: which package paid it ("Package A · 10 times") and its code (P-0003) */
+  package: string
+  package_code: string
+  method: PaymentMethod | "online"
+  amount: number
+  currency: string
+  paid_by: string
+  /** cancelled afterwards (the money was received) */
+  cancelled: boolean
+}
+
+export interface Transactions {
+  from: string
+  to: string
+  rows: TransactionRow[]
+  totals: Money[]
+  by_kind: Array<{
+    kind: TransactionRow["kind"]
+    currency: string
+    count: number
+    amount: number
+  }>
+  by_method: Array<{
+    method: string
+    currency: string
+    count: number
+    amount: number
+  }>
 }

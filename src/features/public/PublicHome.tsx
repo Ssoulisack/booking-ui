@@ -26,6 +26,7 @@ import { useScrollSpy } from "./scroll-spy"
 import { usePublic } from "./context"
 import { BrandRings } from "./BrandRings"
 import { EventAds } from "./EventAds"
+import { PackagesSection } from "./PackagesSection"
 import { heroIsDark } from "./brand"
 
 /** /b/:slug — the business's page: name, booking, classes, coaches, about */
@@ -79,6 +80,7 @@ export function PublicHome() {
             <BookingPanel />
           )}
         </section>
+        {business.type === "sport" && <PackagesSection />}
         <Policy />
       </main>
       <SectionNav page="book" />

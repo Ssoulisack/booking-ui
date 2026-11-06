@@ -7,7 +7,7 @@ import {
   subMonths,
 } from "date-fns"
 import { DownloadIcon } from "lucide-react"
-import { useState } from "react"
+import { createContext, useContext, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
@@ -34,6 +34,7 @@ import { useDashboard } from "../context"
 import { useSettings } from "../api"
 import { PageHeader, Panel } from "../ui"
 import { useCsv, useReport } from "./api"
+import { TransactionsView } from "./TransactionsReport"
 import { BookingSheet } from "./BookingSheet"
 import { EventBookingsView, TableBookingsView } from "./BookingRowsReports"
 
@@ -96,7 +97,8 @@ export function ReportsPage() {
   )
   // a restaurant has no courts or takings to add up: its reports are the table and event booking lists
   const restaurant = useDashboard().branch.type === "restaurant"
-  const tab = params.get("tab") ?? (restaurant ? "tableBookings" : "bookings")
+  const tab =
+    params.get("tab") ?? (restaurant ? "tableBookings" : "transactions")
   const set = (patch: Record<string, string>) =>
     setParams({ ...Object.fromEntries(params), ...patch }, { replace: true })
 
@@ -144,8 +146,10 @@ function CourtReports({
   to: string
 }) {
   const { t } = useTranslation()
+  const [params] = useSearchParams()
+  const view = params.get("view") === "chart" ? "chart" : "table"
   return (
-    <>
+    <ViewContext.Provider value={view}>
       <div className="flex flex-wrap items-center gap-2">
         <div
           role="radiogroup"
@@ -188,15 +192,40 @@ function CourtReports({
           {dayIn(`${from}T12:00:00Z`, "UTC")} –{" "}
           {dayIn(`${to}T12:00:00Z`, "UTC")}
         </span>
+        {(tab === "bookings" || tab === "money") && (
+          <div
+            role="radiogroup"
+            aria-label={t("reports.view")}
+            className="ml-auto flex rounded-lg bg-muted p-1"
+          >
+            {(["table", "chart"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                role="radio"
+                aria-checked={view === v}
+                onClick={() => set({ view: v })}
+                className={`h-9 rounded-md px-3 text-sm font-medium lg:h-7 ${view === v ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+              >
+                {t(`reports.views.${v}`)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <Tabs value={tab} onValueChange={(v) => set({ tab: v })}>
         <TabsList className="h-11 lg:h-9">
-          {["bookings", "money", "courts", "unpaid"].map((k) => (
-            <TabsTrigger key={k} value={k} className="px-3">
-              {t(`reports.tabs.${k}`)}
-            </TabsTrigger>
-          ))}
+          {["transactions", "bookings", "money", "courts", "unpaid"].map(
+            (k) => (
+              <TabsTrigger key={k} value={k} className="px-3">
+                {t(`reports.tabs.${k}`)}
+              </TabsTrigger>
+            ),
+          )}
         </TabsList>
+        <TabsContent value="transactions" className="mt-4">
+          <TransactionsView from={from} to={to} />
+        </TabsContent>
         <TabsContent value="bookings" className="mt-4">
           <BookingsReportView from={from} to={to} />
         </TabsContent>
@@ -210,7 +239,7 @@ function CourtReports({
           <UnpaidView from={from} to={to} />
         </TabsContent>
       </Tabs>
-    </>
+    </ViewContext.Provider>
   )
 }
 
@@ -306,49 +335,53 @@ function BookingsReportView({ from, to }: { from: string; to: string }) {
           <p className="text-sm text-muted-foreground">{t("reports.empty")}</p>
         ) : (
           <>
-            <ChartContainer config={config} className="h-64 w-full">
-              <BarChart
-                data={eachDay(from, to).map((date) => ({
-                  date,
-                  total: r.per_day.find((d) => d.date === date)?.total ?? 0,
-                }))}
-                margin={{ left: -16, right: 8 }}
-                barCategoryGap="20%"
-              >
-                <CartesianGrid vertical={false} strokeOpacity={0.4} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(d: string) => d.slice(8)}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  tickLine={false}
-                  axisLine={false}
-                  width={40}
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(d) => dayIn(`${d}T12:00:00Z`, "UTC")}
-                    />
-                  }
-                />
-                <Bar
-                  dataKey="total"
-                  fill="var(--color-total)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={28}
-                />
-              </BarChart>
-            </ChartContainer>
+            <ChartBox>
+              <ChartContainer config={config} className="h-64 w-full">
+                <BarChart
+                  data={eachDay(from, to).map((date) => ({
+                    date,
+                    total: r.per_day.find((d) => d.date === date)?.total ?? 0,
+                  }))}
+                  margin={{ left: -16, right: 8 }}
+                  barCategoryGap="20%"
+                >
+                  <CartesianGrid vertical={false} strokeOpacity={0.4} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(d: string) => d.slice(8)}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tickLine={false}
+                    axisLine={false}
+                    width={40}
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={(d) => dayIn(`${d}T12:00:00Z`, "UTC")}
+                      />
+                    }
+                  />
+                  <Bar
+                    dataKey="total"
+                    fill="var(--color-total)"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={28}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </ChartBox>
             <TableView
               head={[t("reports.day"), t("reports.bookings")]}
-              rows={r.per_day.map((d) => [
-                dayIn(`${d.date}T12:00:00Z`, "UTC"),
-                String(d.total),
-              ])}
+              rows={r.per_day
+                .filter((d) => d.total > 0)
+                .map((d) => [
+                  dayIn(`${d.date}T12:00:00Z`, "UTC"),
+                  String(d.total),
+                ])}
             />
           </>
         )}
@@ -465,71 +498,75 @@ function FinanceView({ from, to }: { from: string; to: string }) {
             key={x.currency}
             title={t("reports.moneyPerDay", { currency: x.currency })}
           >
-            <ChartContainer config={config} className="h-64 w-full">
-              <BarChart
-                data={days}
-                margin={{ left: 8, right: 8 }}
-                barGap={2}
-                barCategoryGap="20%"
-              >
-                <CartesianGrid vertical={false} strokeOpacity={0.4} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(d: string) => d.slice(8)}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  width={64}
-                  tickFormatter={(v: number) =>
-                    Intl.NumberFormat("en", { notation: "compact" }).format(v)
-                  }
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(d) => dayIn(`${d}T12:00:00Z`, "UTC")}
-                      formatter={(value, name) => (
-                        <span className="flex w-full justify-between gap-3">
-                          <span>
-                            {config[name as keyof typeof config]?.label}
+            <ChartBox>
+              <ChartContainer config={config} className="h-64 w-full">
+                <BarChart
+                  data={days}
+                  margin={{ left: 8, right: 8 }}
+                  barGap={2}
+                  barCategoryGap="20%"
+                >
+                  <CartesianGrid vertical={false} strokeOpacity={0.4} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(d: string) => d.slice(8)}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    width={64}
+                    tickFormatter={(v: number) =>
+                      Intl.NumberFormat("en", { notation: "compact" }).format(v)
+                    }
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={(d) => dayIn(`${d}T12:00:00Z`, "UTC")}
+                        formatter={(value, name) => (
+                          <span className="flex w-full justify-between gap-3">
+                            <span>
+                              {config[name as keyof typeof config]?.label}
+                            </span>
+                            <span className="tabular-nums">
+                              {money(Number(value), x.currency)}
+                            </span>
                           </span>
-                          <span className="tabular-nums">
-                            {money(Number(value), x.currency)}
-                          </span>
-                        </span>
-                      )}
-                    />
-                  }
-                />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar
-                  dataKey="booked_value"
-                  fill="var(--color-booked_value)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={20}
-                />
-                <Bar
-                  dataKey="paid"
-                  fill="var(--color-paid)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={20}
-                />
-              </BarChart>
-            </ChartContainer>
+                        )}
+                      />
+                    }
+                  />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar
+                    dataKey="booked_value"
+                    fill="var(--color-booked_value)"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={20}
+                  />
+                  <Bar
+                    dataKey="paid"
+                    fill="var(--color-paid)"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={20}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </ChartBox>
             <TableView
               head={[
                 t("reports.day"),
                 t("reports.bookedValue"),
                 t("reports.paid"),
               ]}
-              rows={days.map((d) => [
-                dayIn(`${d.date}T12:00:00Z`, "UTC"),
-                money(d.booked_value, x.currency),
-                money(d.paid, x.currency),
-              ])}
+              rows={days
+                .filter((d) => d.booked_value > 0 || d.paid > 0)
+                .map((d) => [
+                  dayIn(`${d.date}T12:00:00Z`, "UTC"),
+                  money(d.booked_value, x.currency),
+                  money(d.paid, x.currency),
+                ])}
             />
           </Panel>
         )
@@ -673,9 +710,51 @@ function UnpaidView({ from, to }: { from: string; to: string }) {
   )
 }
 
-/** The chart's numbers as a table, for screen readers and exact values */
+/** The reports show their numbers as a table (the default) or as charts: the switch above the tabs */
+const ViewContext = createContext<"table" | "chart">("table")
+
+/** A chart: shown only when the charts view is chosen */
+function ChartBox({ children }: { children: ReactNode }) {
+  return useContext(ViewContext) === "chart" ? <>{children}</> : null
+}
+
+/** The numbers as a table: open on the table view; folded under the chart on the chart view */
 function TableView({ head, rows }: { head: string[]; rows: string[][] }) {
   const { t } = useTranslation()
+  const view = useContext(ViewContext)
+  if (view === "table")
+    return (
+      <div className="overflow-x-auto text-sm">
+        <table className="w-full">
+          <thead className="border-b text-left whitespace-nowrap text-muted-foreground">
+            <tr>
+              {head.map((h, i) => (
+                <th
+                  key={h}
+                  className={`py-2 pr-4 font-medium ${i > 0 ? "text-right" : ""}`}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {rows.map((r, i) => (
+              <tr key={i}>
+                {r.map((c, j) => (
+                  <td
+                    key={j}
+                    className={`py-2 pr-4 tabular-nums ${j > 0 ? "text-right" : ""}`}
+                  >
+                    {c}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
   return (
     <details className="mt-3 text-sm">
       <summary className="min-h-9 cursor-pointer text-muted-foreground">

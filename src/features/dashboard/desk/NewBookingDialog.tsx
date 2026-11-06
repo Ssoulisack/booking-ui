@@ -19,6 +19,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import type { Booking, StaffBookingInput } from "@/lib/api/types"
 import { money, timeIn } from "@/lib/format"
+import { leftLabel, ymdLabel } from "@/lib/packages"
 import { displayPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
@@ -29,6 +30,7 @@ import {
   useSettings,
   useSportsList,
 } from "../api"
+import { useSoldPackages } from "../packages/api"
 import { FormDialog } from "../ui"
 import { lengthsOf } from "@/components/booking/lengths"
 import { TimePicker } from "@/components/booking/TimePicker"
@@ -88,6 +90,7 @@ export function NewBookingDialog({
   const [classId, setClassId] = useState<number>()
   const [seats, setSeats] = useState("1")
   const [notes, setNotes] = useState("")
+  const [packageId, setPackageId] = useState<number | null>(null)
   const [missing, setMissing] = useState(false)
 
   const sid = sportId ?? sports[0]?.id // the sports list may arrive after the dialog opened
@@ -128,6 +131,37 @@ export function NewBookingDialog({
     (s) => s.starts_at === picked && s.durations_min.includes(len),
   )
 
+  // a customer with an account may pay with a package of theirs that fits: a group class (one seat) of its sport,
+  // or the space itself with no coach
+  const theirs = useSoldPackages(
+    { customerId: account?.user_id, status: "active" },
+    who === "account" && !!account,
+  )
+  const pickedClass =
+    what === "class" ? dayClasses.find((c) => c.id === classId) : undefined
+  const usable = (
+    who === "account" && account ? (theirs.data ?? []) : []
+  ).filter((p) => {
+    if (p.kind === "times" && p.times_left < 1) return false
+    const last = p.kind === "months" ? p.ends_on : p.expires_on
+    if (last && date > last) return false
+    if (what === "class")
+      return (
+        p.covers === "group_class" &&
+        !!pickedClass &&
+        p.sport_id === pickedClass.sport_id &&
+        (Number(seats) || 1) === 1
+      )
+    return (
+      what === "court" &&
+      p.covers === "space" &&
+      !!court &&
+      p.resource_id === court.id &&
+      !coach
+    )
+  })
+  const usePkg = usable.find((p) => p.id === packageId) ?? null
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     const whoOk = who === "walkin" ? name.trim() && phone.trim() : account
@@ -149,6 +183,7 @@ export function NewBookingDialog({
     if (who === "walkin")
       body.guest = { name: name.trim(), phone: phone.trim() }
     else body.customer = account!.member_no
+    if (usePkg) body.package_id = usePkg.id
     if (notes.trim()) body.notes = notes.trim()
     create.mutate(body, {
       onSuccess: (b) => {
@@ -442,6 +477,47 @@ export function NewBookingDialog({
           </div>
         )}
 
+        {usable.length > 0 && (
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">
+              {t("packages.checkout.title")}
+            </legend>
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
+              <input
+                type="radio"
+                name="nb-package"
+                checked={!usePkg}
+                onChange={() => setPackageId(null)}
+                className="accent-primary"
+              />
+              <span className="text-sm">
+                {t("packages.checkout.payNormal")}
+              </span>
+            </label>
+            {usable.map((p) => (
+              <label
+                key={p.id}
+                className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary"
+              >
+                <input
+                  type="radio"
+                  name="nb-package"
+                  checked={usePkg?.id === p.id}
+                  onChange={() => setPackageId(p.id)}
+                  className="mt-1 accent-primary"
+                />
+                <span className="text-sm">
+                  <span className="block font-medium">
+                    {t("packages.checkout.useTheirs", { name: p.name })}
+                  </span>
+                  <span className="block text-muted-foreground">
+                    {leftLabel(t, p, ymdLabel)}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+        )}
         <Field id="nb-notes" label={t("public.notes")}>
           <Textarea
             id="nb-notes"

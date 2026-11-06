@@ -20,6 +20,7 @@ import type {
   StaffPayment,
   StaffBookingInput,
   UnpaidRow,
+  Transactions,
   Utilisation,
   EventReport,
   TableReport,
@@ -130,13 +131,15 @@ export function useDeskAvailability(
   })
 }
 
-export type ReportKind = "bookings" | "utilisation" | "finance" | "unpaid"
+export type ReportKind =
+  "bookings" | "utilisation" | "finance" | "unpaid" | "transactions"
 
 type ReportOf = {
   bookings: BookingsReport
   utilisation: Utilisation
   finance: Finance
   unpaid: UnpaidRow[]
+  transactions: Transactions
 }
 
 export function useReport<K extends ReportKind>(

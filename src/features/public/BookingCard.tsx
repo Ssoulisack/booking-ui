@@ -170,6 +170,19 @@ export function BookingCard({
                 · {t(`booking.payment.${booking.payment_status}`)}
               </span>
             </dd>
+            {booking.package && (
+              <>
+                <dt className="text-muted-foreground">
+                  {t("booking.package")}
+                </dt>
+                <dd className="font-medium">
+                  {booking.package}{" "}
+                  <span className="font-mono text-xs font-normal text-muted-foreground">
+                    {booking.package_code}
+                  </span>
+                </dd>
+              </>
+            )}
           </>
         )}
         <dt className="text-muted-foreground">{t("booking.code")}</dt>

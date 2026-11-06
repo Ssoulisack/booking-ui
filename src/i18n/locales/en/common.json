@@ -108,7 +108,9 @@
     "branchSettings": "Branch settings",
     "home": "Home",
     "share": "Share page",
-    "telegram": "Telegram"
+    "telegram": "Telegram",
+    "packages": "Packages",
+    "myPackages": "My packages"
   },
   "look": {
     "mode": {
@@ -225,7 +227,8 @@
     "holdToCancel": "Hold to cancel",
     "cancelling": "Cancelling…",
     "holdHint": "Press and hold for {{seconds}} seconds to cancel the booking",
-    "tooLateToCancelNoPhone": "It is too late to cancel online. Please contact the branch."
+    "tooLateToCancelNoPhone": "It is too late to cancel online. Please contact the branch.",
+    "package": "Package"
   },
   "public": {
     "notFoundTitle": "This page is not available",
@@ -582,7 +585,9 @@
       "sport": "Sport: {{name}}",
       "coach": "Coach: {{name}}",
       "cover": "Cover: {{name}}",
-      "logo": "Logo: {{name}}"
+      "logo": "Logo: {{name}}",
+      "pay_qr": "Payment QR",
+      "event": "Event: {{name}}"
     }
   },
   "dash": {
@@ -610,7 +615,8 @@
       "floor-plan": "Floor plan",
       "hours": "Opening hours",
       "table-settings": "Table bookings",
-      "events": "Events"
+      "events": "Events",
+      "packages": "Packages"
     },
     "name": "Name",
     "descriptionOptional": "Description (optional)",
@@ -1074,7 +1080,9 @@
       "cash": "Cash",
       "transfer": "Bank transfer",
       "qr": "QR",
-      "other": "Other"
+      "other": "Other",
+      "package": "Package",
+      "online": "Online"
     },
     "confirm": "Confirm",
     "complete": "Completed",
@@ -1175,7 +1183,12 @@
     "seatsForGuests_other": "{{seats}} seats for {{count}} people",
     "tableFree": "Free",
     "tableTaken": "Taken now",
-    "tableNext": "Booked {{time}}"
+    "tableNext": "Booked {{time}}",
+    "packageUndo": "Nothing to take at the desk. To undo it, cancel the booking: the visit goes back to the package.",
+    "tabs": {
+      "bookings": "Bookings",
+      "approval": "Waiting for approval"
+    }
   },
   "reports": {
     "lead": "Bookings and money for a period. Times use the branch time zone.",
@@ -1191,7 +1204,8 @@
       "courts": "Space use",
       "unpaid": "Unpaid",
       "tableBookings": "Table bookings",
-      "eventBookings": "Event bookings"
+      "eventBookings": "Event bookings",
+      "transactions": "Transactions"
     },
     "bookings": "Bookings",
     "bookedValue": "Booked value",
@@ -1279,6 +1293,37 @@
       "refresh": "Refresh",
       "updatedAt": "Updated {{time}}.",
       "autoRefresh": "Refreshes every minute."
+    },
+    "views": {
+      "table": "Table",
+      "chart": "Chart"
+    },
+    "view": "View",
+    "tx": {
+      "lead": "Every payment received in the period, newest first: money for bookings, money for packages, and the package visits used (no money). Counted by the day the money came in.",
+      "received": "Money received",
+      "count_one": "{{count}} payment",
+      "count_other": "{{count}} payments",
+      "visitsHint": "Bookings paid with a package (no money)",
+      "kinds": {
+        "booking": "Bookings",
+        "package": "Package sales",
+        "visit": "Package visits"
+      },
+      "search": "Search name, phone, code",
+      "type": "Type",
+      "allTypes": "All types",
+      "method": "Paid with",
+      "allMethods": "All ways",
+      "when": "Paid",
+      "what": "For",
+      "paidBy": "Taken by",
+      "amount": "Amount",
+      "cancelled": "Cancelled later",
+      "empty": "No payments in this period.",
+      "total": "Total of {{count}} lines",
+      "more_one": "Show {{count}} more",
+      "more_other": "Show {{count}} more"
     }
   },
   "cashup": {
@@ -1893,7 +1938,7 @@
     "notForSale": "not for sale",
     "pay": {
       "title": "How customers pay",
-      "lead": "Shown after a customer buys tables: they pay by QR or transfer, then send the slip on WhatsApp.",
+      "lead": "Shown after a customer buys tables or a package: they pay by QR or transfer, then send the slip.",
       "whatsapp": "WhatsApp number",
       "whatsappHint": "Customers tap a button that opens WhatsApp to this number.",
       "qr": "Payment QR (optional)",
@@ -1904,7 +1949,7 @@
       "onlineHint": "Customers pay in their bank app and the booking confirms itself. No staff step.",
       "noGateway": "Not available yet: the server has no payment gateway set up (PhaJay keys).",
       "transfer": "Branch QR or transfer",
-      "transferHint": "Customers pay your own QR or bank account and send you the slip on WhatsApp. You confirm it.",
+      "transferHint": "Customers pay your own QR or bank account and send you the slip. You confirm it.",
       "noWay": "Both are off: customers cannot pay on the website. They have to contact the branch, and you confirm each booking by hand.",
       "accountName": "Account name",
       "accountNamePlaceholder": "Event Club Co., Ltd",
@@ -1914,7 +1959,16 @@
       "windowN_one": "{{count}} minute",
       "windowN_other": "{{count}} minutes",
       "windowHint_one": "The QR stays open for {{count}} minute and the tables are held that long (plus a few minutes). Then the customer picks a bank again.",
-      "windowHint_other": "The QR stays open for {{count}} minutes and the tables are held that long (plus a few minutes). Then the customer picks a bank again."
+      "windowHint_other": "The QR stays open for {{count}} minutes and the tables are held that long (plus a few minutes). Then the customer picks a bank again.",
+      "slipTitle": "Payment slip",
+      "slipLead": "After paying by transfer, the customer sends the payment slip. Choose how they can send it.",
+      "slipTelegram": "Upload the slip on the website",
+      "slipTelegramHint": "The customer picks a photo of the slip and it goes straight to your team's Telegram group. The customer never sees the group.",
+      "slipTelegramNotReady": "Telegram is not connected yet.",
+      "slipTelegramConnect": "Connect Telegram",
+      "slipWhatsapp": "Send the slip on WhatsApp",
+      "slipWhatsappHint": "A button opens WhatsApp to the number above, with the booking code and amount filled in.",
+      "slipNone": "No way to send a slip is on. Customers will have to tell your team another way."
     },
     "startTime": "Starts at",
     "endTime": "Ends at",
@@ -1982,7 +2036,8 @@
     },
     "saveQr": "Save QR image",
     "saveQrHint": "Paying on this phone? Save the QR, open your bank app and choose “scan from gallery”.",
-    "payingWith": "You are paying with"
+    "payingWith": "You are paying with",
+    "leadPackage": "Pay {{total}} in your bank app. Your package starts once the payment arrives."
   },
   "payStatus": {
     "title": "Online payments",
@@ -2053,5 +2108,207 @@
     "groupsFound": "Groups the bot saw (latest first). Pick the one for this branch:",
     "useGroup": "Use this group",
     "inUse": "in use"
+  },
+  "slip": {
+    "choose": "Send payment slip",
+    "chooseAnother": "Choose another photo",
+    "sendAnother": "Send your slip photo",
+    "send": "Send slip",
+    "uploadTitle": "Send your payment slip",
+    "uploadHint": "Take or choose a photo of your transfer slip.",
+    "preview": "Your slip",
+    "or": "or",
+    "whatsapp": "Send slip on WhatsApp",
+    "whatsappAgain": "Open WhatsApp again",
+    "mark": "I sent the slip",
+    "sent": "Thank you. The team will check your payment.",
+    "sentPicture": "Slip sent. The team will check it and confirm your payment.",
+    "sentToast": "Slip sent"
+  },
+  "packages": {
+    "title": "Packages",
+    "lead": "Passes you sell next to single bookings: a number of visits, or unlimited for some months. A customer books with a pass and pays nothing more.",
+    "new": "New package",
+    "empty": "No packages yet. Add one, for example Group class: 10 times for 900,000.",
+    "hidden": "Hidden",
+    "validDays_one": "Use within {{count}} day",
+    "validDays_other": "Use within {{count}} days",
+    "edit": "Edit package",
+    "saved": "Package saved",
+    "name": "Name",
+    "namePlaceholder": "Group class",
+    "sport": "Sport",
+    "covers": "What it covers",
+    "coversOptions": {
+      "group_class": "Group classes",
+      "space": "One space"
+    },
+    "coversHints": {
+      "group_class": "Pays a seat in the group classes of this sport.",
+      "space": "Pays a booking of one space, for example a private class. A coach is not included."
+    },
+    "noSpaces": "This sport has no space yet. Add one in Spaces first.",
+    "space": "Space",
+    "description": "Description (optional)",
+    "options": "Ways to buy",
+    "optionsHint": "Each option has its own price: for example 10 times 900,000, 20 times 1,850,000, 1 month 700,000.",
+    "kind": "Type",
+    "kinds": {
+      "times": "Visits",
+      "months": "Months"
+    },
+    "howManyTimes": "How many visits",
+    "howManyMonths": "How many months",
+    "price": "Price",
+    "validFor": "Use within (days)",
+    "noExpiry": "No expiry",
+    "optionOnSale": "On sale",
+    "removeOption": "Remove",
+    "addOption": "Add an option",
+    "onSale": "On sale",
+    "onSaleHint": "Off hides the whole package from customers.",
+    "deleteTitle": "Delete this package?",
+    "deleteHint": "Customers who already bought it keep what they bought.",
+    "option": {
+      "times_one": "{{count}} time",
+      "times_other": "{{count}} times",
+      "months_one": "{{count}} month",
+      "months_other": "{{count}} months"
+    },
+    "coversSpace": "{{space}} (private)",
+    "coversClass": "Group class",
+    "untilDay": "Until {{day}}",
+    "timesLeft": "{{left}} of {{total}} left",
+    "useBy": "use by {{day}}",
+    "paidWith": "Paid by {{method}}",
+    "unpaid": "Waiting for payment",
+    "soldAtDesk": "sold at the desk",
+    "slipTelegram": "Slip sent: check your team's Telegram group (look for the code), then mark it paid.",
+    "slipWhatsapp": "The customer says they sent the slip on WhatsApp: check it, then mark it paid.",
+    "markPaid": "Mark paid",
+    "adjust": "Adjust",
+    "log": "History",
+    "cancel": "Cancel",
+    "cancelTitle": "Cancel {{code}}?",
+    "cancelHint": "The customer can no longer pay for it.",
+    "cancelPaidHint": "The package stops working. Giving money back is for you to settle outside the app.",
+    "soldTitle": "Customer packages",
+    "soldLead": "What customers bought. Sell one at the desk, mark a transfer as paid, add or remove visits.",
+    "sell": "Sell a package",
+    "search": "Search by name, phone or code",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "status": {
+      "pending_payment": "Waiting for payment",
+      "active": "Active",
+      "used_up": "Used up",
+      "expired": "Expired",
+      "cancelled": "Cancelled"
+    },
+    "noneSold": "Nothing here yet.",
+    "howPaid": "How was it paid?",
+    "markPaidTitle": "{{code}} paid",
+    "markPaidLead": "{{price}} received. The package starts today.",
+    "paidDone": "Marked paid. The package is ready to use.",
+    "sellLead": "Sell a package to a customer who has an account.",
+    "sellSubmit": "Sell",
+    "nothingToSell": "There is no package on sale yet.",
+    "package": "Package",
+    "pick": "Choose",
+    "paidNow": "The customer paid now",
+    "notPaidHint": "It waits for payment: mark it paid later.",
+    "notes": "Note (optional)",
+    "sold": "Package sold",
+    "adjustTitle": "Adjust {{code}}",
+    "adjustLead": "Add or remove visits, or give more days. A reason is required and kept in the history.",
+    "adjustSubmit": "Save",
+    "adjusted": "Package adjusted",
+    "adjustVisits": "Visits to add or remove",
+    "adjustVisitsHint": "{{left}} left now, {{after}} after saving. Tap - to remove, + to add.",
+    "adjustDays": "Days to add",
+    "adjustDaysHint": "Now valid until {{day}}.",
+    "adjustNote": "Reason",
+    "adjustNothing": "Add or remove visits or days.",
+    "logTitle": "{{code}} history",
+    "close": "Close",
+    "logEmpty": "Nothing yet.",
+    "logUsed": "One visit used",
+    "logAdded_one": "{{count}} visit added or given back",
+    "logAdded_other": "{{count}} visits added or given back",
+    "logNoChange": "Month pass visit or extension",
+    "logBooking": "Booking #{{id}}",
+    "public": {
+      "title": "Packages",
+      "lead": "Buy a pass and book without paying each time.",
+      "unlimited": "Unlimited visits",
+      "noExpiry": "No expiry date",
+      "buy": "Buy",
+      "loginToBuy": "Log in to buy",
+      "confirmTitle": "Buy this package?",
+      "confirmLead": "You pay on the next step.",
+      "continue": "Continue"
+    },
+    "my": {
+      "title": "My packages",
+      "none": "You have no packages yet.",
+      "past": "Finished",
+      "pay": "Pay now",
+      "view": "View",
+      "bookNow": "Book now",
+      "slipChecking": "Slip sent. The team is checking it.",
+      "pageTitle": "Your package",
+      "notFound": "This package was not found.",
+      "backToPackages": "Packages",
+      "payTitle": "Pay for your package",
+      "payLead": "It starts as soon as it is paid.",
+      "methodHints": {
+        "online": "Scan a bank QR in your bank app. Your package starts by itself.",
+        "manual": "Transfer to the branch, then send the slip."
+      },
+      "noWay": "Online payment is off. Please pay at the place and tell the team your code.",
+      "cancelledNote": "This package was cancelled.",
+      "paidNote": "Paid. Your package is ready: choose it when you book.",
+      "slipMessage": "Package {{code}} {{name}}, {{total}}. Here is my payment slip.",
+      "tellDesk": "Pay at the place and tell the team your code {{code}}."
+    },
+    "checkout": {
+      "title": "How do you pay?",
+      "payPrice": "Pay {{price}}",
+      "payNormal": "Pay the normal price",
+      "useMine": "Use my package: {{name}}",
+      "usesOne": "uses 1 visit",
+      "useTheirs": "Use their package: {{name}}"
+    },
+    "colCode": "Code",
+    "colCustomer": "Customer",
+    "colPackage": "Package",
+    "colLeft": "Left",
+    "colPayment": "Payment",
+    "colActions": "Actions",
+    "yes": "Yes",
+    "no": "No",
+    "colOption": "Option",
+    "colValid": "Use within",
+    "daysN_one": "{{count}} day",
+    "daysN_other": "{{count}} days",
+    "minusOne": "Minus one",
+    "plusOne": "Plus one",
+    "quick": {
+      "week": "1 week",
+      "month": "1 month",
+      "months3": "3 months",
+      "months6": "6 months",
+      "year": "1 year"
+    },
+    "find": {
+      "title": "Find a package",
+      "lead": "A customer says their code, phone number or name: type it here and open their package.",
+      "placeholder": "Code (P-0012), phone, name or package",
+      "search": "Search",
+      "results": "Packages for “{{q}}”",
+      "resultsLead": "Mark paid, adjust or read the history right here.",
+      "none": "No package found. Check the code or the phone number.",
+      "tooShort": "Type at least 2 letters."
+    }
   }
 }

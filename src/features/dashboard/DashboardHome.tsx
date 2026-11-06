@@ -32,6 +32,7 @@ import {
   useSettings,
   useSportsList,
 } from "./api"
+import { PackageFinder } from "./packages/PackageFinder"
 import { useDashboard } from "./context"
 import { GoLiveGuide, type GuideStep } from "./GoLiveGuide"
 import { TonightPlan } from "./TonightPlan"
@@ -56,6 +57,7 @@ export function DashboardHome() {
           branch: branch.name,
         })}
       />
+      {branch.type === "sport" && <PackageFinder />}
       {canSetUp ? (
         <PagePanel />
       ) : (

@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import { ArrowLeftIcon, MapPinIcon } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -26,7 +27,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { ApiError } from "@/lib/api/client"
 import { floorName, zoneHolds } from "@/lib/floor-plan"
 import type { CreateBookingInput } from "@/lib/api/types"
-import { dayIn, duration, money, timeIn } from "@/lib/format"
+import { dayIn, duration, money, timeIn, todayIn } from "@/lib/format"
+import { leftLabel, ymdLabel } from "@/lib/packages"
 import { useSession } from "@/stores/session"
 
 import {
@@ -36,6 +38,7 @@ import {
   useCoaches,
   useCreateBooking,
   useFloorPlans,
+  useMyPackages,
   useResources,
   useTableAvailability,
 } from "./api"
@@ -102,6 +105,9 @@ export function CheckoutPage() {
   const mode = business.booking_mode
   const asCustomer = !!user && mode !== "guest"
   const needsLogin = !user && mode === "account"
+  // a package (course pass) of the customer's may pay a class or a space (a table is free: no pass needed)
+  const myPackages = useMyPackages(asCustomer && !isTable)
+  const [packageId, setPackageId] = useState<number | null>(null)
   const here = encodeURIComponent(pathname + search)
 
   const form = useForm<GuestValues>({
@@ -181,6 +187,25 @@ export function CheckoutPage() {
             : undefined
         })()
 
+  // the customer's packages that fit this booking: this branch, active, a visit left, not out of time on the day,
+  // covering this class (one seat) or this space (no coach)
+  const bookingDay = isClass
+    ? cls && todayIn(tz, new Date(cls.starts_at))
+    : sel.date
+  const usable = (myPackages.data ?? []).filter((p) => {
+    if (p.branch_slug !== slug || p.status !== "active" || !bookingDay)
+      return false
+    if (p.kind === "times" && p.times_left < 1) return false
+    const last = p.kind === "months" ? p.ends_on : p.expires_on
+    if (last && bookingDay > last) return false
+    return isClass
+      ? p.covers === "group_class" &&
+          p.sport_id === cls?.sport_id &&
+          seats === 1
+      : p.covers === "space" && p.resource_id === sel.court && !sel.coach
+  })
+  const usePackage = usable.find((p) => p.id === packageId) ?? null
+
   const submit = (guest?: GuestValues) => {
     const body: CreateBookingInput = isTable
       ? { table_ids: tableIds, guests: sel.guests, starts_at: sel.start }
@@ -193,6 +218,7 @@ export function CheckoutPage() {
             starts_at: sel.start,
             duration_min: sel.length,
           }
+    if (usePackage) body.package_id = usePackage.id
     if (guest) {
       body.guest = {
         name: guest.name,
@@ -300,7 +326,13 @@ export function CheckoutPage() {
               )}
             </div>
             {price && (
-              <p className="shrink-0 display-tight text-2xl tabular-nums">
+              <p
+                className={
+                  usePackage
+                    ? "shrink-0 display-tight text-2xl text-muted-foreground tabular-nums line-through"
+                    : "shrink-0 display-tight text-2xl tabular-nums"
+                }
+              >
                 {money(price.amount, price.currency)}
               </p>
             )}
@@ -347,6 +379,53 @@ export function CheckoutPage() {
           <p className="text-sm text-muted-foreground">
             {t("public.bookingAs", { name: user!.name, email: user!.email })}
           </p>
+          {usable.length > 0 && (
+            <fieldset className="space-y-2 rounded-xl bg-card p-4">
+              <legend className="px-1 text-sm font-medium">
+                {t("packages.checkout.title")}
+              </legend>
+              <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
+                <input
+                  type="radio"
+                  name="use-package"
+                  checked={!usePackage}
+                  onChange={() => setPackageId(null)}
+                  className="accent-primary"
+                />
+                <span className="text-sm font-medium">
+                  {price
+                    ? t("packages.checkout.payPrice", {
+                        price: money(price.amount, price.currency),
+                      })
+                    : t("packages.checkout.payNormal")}
+                </span>
+              </label>
+              {usable.map((p) => (
+                <label
+                  key={p.id}
+                  className="flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary"
+                >
+                  <input
+                    type="radio"
+                    name="use-package"
+                    checked={usePackage?.id === p.id}
+                    onChange={() => setPackageId(p.id)}
+                    className="mt-1 accent-primary"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">
+                      {t("packages.checkout.useMine", { name: p.name })}
+                    </span>
+                    <span className="block text-sm text-muted-foreground">
+                      {leftLabel(t, p, ymdLabel)}
+                      {p.kind === "times" &&
+                        ` · ${t("packages.checkout.usesOne")}`}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+          )}
           <Policy text={business.booking_policy} />
           {confirmButton(() => submit())}
         </form>
