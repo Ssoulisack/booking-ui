@@ -461,6 +461,8 @@ export interface ManagedResource extends Partial<TableFields> {
   name: string
   kind: ResourceKind
   active: boolean
+  /** restaurant tables: kept for walk-ins (customers see it as taken, events do not sell it) */
+  walk_in_only?: boolean
 }
 
 export type TableShape = "round" | "square" | "long"

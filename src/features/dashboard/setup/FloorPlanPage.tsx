@@ -3,6 +3,7 @@ import {
   AlertTriangleIcon,
   BoxSelectIcon,
   CopyIcon,
+  FootprintsIcon,
   KeyboardIcon,
   LayersIcon,
   MinusIcon,
@@ -742,6 +743,7 @@ function Editor({
             seats: x.seats,
             extra_chairs: x.extra_chairs,
             active: x.active,
+            walk_in_only: !!x.walk_in_only,
             shape: x.shape,
             plan_x: x.plan_x,
             plan_y: x.plan_y,
@@ -758,7 +760,8 @@ function Editor({
           (was.name !== x.name ||
             was.seats !== x.seats ||
             was.extra_chairs !== x.extra_chairs ||
-            was.active !== x.active)
+            was.active !== x.active ||
+            !!was.walk_in_only !== !!x.walk_in_only)
         ) {
           await manage.saveResource(base, { ...x, kind: "table" })
         }
@@ -1730,6 +1733,9 @@ function Canvas({
                 : "border-foreground/25",
               bad("table", table.id) && "border-destructive bg-destructive/10",
               !table.active && "border-dashed opacity-60",
+              table.walk_in_only &&
+                !picked &&
+                "border-amber-500 bg-amber-50 dark:bg-amber-950/40",
               table.id < 0 && !picked && "border-dashed border-primary/60",
             )}
             style={place({ type: "table", ...table })}
@@ -1737,6 +1743,12 @@ function Canvas({
             <span className="max-w-full truncate px-1 text-xs font-semibold sm:text-sm">
               {table.name}
             </span>
+            {table.walk_in_only && (
+              <FootprintsIcon
+                aria-label={t("restaurant.table.walkInShort")}
+                className="absolute top-0.5 right-0.5 size-3 text-amber-700 dark:text-amber-300"
+              />
+            )}
             {f.h * cell > 34 && (
               <span className="text-[11px] text-muted-foreground sm:text-xs">
                 {table.seats}
@@ -2038,6 +2050,9 @@ export function TableList({
                                 })
                               : "",
                             x.active ? "" : t("restaurant.table.off"),
+                            x.walk_in_only
+                              ? t("restaurant.table.walkInShort")
+                              : "",
                           ]
                             .filter(Boolean)
                             .join(" · ")}
@@ -2209,6 +2224,13 @@ function TablePanel({
           hint={t("restaurant.table.activeHint")}
           checked={table.active}
           onChange={(active) => onChange({ active })}
+        />
+        <ActiveSwitch
+          id="t-walkin"
+          label={t("restaurant.table.walkInOnly")}
+          hint={t("restaurant.table.walkInOnlyHint")}
+          checked={!!table.walk_in_only}
+          onChange={(walk_in_only) => onChange({ walk_in_only })}
         />
         <p className="text-sm text-muted-foreground">
           {t("restaurant.table.moveHint")}
