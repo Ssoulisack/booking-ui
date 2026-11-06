@@ -239,6 +239,7 @@
   "INVALID_EVENT_TIME": "The event time is not valid. Use hours and minutes, and the end must differ from the start.",
   "EVENT_START_TIME_REQUIRED": "Add a start time before an end time.",
   "INVALID_EVENT_AREA": "One of the chosen areas does not exist.",
+  "EVENT_HAS_TABLE_BOOKINGS": "This event cannot take over its day yet: tables in its areas are already booked in the normal way ({{codes}}). Cancel or move those bookings first, then publish the event.",
   "INVALID_LINEUP_TIME": "A lineup line has a time that is not valid.",
   "INVALID_LINEUP_TITLE": "Every lineup line needs a name (up to 120 characters).",
   "INVALID_LINEUP_DAY": "A lineup line is for a day the event does not run.",

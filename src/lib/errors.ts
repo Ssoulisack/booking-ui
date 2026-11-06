@@ -13,6 +13,12 @@ const PREFIXED: Array<{
     key: "SLOT_NOT_AVAILABLE_ON",
     params: (rest) => ({ date: rest }),
   },
+  {
+    // an event cannot take over tables that normal bookings already hold: the codes of those bookings follow
+    prefix: "EVENT_HAS_TABLE_BOOKINGS_",
+    key: "EVENT_HAS_TABLE_BOOKINGS",
+    params: (rest) => ({ codes: rest.split(",").join(", ") }),
+  },
 ]
 
 /** The backend code behind any thrown value */
