@@ -225,6 +225,8 @@
   "NOT_A_TABLE_BOOKING": "This is not a table booking.",
   "TABLE_BOOKED_LATER": "This table is booked later today. Choose another table, or allow walk-ins before a booking in Table settings.",
   "VENUE_CLOSED": "The place is closed now, so walk-ins cannot be seated. Walk-ins are seated only during the opening hours (Setup › Opening hours).",
+  "EVENT_PAYMENT_REQUIRED": "An event table is confirmed only when it is paid. Mark it paid (or wait for the online payment) and it confirms itself.",
+  "EVENT_PAID_CANNOT_UNDO": "A paid event booking cannot go back to unpaid. If it was a mistake, cancel it; the customer can book again.",
   "TOO_MANY_GUESTS_FOR_TABLES": "That is more people than these tables seat. Choose more tables or fewer people.",
   "PAYMENT_LIMIT_REACHED": "Online payment has reached its limit for today. Please pay with the branch's QR or transfer, or try again tomorrow.",
   "ONLINE_PAYMENT_OFF": "Online payment is switched off at this branch. Please use the branch's QR or transfer.",

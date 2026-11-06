@@ -335,10 +335,13 @@ function Details({ booking: b }: { booking: Booking }) {
                     : "",
                 })}
               </p>
-              {b.payment_method === "online" ? (
+              {b.payment_method === "online" ||
+              (isEvent && b.status === "confirmed") ? (
                 // the bank's money: only a refund of the online payment undoes it
                 <p className="text-xs text-muted-foreground">
-                  {t("desk.paidOnlineHint")}
+                  {b.payment_method === "online"
+                    ? t("desk.paidOnlineHint")
+                    : t("desk.paidEventHint")}
                 </p>
               ) : (
                 <Button

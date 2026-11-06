@@ -1097,6 +1097,7 @@
     "confirmUnpaidYes": "Yes, mark unpaid",
     "markUnpaid": "Mark unpaid (mistake)",
     "paidOnlineHint": "Paid online. To give the money back, use Refund in the online payments below.",
+    "paidEventHint": "A paid event booking stays paid. If it was a mistake, cancel it.",
     "paidDone": "Marked paid.",
     "methods": {
       "cash": "Cash",
