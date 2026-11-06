@@ -234,6 +234,17 @@ function Details({ booking: b }: { booking: Booking }) {
             </a>
           )}
         </dd>
+        <dt className="text-muted-foreground">{t("desk.createdAt")}</dt>
+        <dd>
+          <p className="font-medium">
+            {dayIn(b.created_at, tz)} {timeIn(b.created_at, tz)}
+          </p>
+          {b.created_by && (
+            <p className="text-muted-foreground">
+              {t(`desk.createdBy.${b.created_by}`)}
+            </p>
+          )}
+        </dd>
         {!isTable &&
           b.items.map((i, n) => (
             <div key={n} className="contents">

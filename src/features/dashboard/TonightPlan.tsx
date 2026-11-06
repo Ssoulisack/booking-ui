@@ -31,7 +31,7 @@ import type {
   PublicArea,
   PublicTable,
 } from "@/lib/api/types"
-import { timeIn, todayIn } from "@/lib/format"
+import { dayIn, timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 import {
@@ -106,7 +106,14 @@ export function TonightPlan() {
     const who = b.customer_name ?? b.guest_name ?? ""
     const note = shortName(who) || time
     const detail = (state: string) =>
-      [state, time, who].filter(Boolean).join(" · ")
+      [
+        state,
+        time,
+        who,
+        `${t("desk.createdAt")} ${dayIn(b.created_at, tz)} ${timeIn(b.created_at, tz)}`,
+      ]
+        .filter(Boolean)
+        .join(" · ")
     if (b.event_id) {
       if (b.status === "confirmed" && paid)
         return {
@@ -517,6 +524,11 @@ function FreeDialog({
             })}
             {who && who !== "Walk-in" && ` · ${who}`}
           </DialogDescription>
+          <p className="text-sm text-muted-foreground">
+            {t("desk.createdAt")}: {dayIn(b.created_at, tz)}{" "}
+            {timeIn(b.created_at, tz)}
+            {b.created_by && ` · ${t(`desk.createdBy.${b.created_by}`)}`}
+          </p>
         </DialogHeader>
         <ErrorAlert error={status.error} />
         <div className="grid gap-2">

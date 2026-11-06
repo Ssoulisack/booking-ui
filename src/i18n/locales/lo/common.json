@@ -1056,6 +1056,8 @@
     },
     "paidWith": "ຊຳລະດ້ວຍ {{method}} · {{when}}",
     "markPaidWith": "ໝາຍວ່າຊຳລະແລ້ວ:",
+    "createdAt": "ຈອງເມື່ອ",
+    "createdBy": {"customer": "ໂດຍລູກຄ້າ ທາງອອນລາຍ", "guest": "ໂດຍແຂກ ທາງອອນລາຍ", "staff": "ໂດຍທີມງານ"},
     "confirmPaidTitle": "ຢືນຢັນວ່າຊຳລະແລ້ວ?",
     "confirmPaid": "ການຈອງ {{code}}: ໄດ້ຮັບ {{amount}} ທາງ {{method}}. ກວດໃຫ້ແນ່ໃຈວ່າໄດ້ຮັບເງິນແທ້ ແລະ ຈະບັນທຶກໄວ້ໃນຊື່ຂອງທ່ານ.",
     "confirmPaidYes": "ແມ່ນ, ຊຳລະແລ້ວ",
