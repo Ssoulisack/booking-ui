@@ -32,9 +32,14 @@ import { dashMode, useHtmlMode } from "@/lib/color-mode"
 import { Breadcrumbs } from "./Breadcrumbs"
 import type { Crumb } from "./crumbs"
 import { UserMenu } from "./UserMenu"
+import { CustomerHeader } from "@/features/public/CustomerHeader"
 import { LanguageToggle } from "@/components/LanguageToggle"
 
 export interface NavItem {
+  /** the same id as the matching item of the customer menu on other pages (see MobileNav) */
+  id?: string
+  /** a customer menu item whose page is open (the customer header highlights it) */
+  here?: boolean
   to: string
   label: string
   icon: LucideIcon
@@ -111,89 +116,113 @@ export function AppShell({
     <MotionConfig reducedMotion="user">
       <UnsavedGuard />
       <Frame customer={customer}>
-        <header
-          className={cn(
-            "sticky top-0 z-30 flex h-14 items-center gap-2 bg-background px-3 sm:px-4",
-            customer ? "pub-rainbow" : "border-b",
-          )}
-        >
-          {area && (
-            <span
-              aria-hidden
-              className={cn(
-                "absolute inset-x-0 top-0 h-[3px] transition-colors duration-500",
-                area === "company"
-                  ? "bg-[var(--area-company)]"
-                  : "bg-[var(--area-branch)]",
-              )}
-            />
-          )}
-          {nav.length > 0 && !gooey && (
-            <Sheet open={open} onOpenChange={setOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-lg"
-                  className="relative lg:hidden"
-                  aria-label={t("nav.menu")}
+        {customer && gooey ? (
+          // the one customer header: the same bar as the branch page
+          <CustomerHeader
+            left={
+              context ?? (
+                <Link
+                  to="/"
+                  className="flex shrink-0 items-center gap-2 font-semibold"
                 >
-                  <MenuIcon />
-                  {/* something waits (e.g. bookings to approve): seen without opening the menu */}
-                  {nav.some((n) => n.badge) && (
-                    <span
-                      aria-hidden
-                      className="absolute top-1.5 right-1.5 size-2.5 rounded-full bg-red-600 ring-2 ring-background"
-                    />
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="left"
-                className={cn("w-72 p-0", area && MENU_BG[area])}
-              >
-                <SheetHeader
-                  className={cn(
-                    "border-b",
-                    area === "company" && "border-white/10",
-                  )}
-                >
-                  <SheetTitle
-                    className={cn(area === "company" && "text-white")}
+                  <CalendarCheckIcon className="size-5 text-[var(--primary-ink)]" />
+                  <span>{t("app.name")}</span>
+                </Link>
+              )
+            }
+            items={nav.map((item) => ({
+              id: item.id ?? item.to,
+              to: item.to,
+              label: item.label,
+              icon: item.icon,
+              here: !!item.here,
+            }))}
+          />
+        ) : (
+          <header
+            className={cn(
+              "sticky top-0 z-30 flex h-14 items-center gap-2 bg-background px-3 sm:px-4",
+              customer ? "pub-rainbow" : "border-b",
+            )}
+          >
+            {area && (
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute inset-x-0 top-0 h-[3px] transition-colors duration-500",
+                  area === "company"
+                    ? "bg-[var(--area-company)]"
+                    : "bg-[var(--area-branch)]",
+                )}
+              />
+            )}
+            {nav.length > 0 && !gooey && (
+              <Sheet open={open} onOpenChange={setOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-lg"
+                    className="relative lg:hidden"
+                    aria-label={t("nav.menu")}
                   >
-                    {t("app.name")}
-                  </SheetTitle>
-                </SheetHeader>
-                {menu(() => setOpen(false))}
-              </SheetContent>
-            </Sheet>
-          )}
-          {back ? (
-            <Link
-              to={back.to}
-              aria-label={t("nav.backTo", { name: back.label })}
-              className="flex h-11 min-w-0 shrink items-center gap-2 rounded-lg px-2 font-semibold hover:bg-muted"
-            >
-              <ArrowLeftIcon className="size-5 shrink-0" />
-              <span className="truncate">{back.label}</span>
-            </Link>
-          ) : (
-            <Link
-              to="/"
-              className="flex shrink-0 items-center gap-2 font-semibold"
-            >
-              <CalendarCheckIcon className="size-5 text-[var(--primary-ink)]" />
-              <span className="hidden sm:inline">{t("app.name")}</span>
-            </Link>
-          )}
-          {area && <AreaTag area={area} />}
-          <div className="min-w-0 flex-1">{context}</div>
-          <LanguageToggle />
-          {customer ? <ThemeToggle /> : <ModeToggle store={dashMode} />}
-          <UserMenu allBranches={!!back} />
-        </header>
+                    <MenuIcon />
+                    {/* something waits (e.g. bookings to approve): seen without opening the menu */}
+                    {nav.some((n) => n.badge) && (
+                      <span
+                        aria-hidden
+                        className="absolute top-1.5 right-1.5 size-2.5 rounded-full bg-red-600 ring-2 ring-background"
+                      />
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="left"
+                  className={cn("w-72 p-0", area && MENU_BG[area])}
+                >
+                  <SheetHeader
+                    className={cn(
+                      "border-b",
+                      area === "company" && "border-white/10",
+                    )}
+                  >
+                    <SheetTitle
+                      className={cn(area === "company" && "text-white")}
+                    >
+                      {t("app.name")}
+                    </SheetTitle>
+                  </SheetHeader>
+                  {menu(() => setOpen(false))}
+                </SheetContent>
+              </Sheet>
+            )}
+            {back ? (
+              <Link
+                to={back.to}
+                aria-label={t("nav.backTo", { name: back.label })}
+                className="flex h-11 min-w-0 shrink items-center gap-2 rounded-lg px-2 font-semibold hover:bg-muted"
+              >
+                <ArrowLeftIcon className="size-5 shrink-0" />
+                <span className="truncate">{back.label}</span>
+              </Link>
+            ) : (
+              <Link
+                to="/"
+                className="flex shrink-0 items-center gap-2 font-semibold"
+              >
+                <CalendarCheckIcon className="size-5 text-[var(--primary-ink)]" />
+                <span className="hidden sm:inline">{t("app.name")}</span>
+              </Link>
+            )}
+            {area && <AreaTag area={area} />}
+            <div className="min-w-0 flex-1">{context}</div>
+            <LanguageToggle />
+            {customer ? <ThemeToggle /> : <ModeToggle store={dashMode} />}
+            <UserMenu allBranches={!!back} />
+          </header>
+        )}
         {banner}
         <div className="lg:flex">
-          {nav.length > 0 && (
+          {nav.length > 0 && !(customer && gooey) && (
             <aside
               className={cn(
                 "sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-60 shrink-0 overflow-hidden border-r lg:block",
@@ -219,7 +248,8 @@ export function AppShell({
           )}
           <main
             className={cn(
-              "mx-auto w-full max-w-6xl min-w-0 px-4 py-6 sm:px-6",
+              "mx-auto w-full min-w-0 px-4 py-6",
+              customer ? "max-w-5xl" : "max-w-6xl sm:px-6",
               gooey && "pb-28 lg:pb-6",
             )}
           >
@@ -333,6 +363,7 @@ function AccountNav({ nav }: { nav: NavItem[] }) {
       color={color}
       active={active}
       items={nav.map((item, i) => ({
+        id: item.id,
         label: item.label,
         icon: item.icon,
         // three or more items do not fit in one row on a phone: only the open page keeps its words

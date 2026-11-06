@@ -108,7 +108,7 @@ export function SoldPackagesPage() {
         </p>
       ) : (
         // a phone scrolls the table sideways inside its box
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="relative -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[58rem] text-sm">
             <thead className="border-b text-left whitespace-nowrap text-muted-foreground">
               <tr>
@@ -318,7 +318,7 @@ function SellDialog({ onClose }: { onClose: () => void }) {
               onClick={() => find.mutate(lookup.trim())}
             >
               {find.isPending ? <Spinner /> : <SearchIcon />}
-              <span className="sr-only">{t("desk.search")}</span>
+              <span className="sr-only">{t("desk.findCustomer")}</span>
             </Button>
           </div>
           {account ? (

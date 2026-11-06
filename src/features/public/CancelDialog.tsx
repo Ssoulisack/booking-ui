@@ -25,7 +25,10 @@ export function CancelDialog({
   onConfirm,
   pending,
   error,
+  visitReturns = false,
 }: {
+  /** the booking was paid with a package: say the visit goes back */
+  visitReturns?: boolean
   onConfirm: (reason: string) => void
   pending: boolean
   error: unknown
@@ -44,6 +47,7 @@ export function CancelDialog({
           <AlertDialogTitle>{t("booking.cancelTitle")}</AlertDialogTitle>
           <AlertDialogDescription>
             {t("booking.cancelLead")}
+            {visitReturns && ` ${t("booking.cancelPackageNote")}`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="space-y-2">

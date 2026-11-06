@@ -34,7 +34,7 @@ export function PackagePay({
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [method, setMethod] = useState<"online" | "manual">("online")
-  const hasOnline = !!usePaymentOptions(slug).data?.length
+  const hasOnline = !!usePaymentOptions(slug, true).data?.length
   const remote = usePublicPayInfo(slug)
   const slip = useMutation({
     mutationFn: (input: SlipInput) => slipApi.package(pkg.id, input),

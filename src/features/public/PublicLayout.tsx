@@ -1,16 +1,13 @@
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, Outlet, useLocation, useParams } from "react-router"
+import { Link, Outlet, useParams } from "react-router"
 
 import { PageError } from "@/components/page-state"
 import { UnsavedGuard } from "@/components/UnsavedGuard"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { applyBusinessLanguage } from "@/i18n"
 import { ApiError } from "@/lib/api/client"
 import type { PublicBranch } from "@/lib/api/types"
-import { UserMenu } from "@/layouts/UserMenu"
-import { useSession } from "@/stores/session"
 
 import { usePublicBranch } from "./api"
 import { brandStyle, DEFAULT_BRAND } from "./brand"
@@ -18,9 +15,8 @@ import { BranchSwitcher } from "./BranchSwitcher"
 import { rememberBranchName } from "./origin"
 import { PageSpark } from "./PageSpark"
 import type { PublicContext } from "./context"
-import { ThemeToggle } from "./ThemeToggle"
+import { CustomerHeader, useCustomerMenu } from "./CustomerHeader"
 import { useBrandOnPage, usePublicTheme } from "./theme"
-import { LanguageToggle } from "@/components/LanguageToggle"
 
 /** /b/:slug/* — a branch's public pages, in the company's brand colour and language */
 export function PublicLayout() {
@@ -64,45 +60,12 @@ export function PublicLayout() {
 }
 
 function PublicTopBar({ business }: { business: PublicBranch }) {
-  const { t } = useTranslation()
-  const user = useSession((s) => s.user)
-  const { pathname } = useLocation()
-  const home = `/b/${business.slug}`
-  const loginLink = `/login?next=${encodeURIComponent(pathname)}`
-
-  // the parts of the booking page (classes are booked in it: Group class)
-  const sections = [
-    { to: `${home}#book`, label: t("public.nav.book") },
-    ...(business.booking_policy
-      ? [{ to: `${home}#policy`, label: t("public.nav.policy") }]
-      : []),
-  ]
-
+  const items = useCustomerMenu(business.slug, business)
   return (
-    <header className="pub-rainbow sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4">
-        <BranchSwitcher business={business} />
-        <nav className="ml-auto hidden items-center gap-1 lg:flex">
-          {sections.map((s) => (
-            <Button key={s.to} asChild variant="ghost" className="h-11 px-3">
-              <Link to={s.to}>{s.label}</Link>
-            </Button>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-2 lg:ml-2">
-          <LanguageToggle />
-          <ThemeToggle />
-          {user ? (
-            // logged in: the profile circle, whose menu has My bookings, All branches, My account
-            <UserMenu allBranches />
-          ) : (
-            <Button asChild variant="outline" className="h-11 px-4">
-              <Link to={loginLink}>{t("actions.logIn")}</Link>
-            </Button>
-          )}
-        </div>
-      </div>
-    </header>
+    <CustomerHeader
+      left={<BranchSwitcher business={business} />}
+      items={items}
+    />
   )
 }
 

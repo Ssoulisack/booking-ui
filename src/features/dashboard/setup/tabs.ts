@@ -6,6 +6,7 @@ const SPORT_TABS = [
   "coaches",
   "classes",
   "packages",
+  "payments",
   "closures",
   "rules",
 ] as const

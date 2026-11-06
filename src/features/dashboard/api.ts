@@ -463,7 +463,12 @@ export const manage = {
     api<PayInfo>(`${base}/event-pay`, { method: "PUT", body }),
   savePaymentSettings: (
     base: string,
-    body: { online_enabled: boolean; charge_minutes: number },
+    body: {
+      online_enabled: boolean
+      online_bookings?: boolean
+      online_packages?: boolean
+      charge_minutes: number
+    },
   ) =>
     api<PaymentSettings>(`${base}/payment-settings`, { method: "PUT", body }),
 

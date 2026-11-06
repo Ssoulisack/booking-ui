@@ -60,6 +60,7 @@ export function BookingDetailView({
                 })}
               </p>
               <CancelDialog
+                visitReturns={!!booking.package}
                 pending={cancel.pending}
                 error={cancel.error}
                 onConfirm={cancel.onConfirm}

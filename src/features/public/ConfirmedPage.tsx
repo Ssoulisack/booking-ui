@@ -36,6 +36,8 @@ function Confirmed({ created }: { created: CreatedBooking }) {
   // the answer to booking also holds the private link and the way to pay: keep those
   const booking: CreatedBooking = { ...created, ...live.data }
   const pending = booking.status === "pending"
+  // paid online but the branch has not approved yet: say the money arrived (UX-004)
+  const paid = booking.payment_status === "paid"
 
   return (
     <main className="mx-auto max-w-xl space-y-6 px-4 pt-8 pb-16">
@@ -46,10 +48,18 @@ function Confirmed({ created }: { created: CreatedBooking }) {
           <CheckIcon className="size-7" />
         </span>
         <h1 className="display-tight text-4xl">
-          {pending ? t("public.requestedTitle") : t("public.bookedTitle")}
+          {pending
+            ? paid
+              ? t("public.paidTitle")
+              : t("public.requestedTitle")
+            : t("public.bookedTitle")}
         </h1>
         <p className="text-muted-foreground">
-          {pending ? t("public.requestedLead") : t("public.bookedLead")}
+          {pending
+            ? paid
+              ? t("public.paidLead")
+              : t("public.requestedLead")
+            : t("public.bookedLead")}
         </p>
       </div>
 

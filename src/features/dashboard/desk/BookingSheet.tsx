@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { StatusBadge } from "@/features/public/BookingCard"
+import { PaymentBadge } from "./PaymentBadge"
 import { bookingTitle, currentItems } from "@/features/public/booking-utils"
 import { eventBookingWhen } from "@/features/public/event-program"
 import type { Booking, PaymentMethod } from "@/lib/api/types"
@@ -128,6 +129,7 @@ function Details({ booking: b }: { booking: Booking }) {
           {t(`desk.createdBy.${b.created_by ?? "customer"}`)}
         </span>
       </div>
+      {(!isTable || isEvent) && <PaymentBadge b={b} big />}
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
         {b.event_name && (
@@ -317,14 +319,21 @@ function Details({ booking: b }: { booking: Booking }) {
                     : "",
                 })}
               </p>
-              <Button
-                variant="ghost"
-                className="h-11 px-2 text-muted-foreground lg:h-9"
-                disabled={payment.isPending}
-                onClick={() => payment.mutate({ id: b.id, status: "unpaid" })}
-              >
-                {t("desk.markUnpaid")}
-              </Button>
+              {b.payment_method === "online" ? (
+                // the bank's money: only a refund of the online payment undoes it
+                <p className="text-xs text-muted-foreground">
+                  {t("desk.paidOnlineHint")}
+                </p>
+              ) : (
+                <Button
+                  variant="ghost"
+                  className="h-11 px-2 text-muted-foreground lg:h-9"
+                  disabled={payment.isPending}
+                  onClick={() => payment.mutate({ id: b.id, status: "unpaid" })}
+                >
+                  {t("desk.markUnpaid")}
+                </Button>
+              )}
             </div>
           ) : b.status !== "cancelled" ? (
             <div className="space-y-2">
@@ -392,14 +401,10 @@ function Details({ booking: b }: { booking: Booking }) {
                   </Button>
                 )}
                 {!b.arrived_at && started && (
-                  <Button
-                    variant="outline"
-                    className="h-11 lg:h-9"
-                    disabled={status.isPending}
-                    onClick={() => change("no_show")}
-                  >
-                    {t("desk.noShow")}
-                  </Button>
+                  <NoShowAction
+                    pending={status.isPending}
+                    onConfirm={() => change("no_show")}
+                  />
                 )}
                 <Button
                   variant="outline"
@@ -419,14 +424,10 @@ function Details({ booking: b }: { booking: Booking }) {
                 >
                   {t("desk.complete")}
                 </Button>
-                <Button
-                  variant="outline"
-                  className="h-11 lg:h-9"
-                  disabled={status.isPending}
-                  onClick={() => change("no_show")}
-                >
-                  {t("desk.noShow")}
-                </Button>
+                <NoShowAction
+                  pending={status.isPending}
+                  onConfirm={() => change("no_show")}
+                />
               </>
             )}
             {!cancelling && (
@@ -439,6 +440,47 @@ function Details({ booking: b }: { booking: Booking }) {
               </Button>
             )}
           </div>
+          {/* what each desk button does, in plain words (owners asked: "what is Move table? what is No show?") */}
+          {b.status === "confirmed" && (isTable || started) && (
+            <ul className="space-y-1 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
+              {isTable && !b.arrived_at && (
+                <li>
+                  <strong className="text-foreground">
+                    {t("desk.markArrived")}
+                  </strong>
+                  {": "}
+                  {t("desk.markArrivedHelp")}
+                </li>
+              )}
+              {started && !(isTable && b.arrived_at) && (
+                <li>
+                  <strong className="text-foreground">
+                    {t("desk.noShow")}
+                  </strong>
+                  {": "}
+                  {t("desk.noShowHelp")}
+                </li>
+              )}
+              {isTable && (
+                <li>
+                  <strong className="text-foreground">
+                    {t("desk.moveTable")}
+                  </strong>
+                  {": "}
+                  {t("desk.moveTableHelp")}
+                </li>
+              )}
+              {!isTable && started && (
+                <li>
+                  <strong className="text-foreground">
+                    {t("desk.complete")}
+                  </strong>
+                  {": "}
+                  {t("desk.completeHelp")}
+                </li>
+              )}
+            </ul>
+          )}
           {waitingForMoney && !cancelling && (
             <p className="text-sm text-muted-foreground">
               {t("eventPay.releaseHint")}
@@ -490,6 +532,53 @@ function Details({ booking: b }: { booking: Booking }) {
       {moving && (
         <MoveTablesDialog booking={b} onClose={() => setMoving(false)} />
       )}
+    </div>
+  )
+}
+
+/** "No show" asks once before it frees the table and counts a lost booking */
+function NoShowAction({
+  onConfirm,
+  pending,
+}: {
+  onConfirm: () => void
+  pending: boolean
+}) {
+  const { t } = useTranslation()
+  const [asking, setAsking] = useState(false)
+  if (!asking)
+    return (
+      <Button
+        variant="outline"
+        className="h-11 lg:h-9"
+        disabled={pending}
+        onClick={() => setAsking(true)}
+      >
+        {t("desk.noShow")}
+      </Button>
+    )
+  return (
+    <div className="w-full space-y-2 rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm dark:bg-amber-950/40">
+      <p>{t("desk.noShowAsk")}</p>
+      <div className="flex gap-2">
+        <Button
+          className="h-11 lg:h-9"
+          disabled={pending}
+          onClick={() => {
+            setAsking(false)
+            onConfirm()
+          }}
+        >
+          {t("desk.yesNoShow")}
+        </Button>
+        <Button
+          variant="outline"
+          className="h-11 lg:h-9"
+          onClick={() => setAsking(false)}
+        >
+          {t("booking.keep")}
+        </Button>
+      </div>
     </div>
   )
 }

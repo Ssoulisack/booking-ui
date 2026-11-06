@@ -115,6 +115,7 @@ export function FindBookingPage() {
                   })}
                 </p>
                 <CancelDialog
+                  visitReturns={!!booking.package}
                   pending={cancel.isPending}
                   error={cancel.error}
                   onConfirm={(reason) => cancel.mutate(reason)}

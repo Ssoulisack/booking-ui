@@ -284,7 +284,7 @@ function Grid({ items, event = false }: { items: Row[]; event?: boolean }) {
   const right = event ? [head.length - 1] : []
 
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <table className="w-full min-w-[56rem] text-sm">
         <thead>
           <tr className="border-b text-left text-muted-foreground">

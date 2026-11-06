@@ -732,7 +732,7 @@ export interface MediaItem extends Media {
 
 // ---------- branch dashboard: desk and reports ----------
 
-export type PaymentMethod = "cash" | "transfer" | "qr" | "other" | "package"
+export type PaymentMethod = "cash" | "transfer" | "qr" | "other" | "package" | "online"
 
 export interface CalendarEntry {
   kind: "booking" | "class" | "closure"
@@ -1015,6 +1015,10 @@ export interface PayInfo {
 /** Online payment on or off for the branch, and whether the server has a gateway at all */
 export interface PaymentSettings {
   online_enabled: boolean
+  /** sport branches: online payment is offered for bookings (packages are separate) */
+  online_bookings: boolean
+  /** sport branches: online payment is offered when buying a package */
+  online_packages: boolean
   gateway_available: boolean
   /** how long a customer has to pay once they chose a bank */
   charge_minutes: number

@@ -15,9 +15,10 @@ import { displayPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
 import { useSettings } from "../api"
+import { Pager } from "@/components/Pager"
+import { paginate } from "@/features/company/paging"
 import { useCsv, useReport } from "./api"
 
-const PAGE = 100
 const selectClass =
   "h-11 rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
 
@@ -34,7 +35,8 @@ export function TransactionsView({ from, to }: { from: string; to: string }) {
   const [kind, setKind] = useState("")
   const [method, setMethod] = useState("")
   const [search, setSearch] = useState("")
-  const [shown, setShown] = useState(PAGE)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(50)
 
   const rows = report.data?.rows
   const methods = useMemo(
@@ -57,6 +59,7 @@ export function TransactionsView({ from, to }: { from: string; to: string }) {
     [rows, kind, method, q],
   )
 
+  const paged = paginate(filtered, page, limit)
   if (report.isPending) return <Skeleton className="h-80 rounded-xl" />
   if (report.isError) return <PageError error={report.error} />
   const r = report.data
@@ -127,7 +130,7 @@ export function TransactionsView({ from, to }: { from: string; to: string }) {
             placeholder={t("reports.tx.search")}
             onChange={(e) => {
               setSearch(e.target.value)
-              setShown(PAGE)
+              setPage(1)
             }}
             className="h-11 pl-9 text-base lg:h-9 lg:text-sm"
           />
@@ -137,7 +140,7 @@ export function TransactionsView({ from, to }: { from: string; to: string }) {
           value={kind}
           onChange={(e) => {
             setKind(e.target.value)
-            setShown(PAGE)
+            setPage(1)
           }}
           className={selectClass}
         >
@@ -153,7 +156,7 @@ export function TransactionsView({ from, to }: { from: string; to: string }) {
           value={method}
           onChange={(e) => {
             setMethod(e.target.value)
-            setShown(PAGE)
+            setPage(1)
           }}
           className={selectClass}
         >
@@ -188,7 +191,7 @@ export function TransactionsView({ from, to }: { from: string; to: string }) {
         </p>
       ) : (
         // a phone scrolls the table sideways inside its box
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="relative -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[56rem] text-sm">
             <thead className="border-b text-left whitespace-nowrap text-muted-foreground">
               <tr>
@@ -219,7 +222,7 @@ export function TransactionsView({ from, to }: { from: string; to: string }) {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.slice(0, shown).map((x, i) => (
+              {paged.items.map((x, i) => (
                 <tr key={`${x.kind}-${x.code}-${i}`} className="align-top">
                   <td className="py-2.5 pr-3 whitespace-nowrap">
                     <span className="block">{dayIn(x.paid_at, tz)}</span>
@@ -302,15 +305,16 @@ export function TransactionsView({ from, to }: { from: string; to: string }) {
           </table>
         </div>
       )}
-      {filtered.length > shown && (
-        <Button
-          variant="outline"
-          className="h-11"
-          onClick={() => setShown((n) => n + PAGE)}
-        >
-          {t("reports.tx.more", { count: filtered.length - shown })}
-        </Button>
-      )}
+      <Pager
+        meta={paged.meta}
+        page={paged.page}
+        onPage={setPage}
+        limit={limit}
+        onLimit={(n) => {
+          setLimit(n)
+          setPage(1)
+        }}
+      />
     </div>
   )
 }

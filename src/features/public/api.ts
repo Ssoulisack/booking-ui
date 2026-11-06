@@ -56,10 +56,11 @@ export const publicKeys = {
 // the catalog changes rarely: keep it a few minutes
 const CATALOG = { staleTime: 5 * 60_000 }
 
-export function usePublicBranch(slug: string) {
+export function usePublicBranch(slug: string, enabled = true) {
   return useQuery({
     queryKey: publicKeys.business(slug),
     queryFn: () => api<PublicBranch>(`${pub(slug)}/`),
+    enabled,
     ...CATALOG,
   })
 }
@@ -321,10 +322,13 @@ export const slipApi = {
 }
 
 /** The ways to pay online at this branch (empty: online payment is off, pay at the place or by QR / transfer) */
-export function usePaymentOptions(slug: string) {
+export function usePaymentOptions(slug: string, forPackage = false) {
   return useQuery({
-    queryKey: ["public", slug, "payment-options"] as const,
-    queryFn: () => api<PaymentOption[]>(`${pub(slug)}/payment-options`),
+    queryKey: ["public", slug, "payment-options", forPackage] as const,
+    queryFn: () =>
+      api<PaymentOption[]>(`${pub(slug)}/payment-options`, {
+        query: forPackage ? { for: "package" } : undefined,
+      }),
     staleTime: 5 * 60_000,
   })
 }

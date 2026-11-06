@@ -78,7 +78,7 @@ export function AccountPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-2xl">
+      <div>
         <PageTitle title={t("account.title")} />
         <div className="mb-4 flex flex-wrap items-end gap-3">
           <div className="relative min-w-0 flex-1 basis-56">
@@ -183,7 +183,7 @@ export function AccountPage() {
                 : t("account.noPast")}
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-3 lg:grid-cols-2">
             {shown.map((b) => (
               <MyBooking key={b.id} booking={b} />
             ))}
@@ -224,6 +224,7 @@ function MyBooking({ booking }: { booking: Booking }) {
         {canCancel(booking) && (
           <div className="flex flex-col gap-1 sm:items-end">
             <CancelDialog
+              visitReturns={!!booking.package}
               pending={cancel.isPending}
               error={cancel.error}
               onConfirm={(reason) => cancel.mutate(reason)}

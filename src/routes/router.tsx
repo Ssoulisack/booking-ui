@@ -256,6 +256,7 @@ export const router = createBrowserRouter([
                       page("coaches/:coachId", "CoachDetailPage"),
                       page("classes", "ClassesPage"),
                       page("packages", "PackagesPage"),
+                      page("payments", "PaymentsPage"),
                       page("closures", "ClosuresPage"),
                       page("rules", "RulesPage"),
                       // restaurant branches

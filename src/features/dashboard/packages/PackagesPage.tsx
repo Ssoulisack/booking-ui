@@ -1,6 +1,7 @@
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { Link } from "react-router"
 import { toast } from "sonner"
 
 import { PageError } from "@/components/page-state"
@@ -15,7 +16,13 @@ import { coversLabel, optionLabel } from "@/lib/packages"
 import { money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { useChange, useDelete, useResourcesList, useSportsList } from "../api"
+import {
+  useBiz,
+  useChange,
+  useDelete,
+  useResourcesList,
+  useSportsList,
+} from "../api"
 import {
   ActiveSwitch,
   DeleteButton,
@@ -23,17 +30,17 @@ import {
   FormDialog,
   PageHeader,
 } from "../ui"
-import { PayInfoPanel } from "../setup/PayInfoPanel"
 import { packageApi, usePackages } from "./api"
 
 const input = "h-11 text-base lg:h-9 lg:text-sm"
 const selectClass =
   "h-11 w-full rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
 
-/** /setup/packages — what the branch sells as passes (10 / 20 times, 1 / 3 months), and how customers pay */
+/** /setup/packages — what the branch sells as passes (10 / 20 times, 1 / 3 months). How customers pay is in Setup > Payments. */
 export function PackagesPage() {
   const { t } = useTranslation()
   const packages = usePackages()
+  const { id: branchId } = useBiz()
   const [editing, setEditing] = useState<PackageItem | "new" | null>(null)
 
   return (
@@ -64,7 +71,7 @@ export function PackagesPage() {
         />
       ) : (
         // one row per option, grouped by package; a phone scrolls the table sideways inside its box
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="relative -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           <table className="w-full min-w-[44rem] text-sm">
             <thead className="border-b text-left whitespace-nowrap text-muted-foreground">
               <tr>
@@ -160,7 +167,15 @@ export function PackagesPage() {
           </table>
         </div>
       )}
-      <PayInfoPanel />
+      <p className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
+        {t("packages.paymentsMoved")}{" "}
+        <Link
+          to={`/dashboard/${branchId}/setup/payments`}
+          className="font-medium text-foreground underline underline-offset-4"
+        >
+          {t("setup.tabs.payments")}
+        </Link>
+      </p>
       {editing && (
         <PackageDialog
           item={editing === "new" ? null : editing}

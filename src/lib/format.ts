@@ -1,3 +1,4 @@
+import i18n from "@/i18n"
 import { addDays } from "date-fns"
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 
@@ -51,13 +52,45 @@ export function stampIn(iso: string, tz: string) {
 export const timeIn = (iso: string, tz: string) =>
   formatInTimeZone(iso, tz, "HH:mm")
 
-/** "Thu 23 Oct" */
-export const dayIn = (iso: string, tz: string) =>
-  formatInTimeZone(iso, tz, "EEE d MMM")
+/**
+ * The page language for dates: English keeps the fixed look ("Thu 23 Oct"); Lao and Thai use the browser's own
+ * weekday and month names (always the Gregorian year, not the Buddhist one Thai uses by default)
+ */
+const localeTag = () => {
+  const l = i18n.resolvedLanguage ?? i18n.language
+  return l === "lo"
+    ? "lo-LA-u-ca-gregory"
+    : l === "th"
+      ? "th-TH-u-ca-gregory"
+      : null
+}
 
-/** "Thursday 23 October 2026" */
-export const longDayIn = (iso: string, tz: string) =>
-  formatInTimeZone(iso, tz, "EEEE d MMMM yyyy")
+/** "Thu 23 Oct" (in Lao and Thai: the same in their words) */
+export const dayIn = (iso: string, tz: string) => {
+  const tag = localeTag()
+  return tag
+    ? new Intl.DateTimeFormat(tag, {
+        timeZone: tz,
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      }).format(new Date(iso))
+    : formatInTimeZone(iso, tz, "EEE d MMM")
+}
+
+/** "Thursday 23 October 2026" (in Lao and Thai: the same in their words) */
+export const longDayIn = (iso: string, tz: string) => {
+  const tag = localeTag()
+  return tag
+    ? new Intl.DateTimeFormat(tag, {
+        timeZone: tz,
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(new Date(iso))
+    : formatInTimeZone(iso, tz, "EEEE d MMMM yyyy")
+}
 
 /** Today's date (YYYY-MM-DD) in the business time zone */
 export const todayIn = (tz: string, now = new Date()) =>

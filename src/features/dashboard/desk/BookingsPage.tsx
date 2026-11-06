@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router"
 
 import { PageError } from "@/components/page-state"
+import { Pager, PAGE_SIZES } from "@/components/Pager"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StatusBadge } from "@/features/public/BookingCard"
 import { bookingTitle } from "@/features/public/booking-utils"
-import { dayIn, money, nextDays, timeIn, todayIn } from "@/lib/format"
+import { dayIn, nextDays, timeIn, todayIn } from "@/lib/format"
 
 import { useSettings } from "../api"
 import { useDashboard } from "../context"
@@ -26,6 +27,7 @@ import { PageHeader } from "../ui"
 import { useBookingList, usePendingBookings, type BookingFilters } from "./api"
 import { BookingSheet } from "./BookingSheet"
 import { NewBookingDialog } from "./NewBookingDialog"
+import { PaymentBadge } from "./PaymentBadge"
 
 const STATUSES = [
   "pending",
@@ -65,7 +67,10 @@ export function BookingsPage() {
         : period === "week"
           ? { from: today, to: nextDays(tz, 7)[6] }
           : { from: params.get("from") ?? today, to: params.get("to") ?? today }
-  const page = Number(params.get("page") ?? 1)
+  const page = Math.max(1, Number(params.get("page") ?? 1) || 1)
+  const limit = PAGE_SIZES.includes(Number(params.get("limit")) as 20)
+    ? Number(params.get("limit"))
+    : PAGE_SIZES[0]
   const filters: BookingFilters = {
     // a search, one customer's history and the pending list look at every date
     ...(params.get("q") || params.get("customer") || period === "pending"
@@ -77,7 +82,7 @@ export function BookingsPage() {
     payment_status: params.get("pay") || undefined,
     customer_id: Number(params.get("customer")) || undefined,
     page,
-    limit: 20,
+    limit,
   }
   const list = useBookingList(filters)
   const set = (patch: Record<string, string | undefined>) => {
@@ -236,88 +241,82 @@ export function BookingsPage() {
             : t("desk.noBookings")}
         </p>
       ) : (
-        <ul className="divide-y rounded-xl bg-background ring-1 ring-border">
-          {list.data.items.map((b) => (
-            <li key={b.id}>
-              <button
-                type="button"
-                onClick={() => setOpen(b.id)}
-                className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-left hover:bg-muted/50 sm:flex-nowrap"
-              >
-                <span className="w-32 shrink-0">
-                  <span className="block font-medium tabular-nums">
-                    {!b.guests
-                      ? `${timeIn(b.starts_at, tz)}–${timeIn(b.ends_at, tz)}`
-                      : b.booking_style === "arrive_by" && b.arrive_by
-                        ? t("upcoming.arriveBy", {
-                            time: timeIn(b.arrive_by, tz),
-                          })
-                        : timeIn(b.starts_at, tz)}
-                  </span>
-                  <span className="block text-xs text-muted-foreground">
-                    {dayIn(b.starts_at, tz)}
-                  </span>
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">
-                    {b.customer_name || b.guest_name}
-                  </span>
-                  <span className="block truncate text-sm text-muted-foreground">
-                    {bookingTitle(b)}
-                    {b.guests
-                      ? ` · ${t("public.tables.guestsLine", { count: b.guests })}${b.zones ? ` · ${b.zones}` : ""}`
-                      : ""}{" "}
-                    · {b.code}
-                  </span>
-                </span>
-                <span className="flex items-center gap-2">
-                  <StatusBadge status={b.status} />
-                  {!b.guests && (
-                    <Badge
-                      variant={
-                        b.payment_status === "paid" ? "outline" : "secondary"
-                      }
-                    >
-                      {b.package
-                        ? `${b.package} · ${b.package_code}`
-                        : `${money(b.total_price, b.currency)} · ${t(`desk.${b.payment_status}`)}`}
-                    </Badge>
-                  )}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {meta && meta.total_page > 1 && (
-        <div className="flex items-center justify-between gap-2 text-sm">
-          <span className="text-muted-foreground">
-            {t("desk.pageOf", {
-              page: meta.page,
-              pages: meta.total_page,
-              total: meta.total,
-            })}
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="h-11 lg:h-9"
-              disabled={page <= 1}
-              onClick={() => set({ page: String(page - 1) })}
+        <>
+          {/* the list shown may be the previous one (a new tab or filter is loading) or old (the server went away):
+              dim it and say so, so nobody acts on rows that are not current */}
+          {list.isRefetchError ? (
+            <p
+              role="alert"
+              className="rounded-lg bg-amber-100 p-3 text-sm text-amber-950 dark:bg-amber-950 dark:text-amber-100"
             >
-              {t("desk.previous")}
-            </Button>
-            <Button
-              variant="outline"
-              className="h-11 lg:h-9"
-              disabled={page >= meta.total_page}
-              onClick={() => set({ page: String(page + 1) })}
-            >
-              {t("desk.next")}
-            </Button>
-          </div>
-        </div>
+              {t("common.offlineStale")}
+            </p>
+          ) : (
+            list.isPlaceholderData && (
+              <p aria-live="polite" className="text-sm text-muted-foreground">
+                {t("common.updating")}
+              </p>
+            )
+          )}
+          <ul
+            aria-busy={list.isPlaceholderData}
+            className={
+              "divide-y rounded-xl bg-background ring-1 ring-border transition-opacity" +
+              (list.isPlaceholderData || list.isRefetchError
+                ? " opacity-50"
+                : "")
+            }
+          >
+            {list.data.items.map((b) => (
+              <li key={b.id}>
+                <button
+                  type="button"
+                  onClick={() => setOpen(b.id)}
+                  className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-left hover:bg-muted/50 sm:flex-nowrap"
+                >
+                  <span className="w-32 shrink-0">
+                    <span className="block font-medium tabular-nums">
+                      {!b.guests
+                        ? `${timeIn(b.starts_at, tz)}–${timeIn(b.ends_at, tz)}`
+                        : b.booking_style === "arrive_by" && b.arrive_by
+                          ? t("upcoming.arriveBy", {
+                              time: timeIn(b.arrive_by, tz),
+                            })
+                          : timeIn(b.starts_at, tz)}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {dayIn(b.starts_at, tz)}
+                    </span>
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">
+                      {b.customer_name || b.guest_name}
+                    </span>
+                    <span className="block truncate text-sm text-muted-foreground">
+                      {bookingTitle(b)}
+                      {b.guests
+                        ? ` · ${t("public.tables.guestsLine", { count: b.guests })}${b.zones ? ` · ${b.zones}` : ""}`
+                        : ""}{" "}
+                      · {b.code}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <StatusBadge status={b.status} />
+                    {!b.guests && <PaymentBadge b={b} />}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
+      <Pager
+        meta={meta}
+        page={page}
+        onPage={(p) => set({ page: String(p) })}
+        limit={limit}
+        onLimit={(n) => set({ limit: String(n), page: "1" })}
+      />
       <BookingSheet id={open} onClose={() => setOpen(null)} />
       {adding && (
         <NewBookingDialog

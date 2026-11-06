@@ -12,6 +12,8 @@ import { displayPhone } from "@/lib/phone"
 
 import { useSettings } from "../api"
 import { PageHeader } from "../ui"
+import { Pager } from "@/components/Pager"
+
 import { useCustomers } from "./api"
 
 /** /dashboard/:id/customers — people with an account who booked here; open their bookings */
@@ -21,7 +23,8 @@ export function CustomersPage() {
   const [search, setSearch] = useState("")
   const [keyword, setKeyword] = useState("")
   const [page, setPage] = useState(1)
-  const customers = useCustomers(keyword, page)
+  const [limit, setLimit] = useState(20)
+  const customers = useCustomers(keyword, page, limit)
   const meta = customers.data?.meta
 
   return (
@@ -89,26 +92,16 @@ export function CustomersPage() {
           ))}
         </ul>
       )}
-      {meta && meta.total_page > 1 && (
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            className="h-11 lg:h-9"
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-          >
-            {t("desk.previous")}
-          </Button>
-          <Button
-            variant="outline"
-            className="h-11 lg:h-9"
-            disabled={page >= meta.total_page}
-            onClick={() => setPage(page + 1)}
-          >
-            {t("desk.next")}
-          </Button>
-        </div>
-      )}
+      <Pager
+        meta={meta}
+        page={page}
+        onPage={setPage}
+        limit={limit}
+        onLimit={(n) => {
+          setLimit(n)
+          setPage(1)
+        }}
+      />
     </div>
   )
 }

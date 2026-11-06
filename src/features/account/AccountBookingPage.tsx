@@ -41,7 +41,7 @@ export function AccountBookingPage() {
   })
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="max-w-xl space-y-6">
       <Button asChild variant="ghost" className="-ml-3 h-11">
         <Link to="/account">
           <ArrowLeftIcon />

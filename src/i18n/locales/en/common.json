@@ -228,7 +228,8 @@
     "cancelling": "Cancelling…",
     "holdHint": "Press and hold for {{seconds}} seconds to cancel the booking",
     "tooLateToCancelNoPhone": "It is too late to cancel online. Please contact the branch.",
-    "package": "Package"
+    "package": "Package",
+    "cancelPackageNote": "Your visit goes back to your package."
   },
   "public": {
     "notFoundTitle": "This page is not available",
@@ -526,6 +527,11 @@
       "reason": "Reason: {{reason}}",
       "contact": "Questions? Call {{phone}}.",
       "home": "Back to home"
+    },
+    "paidTitle": "Payment received",
+    "paidLead": "Your booking is paid. The branch will confirm it soon.",
+    "tabs": {
+      "package": "Package"
     }
   },
   "weekday": {
@@ -616,7 +622,8 @@
       "hours": "Opening hours",
       "table-settings": "Table bookings",
       "events": "Events",
-      "packages": "Packages"
+      "packages": "Packages",
+      "payments": "Payments"
     },
     "name": "Name",
     "descriptionOptional": "Description (optional)",
@@ -763,7 +770,8 @@
       "classesRemoved_other": "{{count}} weekly classes without bookings were removed.",
       "classesKept_one": "{{count}} class in this time has bookings and was kept: {{list}}. Contact those customers.",
       "classesKept_other": "{{count}} classes in this time have bookings and were kept: {{list}}. Contact those customers."
-    }
+    },
+    "paymentsLead": "How customers pay for bookings and packages: online with a bank app QR, your own QR or bank account, and how they send the payment slip."
   },
   "rules": {
     "title": "Booking rules",
@@ -1075,6 +1083,7 @@
     "paidWith": "Paid by {{method}} · {{when}}",
     "markPaidWith": "Mark paid:",
     "markUnpaid": "Mark unpaid (mistake)",
+    "paidOnlineHint": "Paid online. To give the money back, use Refund in the online payments below.",
     "paidDone": "Marked paid.",
     "methods": {
       "cash": "Cash",
@@ -1188,7 +1197,15 @@
     "tabs": {
       "bookings": "Bookings",
       "approval": "Waiting for approval"
-    }
+    },
+    "unpaidToCollect": "UNPAID · {{amount}} to collect",
+    "findCustomer": "Find customer",
+    "noShowHelp": "The customer did not come. Frees the table or court now and counts as a no-show in the reports.",
+    "noShowAsk": "Did the customer not come? The table or court is freed now and it counts as a no-show.",
+    "yesNoShow": "Yes, no-show",
+    "moveTableHelp": "Put this group at other free tables: a better table, a broken table, or a bigger group.",
+    "markArrivedHelp": "The customer is here: the table stays theirs and is not given away.",
+    "completeHelp": "The booking is done (the customer came and finished)."
   },
   "reports": {
     "lead": "Bookings and money for a period. Times use the branch time zone.",
@@ -1600,7 +1617,9 @@
         },
         {
           "h": "Contact",
-          "p": ["Questions about this policy: {{email}}."]
+          "p": [
+            "Questions about this policy: {{email}}."
+          ]
         }
       ]
     },
@@ -1968,7 +1987,11 @@
       "slipTelegramConnect": "Connect Telegram",
       "slipWhatsapp": "Send the slip on WhatsApp",
       "slipWhatsappHint": "A button opens WhatsApp to the number above, with the booking code and amount filled in.",
-      "slipNone": "No way to send a slip is on. Customers will have to tell your team another way."
+      "slipNone": "No way to send a slip is on. Customers will have to tell your team another way.",
+      "switchBooking": "Booking",
+      "switchBookingHint": "Courts, rooms and classes. Off: customers book for free and pay at the venue, and no \"Pay online\" box is shown after booking.",
+      "switchPackage": "Package",
+      "switchPackageHint": "Buying a package. Off: customers send a slip or pay at the desk."
     },
     "startTime": "Starts at",
     "endTime": "Ends at",
@@ -2309,6 +2332,20 @@
       "resultsLead": "Mark paid, adjust or read the history right here.",
       "none": "No package found. Check the code or the phone number.",
       "tooShort": "Type at least 2 letters."
-    }
+    },
+    "paymentsMoved": "How customers pay (online, bank QR, slip) is set in"
+  },
+  "pager": {
+    "label": "Pages",
+    "first": "First page",
+    "last": "Last page",
+    "goTo": "Go to page",
+    "of": "of {{pages}}",
+    "range": "{{from}}–{{to}} of {{total}}",
+    "perPage": "Per page"
+  },
+  "common": {
+    "updating": "Updating…",
+    "offlineStale": "Cannot reach the server. The list below may be old."
   }
 }

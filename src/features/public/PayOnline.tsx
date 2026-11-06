@@ -92,7 +92,7 @@ export function PayOnline({
   onPaid?: () => void
 }) {
   const { t } = useTranslation()
-  const options = usePaymentOptions(slug)
+  const options = usePaymentOptions(slug, !!pkg)
   // what is being paid, whichever it is
   const subject = pkg
     ? {

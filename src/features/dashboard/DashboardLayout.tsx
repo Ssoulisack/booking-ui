@@ -123,6 +123,8 @@ const DASHBOARD_CRUMBS: Record<string, string> = {
   spaces: "setup.tabs.spaces",
   coaches: "setup.tabs.coaches",
   classes: "setup.tabs.classes",
+  payments: "setup.tabs.payments",
+  events: "setup.tabs.events",
   closures: "setup.tabs.closures",
   rules: "setup.tabs.rules",
   "floor-plan": "setup.tabs.floor-plan",

@@ -20,6 +20,7 @@ import {
   usePayInfo,
   usePaymentSettings,
 } from "../api"
+import { useDashboard } from "../context"
 import { ActiveSwitch, ImageField, Panel } from "../ui"
 
 /** Minutes a customer may have to pay once they chose a bank (5 to 30, as the API allows) */
@@ -59,7 +60,16 @@ function PayInfoForm({
   settings: PaymentSettings
 }) {
   const { t } = useTranslation()
-  const [online, setOnline] = useState(settings.online_enabled)
+  const sport = useDashboard().branch.type === "sport"
+  // a restaurant has one switch; a sport branch has two, Booking and Package, grouped under "Pay online"
+  const [onlineSwitch, setOnline] = useState(settings.online_enabled)
+  const [bookingsOnline, setBookingsOnline] = useState(
+    settings.online_enabled && settings.online_bookings,
+  )
+  const [packagesOnline, setPackagesOnline] = useState(
+    settings.online_enabled && settings.online_packages,
+  )
+  const online = sport ? bookingsOnline || packagesOnline : onlineSwitch
   const [minutes, setMinutes] = useState(settings.charge_minutes)
   const [transfer, setTransfer] = useState(initial.transfer_enabled)
   const [slipWhatsapp, setSlipWhatsapp] = useState(initial.slip_whatsapp)
@@ -83,7 +93,13 @@ function PayInfoForm({
     note !== initial.note ||
     qr.key !== initial.qr_key
   const settingsDirty =
-    online !== settings.online_enabled || minutes !== settings.charge_minutes
+    online !== settings.online_enabled ||
+    (sport &&
+      (bookingsOnline !==
+        (settings.online_enabled && settings.online_bookings) ||
+        packagesOnline !==
+          (settings.online_enabled && settings.online_packages))) ||
+    minutes !== settings.charge_minutes
   const savePay = useChange(manage.savePayInfo, ["event-pay"])
   const saveSettings = useChange(manage.savePaymentSettings, [
     "payment-settings",
@@ -109,6 +125,12 @@ function PayInfoForm({
       if (settingsDirty)
         await saveSettings.mutateAsync({
           online_enabled: online,
+          ...(sport
+            ? {
+                online_bookings: bookingsOnline,
+                online_packages: packagesOnline,
+              }
+            : {}),
           charge_minutes: minutes,
         })
       toast.success(t("events.pay.saved"))
@@ -122,17 +144,47 @@ function PayInfoForm({
       <ErrorAlert error={savePay.error ?? saveSettings.error} />
 
       <div className="space-y-2">
-        <ActiveSwitch
-          id="pay-online"
-          checked={online}
-          onChange={setOnline}
-          label={t("events.pay.online")}
-          hint={
-            settings.gateway_available
-              ? t("events.pay.onlineHint")
-              : t("events.pay.noGateway")
-          }
-        />
+        {sport ? (
+          // one block: the "Pay online" title, then a switch for Booking and one for Package
+          <div className="space-y-2">
+            <div className="px-1">
+              <p className="text-sm font-medium">{t("events.pay.online")}</p>
+              <p className="text-sm text-muted-foreground">
+                {settings.gateway_available
+                  ? t("events.pay.onlineHint")
+                  : t("events.pay.noGateway")}
+              </p>
+            </div>
+            <div className="space-y-2 pl-3">
+              <ActiveSwitch
+                id="pay-online-bookings"
+                checked={bookingsOnline}
+                onChange={setBookingsOnline}
+                label={t("events.pay.switchBooking")}
+                hint={t("events.pay.switchBookingHint")}
+              />
+              <ActiveSwitch
+                id="pay-online-packages"
+                checked={packagesOnline}
+                onChange={setPackagesOnline}
+                label={t("events.pay.switchPackage")}
+                hint={t("events.pay.switchPackageHint")}
+              />
+            </div>
+          </div>
+        ) : (
+          <ActiveSwitch
+            id="pay-online"
+            checked={onlineSwitch}
+            onChange={setOnline}
+            label={t("events.pay.online")}
+            hint={
+              settings.gateway_available
+                ? t("events.pay.onlineHint")
+                : t("events.pay.noGateway")
+            }
+          />
+        )}
         {online && settings.gateway_available && (
           <div className="space-y-1.5 rounded-lg border px-3 py-3">
             <Label htmlFor="pay-window">{t("events.pay.window")}</Label>

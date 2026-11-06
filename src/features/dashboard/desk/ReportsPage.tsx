@@ -14,6 +14,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import { ErrorAlert } from "@/components/form"
 import { PageError } from "@/components/page-state"
+import { Pager } from "@/components/Pager"
 import { Button } from "@/components/ui/button"
 import {
   ChartContainer,
@@ -33,7 +34,7 @@ import { dayIn, money, todayIn } from "@/lib/format"
 import { useDashboard } from "../context"
 import { useSettings } from "../api"
 import { PageHeader, Panel } from "../ui"
-import { useCsv, useReport } from "./api"
+import { useCsv, useReport, useUnpaidPage } from "./api"
 import { TransactionsView } from "./TransactionsReport"
 import { BookingSheet } from "./BookingSheet"
 import { EventBookingsView, TableBookingsView } from "./BookingRowsReports"
@@ -214,15 +215,18 @@ function CourtReports({
         )}
       </div>
       <Tabs value={tab} onValueChange={(v) => set({ tab: v })}>
-        <TabsList className="h-11 lg:h-9">
-          {["transactions", "bookings", "money", "courts", "unpaid"].map(
-            (k) => (
-              <TabsTrigger key={k} value={k} className="px-3">
-                {t(`reports.tabs.${k}`)}
-              </TabsTrigger>
-            ),
-          )}
-        </TabsList>
+        {/* five tabs do not fit a phone: the bar scrolls inside its own box, the page never moves sideways */}
+        <div className="-mx-4 no-scrollbar overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <TabsList className="h-11 w-max lg:h-9">
+            {["transactions", "bookings", "money", "courts", "unpaid"].map(
+              (k) => (
+                <TabsTrigger key={k} value={k} className="px-3">
+                  {t(`reports.tabs.${k}`)}
+                </TabsTrigger>
+              ),
+            )}
+          </TabsList>
+        </div>
         <TabsContent value="transactions" className="mt-4">
           <TransactionsView from={from} to={to} />
         </TabsContent>
@@ -661,7 +665,9 @@ function UtilisationView({ from, to }: { from: string; to: string }) {
 function UnpaidView({ from, to }: { from: string; to: string }) {
   const { t } = useTranslation()
   const tz = useSettings().data?.in_force.timezone ?? "Asia/Vientiane"
-  const report = useReport("unpaid", from, to)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(50)
+  const report = useUnpaidPage(from, to, page, limit)
   const [open, setOpen] = useState<number | null>(null)
   if (report.isPending) return <Skeleton className="h-64 rounded-xl" />
   if (report.isError) return <PageError error={report.error} />
@@ -677,11 +683,11 @@ function UnpaidView({ from, to }: { from: string; to: string }) {
         />
       }
     >
-      {report.data.length === 0 ? (
+      {report.data.items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("reports.noUnpaid")}</p>
       ) : (
         <ul className="divide-y">
-          {report.data.map((r) => (
+          {report.data.items.map((r) => (
             <li key={r.booking_id}>
               <button
                 type="button"
@@ -705,6 +711,16 @@ function UnpaidView({ from, to }: { from: string; to: string }) {
           ))}
         </ul>
       )}
+      <Pager
+        meta={report.data.meta}
+        page={page}
+        onPage={setPage}
+        limit={limit}
+        onLimit={(n) => {
+          setLimit(n)
+          setPage(1)
+        }}
+      />
       <BookingSheet id={open} onClose={() => setOpen(null)} />
     </Panel>
   )
@@ -724,7 +740,7 @@ function TableView({ head, rows }: { head: string[]; rows: string[][] }) {
   const view = useContext(ViewContext)
   if (view === "table")
     return (
-      <div className="overflow-x-auto text-sm">
+      <div className="relative overflow-x-auto text-sm">
         <table className="w-full">
           <thead className="border-b text-left whitespace-nowrap text-muted-foreground">
             <tr>

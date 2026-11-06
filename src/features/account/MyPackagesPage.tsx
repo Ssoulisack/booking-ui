@@ -31,7 +31,7 @@ export function MyPackagesPage() {
   const done = list.filter((p) => !open.includes(p))
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-6">
       <PageTitle title={t("packages.my.title")} />
       {mine.isPending ? (
         <Skeleton className="h-40 rounded-xl" />
@@ -68,7 +68,7 @@ function PackageList({
 }) {
   const { t } = useTranslation()
   return (
-    <ul className="space-y-3">
+    <ul className="grid gap-3 lg:grid-cols-2">
       {items.map((p) => (
         <li
           key={p.id}

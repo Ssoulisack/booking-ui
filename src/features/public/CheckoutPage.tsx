@@ -440,7 +440,7 @@ export function CheckoutPage() {
             {mode === "both" && (
               <Link
                 to={`/login?next=${here}`}
-                className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--brand-ink)] underline-offset-4 hover:underline"
+                className="inline-flex min-h-11 items-center text-sm font-semibold text-foreground underline underline-offset-4 hover:text-[var(--brand)]"
               >
                 {t("public.haveAccount")}
               </Link>

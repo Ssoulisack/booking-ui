@@ -100,13 +100,13 @@ export function useFindCustomer() {
   })
 }
 
-export function useCustomers(keyword: string, page: number) {
+export function useCustomers(keyword: string, page: number, limit = 20) {
   const { base, key } = useBiz()
   return useQuery({
-    queryKey: key("customers", keyword, page),
+    queryKey: key("customers", keyword, page, limit),
     queryFn: () =>
       apiPage<Customer>(`${base}/customers`, {
-        query: { keyword, page, limit: 30 },
+        query: { keyword, page, limit },
       }),
     placeholderData: keepPreviousData,
   })
@@ -152,6 +152,24 @@ export function useReport<K extends ReportKind>(
     queryKey: key("reports", kind, from, to),
     queryFn: () =>
       api<ReportOf[K]>(`${base}/reports/${kind}`, { query: { from, to } }),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** One page of the unpaid list (the server pages it; the CSV button still downloads every row) */
+export function useUnpaidPage(
+  from: string,
+  to: string,
+  page: number,
+  limit: number,
+) {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("reports", "unpaid", from, to, page, limit),
+    queryFn: () =>
+      apiPage<UnpaidRow>(`${base}/reports/unpaid`, {
+        query: { from, to, page, limit },
+      }),
     placeholderData: keepPreviousData,
   })
 }

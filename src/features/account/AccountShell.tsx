@@ -1,47 +1,52 @@
-import { TicketIcon, TicketPercentIcon, UserRoundIcon } from "lucide-react"
+import { Link, Outlet } from "react-router"
 import { useTranslation } from "react-i18next"
-import { Outlet } from "react-router"
 
-import { readBack } from "@/features/public/origin"
+import { usePublicBranch } from "@/features/public/api"
+import { BranchSwitcher } from "@/features/public/BranchSwitcher"
+import { useCustomerMenu } from "@/features/public/CustomerHeader"
+import { readOriginSlug } from "@/features/public/origin"
 import { AppShell } from "@/layouts/AppShell"
 
 /**
- * /account/*: the customer's own area (My bookings, My account). One layout for both pages, so the
- * menu stays put and its pill slides from one item to the other. The top-left arrow leads back to
- * the page before: a branch, or all branches (also when there was none).
+ * /account/*: the customer's own area (My bookings, My packages, My account). It wears the same header and the same menu
+ * as the branch page (one list, see useCustomerMenu): the header on a laptop, the bottom menu on a phone, where the pill
+ * slides from one item to the next because it is one layout.
  */
 export function AccountLayout() {
-  const { t } = useTranslation()
-  const before = readBack()
+  // the branch the customer came from (null: from the list of all branches)
+  const slug = readOriginSlug()
+  const branch = usePublicBranch(slug ?? "", !!slug)
+  const menu = useCustomerMenu(slug, branch.data)
   return (
     <AppShell
       gooey
       customer
-      back={
-        before?.name
-          ? { to: before.to, label: before.name }
-          : { to: "/", label: t("public.allBranches") }
-      }
-      nav={[
-        {
-          to: "/account",
-          label: t("nav.myBookings"),
-          icon: TicketIcon,
-          end: true,
-        },
-        {
-          to: "/account/packages",
-          label: t("nav.myPackages"),
-          icon: TicketPercentIcon,
-        },
-        {
-          to: "/account/profile",
-          label: t("nav.account"),
-          icon: UserRoundIcon,
-        },
-      ]}
+      // the same left side as the branch page ("Company › Branch ▾"); the logo when there is no branch
+      context={slug ? <BranchLeft slug={slug} /> : undefined}
+      nav={menu.map((item) => ({
+        id: item.id,
+        to: item.to,
+        label: item.label,
+        icon: item.icon,
+        here: item.here,
+        end: true,
+      }))}
     >
       <Outlet />
     </AppShell>
   )
+}
+
+/** The branch button on the left of the header, as on the branch page */
+function BranchLeft({ slug }: { slug: string }) {
+  const { t } = useTranslation()
+  const branch = usePublicBranch(slug)
+  if (branch.data) return <BranchSwitcher business={branch.data} />
+  if (branch.isError)
+    return (
+      <Link to="/" className="font-semibold">
+        {t("public.allBranches")}
+      </Link>
+    )
+  return <span aria-hidden className="block h-11 w-40" />
 }

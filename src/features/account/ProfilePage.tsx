@@ -32,7 +32,7 @@ export function ProfilePage() {
   if (!user) return null
   return (
     <>
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="max-w-lg space-y-6">
         <PageTitle
           title={completing ? t("identity.completeTitle") : t("identity.title")}
           lead={completing ? t("identity.completeLead") : undefined}
