@@ -220,7 +220,10 @@ export function WalkInDialog({
         <Label>{t("public.tables.people")}</Label>
         <GuestsStepper value={guests} onChange={setGuests} />
       </div>
-      <TablePicker value={tables} onChange={setTables} guests={guests} />
+      {/* the tables scroll in their own box: the name, phone, note and the buttons stay in view */}
+      <div className="max-h-[24dvh] overflow-y-auto rounded-lg border p-2 sm:max-h-[34dvh]">
+        <TablePicker value={tables} onChange={setTables} guests={guests} />
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="walkin-name">{t("desk.nameOptional")}</Label>

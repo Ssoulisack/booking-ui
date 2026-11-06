@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { StatusBadge } from "@/features/public/BookingCard"
+import { ConfirmDialog } from "../ui"
 import { PaymentBadge } from "./PaymentBadge"
 import { bookingTitle, currentItems } from "@/features/public/booking-utils"
 import { eventBookingWhen } from "@/features/public/event-program"
@@ -78,6 +79,10 @@ function Details({ booking: b }: { booking: Booking }) {
   const status = useChangeStatus()
   const payment = useSetPayment()
   const arrive = useMarkArrived()
+  // a payment is only recorded after "Are you sure?": the method being confirmed, or "unpaid"
+  const [confirming, setConfirming] = useState<PaymentMethod | "unpaid" | null>(
+    null,
+  )
   const [moving, setMoving] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [reason, setReason] = useState("")
@@ -329,7 +334,7 @@ function Details({ booking: b }: { booking: Booking }) {
                   variant="ghost"
                   className="h-11 px-2 text-muted-foreground lg:h-9"
                   disabled={payment.isPending}
-                  onClick={() => payment.mutate({ id: b.id, status: "unpaid" })}
+                  onClick={() => setConfirming("unpaid")}
                 >
                   {t("desk.markUnpaid")}
                 </Button>
@@ -345,12 +350,7 @@ function Details({ booking: b }: { booking: Booking }) {
                     variant="outline"
                     className="h-12 lg:h-10"
                     disabled={payment.isPending}
-                    onClick={() =>
-                      payment.mutate(
-                        { id: b.id, status: "paid", method: m },
-                        { onSuccess: () => toast.success(t("desk.paidDone")) },
-                      )
-                    }
+                    onClick={() => setConfirming(m)}
                   >
                     {t(`desk.methods.${m}`)}
                   </Button>
@@ -359,6 +359,46 @@ function Details({ booking: b }: { booking: Booking }) {
             </div>
           ) : null}
           <ErrorAlert error={payment.error} />
+          {confirming && (
+            <ConfirmDialog
+              title={
+                confirming === "unpaid"
+                  ? t("desk.confirmUnpaidTitle")
+                  : t("desk.confirmPaidTitle")
+              }
+              description={
+                confirming === "unpaid"
+                  ? t("desk.confirmUnpaid", { code: b.code })
+                  : t("desk.confirmPaid", {
+                      code: b.code,
+                      amount: money(b.total_price, b.currency),
+                      method: t(`desk.methods.${confirming}`),
+                    })
+              }
+              confirmLabel={
+                confirming === "unpaid"
+                  ? t("desk.confirmUnpaidYes")
+                  : t("desk.confirmPaidYes")
+              }
+              pending={payment.isPending}
+              error={payment.error}
+              onClose={() => setConfirming(null)}
+              onConfirm={() =>
+                payment.mutate(
+                  confirming === "unpaid"
+                    ? { id: b.id, status: "unpaid" }
+                    : { id: b.id, status: "paid", method: confirming },
+                  {
+                    onSuccess: () => {
+                      if (confirming !== "unpaid")
+                        toast.success(t("desk.paidDone"))
+                      setConfirming(null)
+                    },
+                  },
+                )
+              }
+            />
+          )}
         </section>
       )}
 

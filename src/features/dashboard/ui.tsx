@@ -130,20 +130,27 @@ export function FormDialog({
   }, [error])
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
-        <form onSubmit={onSubmit} noValidate className="space-y-5">
-          <DialogHeader>
+      {/* the title above and the buttons below stay in view; only the middle (the fields) scrolls on a small screen */}
+      <DialogContent className="flex max-h-[92dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <form
+          onSubmit={onSubmit}
+          noValidate
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <DialogHeader className="px-4 pt-4 pr-12 pb-3">
             <DialogTitle>{title}</DialogTitle>
             {description && (
               <DialogDescription>{description}</DialogDescription>
             )}
           </DialogHeader>
 
-          {children}
-          <div ref={errorBox}>
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-1">
+            {children}
+          </div>
+          <div ref={errorBox} className="px-4 empty:hidden">
             <ErrorAlert error={error} />
           </div>
-          <DialogFooter>
+          <DialogFooter className="m-0 rounded-none border-t bg-popover px-4 py-3">
             <Button
               type="button"
               variant="outline"
@@ -377,5 +384,57 @@ export function ImageField({
         }}
       />
     </div>
+  )
+}
+
+/** "Are you sure?" before an action that is easy to do by mistake (money): nothing happens until Confirm */
+export function ConfirmDialog({
+  title,
+  description,
+  confirmLabel,
+  pending,
+  error,
+  onConfirm,
+  onClose,
+}: {
+  title: string
+  description: string
+  confirmLabel: string
+  pending: boolean
+  error?: unknown
+  onConfirm: () => void
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <Dialog open onOpenChange={(o) => !o && !pending && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <ErrorAlert error={error} />
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 lg:h-9"
+            disabled={pending}
+            onClick={onClose}
+          >
+            {t("dash.cancel")}
+          </Button>
+          <Button
+            type="button"
+            className="h-11 lg:h-9"
+            disabled={pending}
+            onClick={onConfirm}
+          >
+            {pending && <Spinner />}
+            {confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

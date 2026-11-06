@@ -936,66 +936,71 @@ function Editor({
       </div>
 
       {/* phone: the selected table's panel and Save come right under the plan, the list after them */}
-      <div className="space-y-4 lg:sticky lg:top-20 lg:row-span-2 lg:self-start">
-        {selectedTable ? (
-          <TablePanel
-            key={`t${selectedTable.id}`}
-            table={selectedTable}
-            onChange={(patch) => update(selectedTable.id, patch)}
-            onDeleted={() => {
-              setPicked(null)
-              void queryClient.invalidateQueries({
-                queryKey: key("plan", area.id),
-              })
-            }}
-            // a copy that is not saved yet is just taken off the plan
-            onRemoveCopy={
-              selectedTable.id < 0
-                ? () => {
-                    remember("delete")
-                    setTables((list) =>
-                      list.filter((x) => x.id !== selectedTable.id),
-                    )
-                    setSel([])
-                  }
-                : undefined
-            }
-            canDelete={!dirty}
-          />
-        ) : selectedItem ? (
-          <ItemPanel
-            key={`i${selectedItem.id}`}
-            item={selectedItem}
-            areaFloor={area.floor ?? 0}
-            canLeave={!dirty}
-            onGoFloor={onGoFloor}
-            maxW={W}
-            maxH={H}
-            onChange={(patch) => updateItem(selectedItem.id, patch)}
-            onRemove={() => {
-              setItems((list) => list.filter((x) => x.id !== selectedItem.id))
-              setPicked(null)
-            }}
-          />
-        ) : sel.length > 1 ? (
-          <MultiPanel
-            tables={sel.filter((k) => parseKey(k).type === "table").length}
-            objects={sel.filter((k) => parseKey(k).type === "item").length}
-            canRemove={sel.some(canRemove)}
-            onDuplicate={duplicate}
-            onRemove={removeSelected}
-            onClear={() => setSel([])}
-          />
-        ) : (
-          <Panel>
-            <p className="text-sm text-muted-foreground">
-              {tables.length === 0
-                ? t("restaurant.table.none")
-                : t("restaurant.table.pick")}
-            </p>
-          </Panel>
-        )}
-        <div className="space-y-3">
+      <div className="flex flex-col gap-4 lg:sticky lg:top-20 lg:row-span-2 lg:max-h-[calc(100dvh-6rem)] lg:self-start">
+        {/* the settings scroll by themselves; Save and Undo below stay in view */}
+        <div className="min-h-0 space-y-4 lg:flex-1 lg:overflow-y-auto">
+          {selectedTable ? (
+            <TablePanel
+              key={`t${selectedTable.id}`}
+              table={selectedTable}
+              onChange={(patch) => update(selectedTable.id, patch)}
+              onDeleted={() => {
+                setPicked(null)
+                void queryClient.invalidateQueries({
+                  queryKey: key("plan", area.id),
+                })
+              }}
+              // a copy that is not saved yet is just taken off the plan
+              onRemoveCopy={
+                selectedTable.id < 0
+                  ? () => {
+                      remember("delete")
+                      setTables((list) =>
+                        list.filter((x) => x.id !== selectedTable.id),
+                      )
+                      setSel([])
+                    }
+                  : undefined
+              }
+              canDelete={!dirty}
+            />
+          ) : selectedItem ? (
+            <ItemPanel
+              key={`i${selectedItem.id}`}
+              item={selectedItem}
+              areaFloor={area.floor ?? 0}
+              canLeave={!dirty}
+              onGoFloor={onGoFloor}
+              maxW={W}
+              maxH={H}
+              onChange={(patch) => updateItem(selectedItem.id, patch)}
+              onRemove={() => {
+                setItems((list) => list.filter((x) => x.id !== selectedItem.id))
+                setPicked(null)
+              }}
+            />
+          ) : sel.length > 1 ? (
+            <MultiPanel
+              tables={sel.filter((k) => parseKey(k).type === "table").length}
+              objects={sel.filter((k) => parseKey(k).type === "item").length}
+              canRemove={sel.some(canRemove)}
+              onDuplicate={duplicate}
+              onRemove={removeSelected}
+              onClear={() => setSel([])}
+            />
+          ) : (
+            <Panel>
+              <p className="text-sm text-muted-foreground">
+                {tables.length === 0
+                  ? t("restaurant.table.none")
+                  : t("restaurant.table.pick")}
+              </p>
+            </Panel>
+          )}
+        </div>
+        {/* phone: Save is pinned to the bottom of the screen; on a laptop it sits under the settings, always in view */}
+        <div aria-hidden className="h-28 lg:hidden" />
+        <div className="fixed inset-x-0 bottom-0 z-30 space-y-2 border-t bg-background p-3 lg:static lg:z-auto lg:shrink-0 lg:border-0 lg:p-0">
           <ErrorAlert error={save.error} />
           <Button
             className="h-11 w-full lg:h-9"
