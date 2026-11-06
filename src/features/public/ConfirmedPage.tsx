@@ -51,14 +51,18 @@ function Confirmed({ created }: { created: CreatedBooking }) {
           {pending
             ? paid
               ? t("public.paidTitle")
-              : t("public.requestedTitle")
+              : booking.event_id
+                ? t("public.heldTitle")
+                : t("public.requestedTitle")
             : t("public.bookedTitle")}
         </h1>
         <p className="text-muted-foreground">
           {pending
             ? paid
               ? t("public.paidLead")
-              : t("public.requestedLead")
+              : booking.event_id
+                ? t("public.heldLead")
+                : t("public.requestedLead")
             : t("public.bookedLead")}
         </p>
       </div>

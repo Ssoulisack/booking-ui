@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Booking, CalendarLane } from "@/lib/api/types"
 import { timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { currentItems } from "@/features/public/booking-utils"
 
 import { useSettings } from "../api"
 import { FormDialog } from "../ui"
@@ -269,10 +268,9 @@ export function MoveTablesDialog({
 }) {
   const { t } = useTranslation()
   const move = useMoveTables()
-  const current = currentItems(b)
-    .filter((i) => i.resource_id)
-    .map((i) => i.resource_id!)
-  const [tables, setTables] = useState<number[]>(current)
+  // nothing is preselected: the old tables are freed by the move, so tapping a new table moves the group there
+  // (a preselected old table made "31 + 22" instead of "22")
+  const [tables, setTables] = useState<number[]>([])
   return (
     <FormDialog
       open
@@ -284,6 +282,7 @@ export function MoveTablesDialog({
       error={move.error}
       onSubmit={(e) => {
         e.preventDefault()
+        if (tables.length === 0) return
         move.mutate(
           { id: b.id, table_ids: tables },
           {

@@ -1,6 +1,4 @@
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
   EyeIcon,
   RefreshCwIcon,
   SearchIcon,
@@ -9,6 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { PageError } from "@/components/page-state"
+import { Pager } from "@/components/Pager"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -207,46 +206,6 @@ function Card({
   )
 }
 
-function Pager({
-  page,
-  total,
-  onPage,
-}: {
-  page: number
-  total: number
-  onPage: (p: number) => void
-}) {
-  const { t } = useTranslation()
-  if (total <= 1) return null
-  return (
-    <div className="mt-3 flex items-center justify-end gap-2">
-      <span className="text-sm text-muted-foreground">
-        {t("reports.rows.page", { page, total })}
-      </span>
-      <Button
-        variant="outline"
-        size="icon"
-        className="size-11 lg:size-9"
-        aria-label={t("reports.rows.prev")}
-        disabled={page <= 1}
-        onClick={() => onPage(page - 1)}
-      >
-        <ChevronLeftIcon />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        className="size-11 lg:size-9"
-        aria-label={t("reports.rows.next")}
-        disabled={page >= total}
-        onClick={() => onPage(page + 1)}
-      >
-        <ChevronRightIcon />
-      </Button>
-    </div>
-  )
-}
-
 function useTz() {
   return useSettings().data?.in_force.timezone ?? "Asia/Vientiane"
 }
@@ -426,6 +385,7 @@ export function TableBookingsView() {
   const [order, setOrder] = useState("desc")
   const [keyword, setKeyword] = useState("")
   const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(20)
   const report = useTableReport({
     from,
     to: to < from ? from : to,
@@ -434,7 +394,7 @@ export function TableBookingsView() {
     sort_by: "created_at",
     order,
     page,
-    limit: 20,
+    limit,
   })
   const reset =
     <T,>(set: (v: T) => void) =>
@@ -517,9 +477,14 @@ export function TableBookingsView() {
               <Grid items={report.data.items} />
             )}
             <Pager
-              page={report.data.meta.page}
-              total={report.data.meta.total_page}
+              meta={report.data.meta}
+              page={page}
               onPage={setPage}
+              limit={limit}
+              onLimit={(n) => {
+                setLimit(n)
+                setPage(1)
+              }}
             />
           </Panel>
         </>
@@ -539,6 +504,7 @@ export function EventBookingsView() {
   const [order, setOrder] = useState("desc")
   const [keyword, setKeyword] = useState("")
   const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(20)
   const none = (v: string) => (v === ALL ? "" : v)
   // newest event first (by its first day); the report opens on the latest one
   const latest = [...(events.data ?? [])]
@@ -555,7 +521,7 @@ export function EventBookingsView() {
       sort_by: "created_at",
       order,
       page,
-      limit: 20,
+      limit,
     },
     !events.isPending,
   )
@@ -664,9 +630,14 @@ export function EventBookingsView() {
               <Grid items={report.data.items} event />
             )}
             <Pager
-              page={report.data.meta.page}
-              total={report.data.meta.total_page}
+              meta={report.data.meta}
+              page={page}
               onPage={setPage}
+              limit={limit}
+              onLimit={(n) => {
+                setLimit(n)
+                setPage(1)
+              }}
             />
           </Panel>
         </>

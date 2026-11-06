@@ -122,7 +122,7 @@ export function itemLook(item: FloorItem) {
     case "bar":
       return "rounded-md bg-stone-700 text-white border-stone-800"
     case "pole":
-      return "rounded-full bg-stone-500 text-white border-stone-600"
+      return "pointer-events-none rounded-full border-2 border-dashed border-stone-500 bg-stone-300/70 text-stone-800"
     case "stage":
       return "rounded-md bg-violet-200 text-violet-950 border-violet-400"
     case "toilet":

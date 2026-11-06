@@ -106,7 +106,11 @@ export function EventPage() {
   // the branch may allow only accounts, or this event may (customers without an account cannot buy its tables)
   const needsLogin =
     !user && (mode === "account" || ev?.accept_guests === false)
-  const areas = plans.data ?? []
+  // only the areas the event is held in (the others are booked the normal way); an event with no areas shows them all
+  const heldIn = new Set((ev?.areas ?? []).map((a) => a.id))
+  const areas = (plans.data ?? []).filter(
+    (a) => heldIn.size === 0 || heldIn.has(a.id),
+  )
 
   const sale = useMemo(
     () => new Map((ev?.tables ?? []).map((x) => [x.id, x])),
