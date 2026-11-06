@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StatusBadge } from "@/features/public/BookingCard"
 import { bookingTitle } from "@/features/public/booking-utils"
+import { floorName } from "@/lib/floor-plan"
 import { dayIn, nextDays, timeIn, todayIn } from "@/lib/format"
 
 import { useSettings } from "../api"
@@ -297,8 +298,16 @@ export function BookingsPage() {
                     </span>
                     <span className="block truncate text-sm text-muted-foreground">
                       {bookingTitle(b)}
+                      {/* a table booking says where the table is: the area (and the floor above the ground floor), then the zone */}
                       {b.guests
-                        ? ` · ${t("public.tables.guestsLine", { count: b.guests })}${b.zones ? ` · ${b.zones}` : ""}`
+                        ? ` · ${[
+                            b.sport_name,
+                            b.area_floor ? floorName(t, b.area_floor) : "",
+                          ]
+                            .filter(Boolean)
+                            .join(
+                              ", ",
+                            )} · ${t("public.tables.guestsLine", { count: b.guests })}${b.zones ? ` · ${b.zones}` : ""}`
                         : ""}{" "}
                       · {b.code}
                     </span>
