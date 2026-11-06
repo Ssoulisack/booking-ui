@@ -378,6 +378,14 @@ export function EventPage() {
                       <span className="inline-block size-3.5 rounded border-2 border-dashed bg-muted" />
                       {t("public.events.legendSold")}
                     </li>
+                    {areas.some((a) =>
+                      a.tables.some((x) => x.walk_in_only),
+                    ) && (
+                      <li className="flex items-center gap-1.5">
+                        <span className="inline-block size-3.5 rounded border-2 border-sky-400 bg-sky-50" />
+                        {t("public.tables.legendKept")}
+                      </li>
+                    )}
                   </ul>
 
                   {/* what is chosen and the total; Continue once something is */}

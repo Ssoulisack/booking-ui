@@ -68,6 +68,7 @@ export function TableBookingPanel() {
     a.tables.map((tb) => ({ ...tb, sport_id: a.id })),
   )
   const freeIds = new Set(time?.free_table_ids ?? [])
+  const keptIds = new Set(avail.data?.kept_table_ids ?? [])
   const floors = [...new Set(areas.map((a) => a.floor))]
   const freeOn = (f: number) =>
     areas
@@ -363,10 +364,14 @@ export function TableBookingPanel() {
               chosen={new Set(chosenIds)}
               onFloor={goFloor}
               onToggle={toggle}
+              kept={keptIds}
             />
           )}
           <Legend
-            kept={areas.some((a) => a.tables.some((x) => x.walk_in_only))}
+            kept={
+              keptIds.size > 0 ||
+              areas.some((a) => a.tables.some((x) => x.walk_in_only))
+            }
           />
           {time.extra_chairs_allowed && (
             <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-400/15 dark:text-amber-200">
@@ -469,6 +474,7 @@ export function Plans({
   staffLook,
   priceLabel,
   tint,
+  kept,
 }: {
   areas: PublicArea[]
   floors: number[]
@@ -480,6 +486,7 @@ export function Plans({
   staffLook?: (id: number) => StaffTable
   priceLabel?: (id: number) => string | undefined
   tint?: (id: number) => string | undefined
+  kept?: Set<number>
 }) {
   const { t } = useTranslation()
   const onThisFloor = areas.filter((a) => a.floor === floor)
@@ -559,6 +566,7 @@ export function Plans({
           staffLook={staffLook}
           priceLabel={priceLabel}
           tint={tint}
+          kept={kept}
           onStairs={(f) => {
             setAreaPick(null)
             onFloor(f)

@@ -233,7 +233,11 @@ export function useFloorPlans(slug: string, enabled = true) {
     queryKey: publicKeys.floorPlans(slug),
     queryFn: () => api<PublicArea[]>(`${pub(slug)}/floor-plans`),
     enabled,
-    ...CATALOG,
+    // the plan says which tables are kept for walk-ins: that changes while a customer has the page open, and the list
+    // of free tables is refreshed every 15 s, so a longer cache would draw a kept table as "taken"
+    staleTime: 20_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
   })
 }
 

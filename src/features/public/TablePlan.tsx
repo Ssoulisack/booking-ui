@@ -41,6 +41,7 @@ export function TablePlan({
   staffLook,
   priceLabel,
   tint,
+  kept: keptIds,
 }: {
   area: PublicArea
   free: Set<number>
@@ -53,6 +54,8 @@ export function TablePlan({
   priceLabel?: (id: number) => string | undefined
   /** event days: tables of one price share a colour (any CSS colour) */
   tint?: (id: number) => string | undefined
+  /** tables kept for walk-ins that the availability answer names (the plan itself may be a little older) */
+  kept?: Set<number>
 }) {
   const { t } = useTranslation()
   const box = useRef<HTMLDivElement>(null)
@@ -115,7 +118,10 @@ export function TablePlan({
         const staff = staffLook?.(table.id)
         const color = isFree && !isChosen ? tint?.(table.id) : undefined
         // a table kept for walk-ins is said so (it is not "taken")
-        const kept = !!table.walk_in_only && !staff && !isFree
+        const kept =
+          (!!table.walk_in_only || !!keptIds?.has(table.id)) &&
+          !staff &&
+          !isFree
         return (
           <button
             key={table.id}

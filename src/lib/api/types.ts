@@ -561,6 +561,8 @@ export interface TableAvailability {
   max_guests_online: number
   late_minutes: number
   booking_style: BookingStyle
+  /** tables kept for walk-ins: shown as "walk-in only", not "taken" (same answer as the free tables, so never out of step) */
+  kept_table_ids?: number[]
   /** an event takes this day over: its tables are sold, not booked free */
   event?: {
     id: number
