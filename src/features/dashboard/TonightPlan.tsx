@@ -97,11 +97,30 @@ export function TonightPlan() {
       (p.data?.tables ?? []).filter((x) => x.walk_in_only).map((x) => x.id),
     ),
   )
+  // what a booked table needs from the team: an event table is paid and confirmed, or waiting for money, or the slip
+  // must be checked; anything odd (paid but not confirmed, confirmed but not paid) is flagged
+  const stateOf = (b: Booking): StaffTable => {
+    const time = timeIn(b.arrive_by ?? b.starts_at, tz)
+    const paid = b.payment_status === "paid"
+    if (b.event_id) {
+      if (b.status === "confirmed" && paid)
+        return { tone: "confirmed", note: t("tonight.sConfirmed") }
+      if (b.status === "pending" && paid)
+        return { tone: "review", note: t("tonight.sPaidConfirm") }
+      if (b.status === "confirmed")
+        return { tone: "review", note: t("tonight.sConfirmedUnpaid") }
+      if (b.slip_sent_at) return { tone: "slip", note: t("tonight.sSlip") }
+      return { tone: "unpaid", note: t("tonight.sUnpaid") }
+    }
+    // a normal booking: waiting for the team's approval, or approved
+    if (b.status === "pending")
+      return { tone: "booked", note: `${time} · ${t("tonight.sApprove")}` }
+    return { tone: "booked", note: time }
+  }
   const look = (id: number): StaffTable => {
     if (seated.has(id)) return { tone: "taken", note: t("tonight.taken") }
     const b = coming.get(id)
-    if (b)
-      return { tone: "booked", note: timeIn(b.arrive_by ?? b.starts_at, tz) }
+    if (b) return stateOf(b)
     // kept for walk-ins: free for the desk to seat, not bookable online
     if (keptIds.has(id)) return { tone: "kept", note: t("tonight.keptShort") }
     return { tone: "free" }
@@ -125,6 +144,11 @@ export function TonightPlan() {
       .filter((x) => ["free", "kept"].includes(look(x.id).tone))
       .map((x) => x.id),
   )
+  // which states are on the plan (the legend names only those) and how many tables each has
+  const tones = all.map((x) => look(x.id).tone)
+  const used = new Set(tones)
+  const count = (tone: StaffTable["tone"]) =>
+    tones.filter((x) => x === tone).length
   const floors = [...new Set(shown.map((a) => a.floor))]
   const floor =
     floorPick !== null && floors.includes(floorPick) ? floorPick : floors[0]
@@ -168,6 +192,33 @@ export function TonightPlan() {
               tone="border-border"
             />
           </div>
+          {(used.has("confirmed") ||
+            used.has("unpaid") ||
+            used.has("slip") ||
+            used.has("review")) && (
+            <p className="flex flex-wrap gap-2 text-sm">
+              {used.has("confirmed") && (
+                <StateChip className="bg-emerald-100 text-emerald-900 dark:bg-emerald-400/20 dark:text-emerald-100">
+                  {t("tonight.nConfirmed", { count: count("confirmed") })}
+                </StateChip>
+              )}
+              {used.has("unpaid") && (
+                <StateChip className="bg-amber-100 text-amber-900 dark:bg-amber-400/20 dark:text-amber-100">
+                  {t("tonight.nUnpaid", { count: count("unpaid") })}
+                </StateChip>
+              )}
+              {used.has("slip") && (
+                <StateChip className="bg-violet-100 text-violet-900 dark:bg-violet-400/20 dark:text-violet-100">
+                  {t("tonight.nSlip", { count: count("slip") })}
+                </StateChip>
+              )}
+              {used.has("review") && (
+                <StateChip className="bg-orange-100 text-orange-900 dark:bg-orange-400/20 dark:text-orange-100">
+                  {t("tonight.nReview", { count: count("review") })}
+                </StateChip>
+              )}
+            </p>
+          )}
           <Plans
             areas={shown}
             floors={floors}
@@ -191,6 +242,26 @@ export function TonightPlan() {
             <Swatch className="border-2 border-sky-500 bg-sky-50 dark:bg-sky-400/15">
               {t("tonight.kept")}
             </Swatch>
+            {used.has("confirmed") && (
+              <Swatch className="border-2 border-emerald-600 bg-emerald-500">
+                {t("tonight.confirmed")}
+              </Swatch>
+            )}
+            {used.has("unpaid") && (
+              <Swatch className="border-2 border-dashed border-amber-500 bg-amber-100">
+                {t("tonight.unpaid")}
+              </Swatch>
+            )}
+            {used.has("slip") && (
+              <Swatch className="border-2 border-violet-500 bg-violet-100">
+                {t("tonight.slip")}
+              </Swatch>
+            )}
+            {used.has("review") && (
+              <Swatch className="border-2 border-orange-600 bg-orange-100">
+                {t("tonight.review")}
+              </Swatch>
+            )}
             <span>{t("tonight.tapHint")}</span>
           </p>
         </div>
@@ -507,5 +578,19 @@ function DayPicker({
         </Button>
       )}
     </div>
+  )
+}
+
+function StateChip({
+  className,
+  children,
+}: {
+  className: string
+  children: React.ReactNode
+}) {
+  return (
+    <span className={cn("rounded-full px-3 py-1 font-medium", className)}>
+      {children}
+    </span>
   )
 }

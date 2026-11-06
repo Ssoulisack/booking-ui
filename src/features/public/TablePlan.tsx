@@ -10,7 +10,15 @@ import { cn } from "@/lib/utils"
 
 /** A table on the team's plan: free, taken (a group sits there) or booked (a group is coming) */
 export interface StaffTable {
-  tone: "free" | "taken" | "booked" | "kept"
+  tone:
+    | "free"
+    | "taken"
+    | "booked"
+    | "kept"
+    | "confirmed" // booked and settled: a normal booking the team approved, or an event booking paid and confirmed
+    | "unpaid" // an event booking holding the table until it is paid
+    | "slip" // the customer says they paid (slip sent): the team must check it
+    | "review" // needs the team: paid but not confirmed, or confirmed but not paid
   /** a short line under the name: "Taken", "19:30" */
   note?: string
 }
@@ -19,6 +27,12 @@ const STAFF_TONE: Record<StaffTable["tone"], string> = {
   free: "border-[var(--brand)]/60 bg-card text-foreground shadow-sm active:bg-[var(--brand-soft)]",
   taken: "border-rose-600 bg-rose-500 text-white shadow-sm",
   booked: "border-dashed border-amber-500 bg-amber-50 text-amber-950",
+  confirmed: "border-emerald-600 bg-emerald-500 text-white shadow-sm",
+  unpaid:
+    "border-dashed border-amber-500 bg-amber-100 text-amber-950 shadow-sm",
+  slip: "border-violet-500 bg-violet-100 text-violet-950 shadow-sm ring-2 ring-violet-400/60",
+  review:
+    "border-orange-600 bg-orange-100 text-orange-950 shadow-sm ring-2 ring-orange-500",
   // kept for walk-ins: free for the desk to seat, not bookable online
   kept: "border-sky-500 bg-sky-50 text-sky-950 shadow-sm active:bg-sky-100",
 }
