@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { ImagePlusIcon, ImagesIcon, Trash2Icon, XIcon } from "lucide-react"
-import { useRef, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ErrorAlert } from "@/components/form"
@@ -121,6 +121,13 @@ export function FormDialog({
   children: ReactNode
 }) {
   const { t } = useTranslation()
+  // the answer of a refused save shows beside the button that was pressed (a long form scrolls: an error at the top
+  // would be out of sight) and comes into view
+  const errorBox = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (error)
+      errorBox.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+  }, [error])
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
@@ -131,8 +138,11 @@ export function FormDialog({
               <DialogDescription>{description}</DialogDescription>
             )}
           </DialogHeader>
-          <ErrorAlert error={error} />
+
           {children}
+          <div ref={errorBox}>
+            <ErrorAlert error={error} />
+          </div>
           <DialogFooter>
             <Button
               type="button"
