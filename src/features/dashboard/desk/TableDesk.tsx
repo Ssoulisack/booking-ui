@@ -1,5 +1,5 @@
-import { MinusIcon, PlusIcon, UsersIcon } from "lucide-react"
-import { useState } from "react"
+import { MinusIcon, PlusIcon, SearchIcon, UsersIcon } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -42,29 +42,58 @@ function tableState(lane: CalendarLane, now: string, exclude?: number) {
 }
 
 /**
- * Today's tables by area: seats, free / taken now, and the next booking. Taken tables cannot be
- * picked; several tables can be joined for a big group.
+ * Today's tables by area: seats, free / booked later / taken now, and the next booking. Taken tables cannot be
+ * picked; several tables can be joined for a big group. The counts and the search stay in view; the list scrolls.
+ * Typing a name (11, A1) highlights that table and scrolls to it; Enter picks it.
  */
 function TablePicker({
   value,
   onChange,
   guests,
   exclude,
+  listClass = "max-h-[34dvh]",
 }: {
   value: number[]
   onChange: (ids: number[]) => void
   guests: number
   /** the booking being moved: its own tables count as free */
   exclude?: number
+  /** how tall the scrolling list may be */
+  listClass?: string
 }) {
   const { t } = useTranslation()
   const tz = useSettings().data?.in_force.timezone ?? "Asia/Vientiane"
   const calendar = useCalendar(todayIn(tz), 1)
   const [now] = useState(() => new Date().toISOString())
-  if (!calendar.data) return <Skeleton className="h-48 rounded-xl" />
-  const tables = calendar.data.lanes.filter(
+  const [query, setQuery] = useState("")
+  const nodes = useRef(new Map<number, HTMLButtonElement>())
+  const tables = (calendar.data?.lanes ?? []).filter(
     (l) => l.owner_type === "resource" && l.seats > 0,
   )
+  const state = new Map(
+    tables.map((l) => [l.owner_id, tableState(l, now, exclude)]),
+  )
+
+  // the tables the typed name points at: the exact name, else names that start with it, else names that hold it
+  const q = query.trim().toLowerCase()
+  const lower = (l: CalendarLane) => l.name.toLowerCase()
+  const found = !q
+    ? []
+    : ([
+        tables.filter((l) => lower(l) === q),
+        tables.filter((l) => lower(l).startsWith(q)),
+        tables.filter((l) => lower(l).includes(q)),
+      ].find((tier) => tier.length > 0) ?? [])
+  const foundIds = new Set(found.map((l) => l.owner_id))
+  const firstFound = found[0]?.owner_id
+  useEffect(() => {
+    if (firstFound)
+      nodes.current
+        .get(firstFound)
+        ?.scrollIntoView({ block: "center", behavior: "smooth" })
+  }, [firstFound])
+
+  if (!calendar.data) return <Skeleton className="h-48 rounded-xl" />
   const groups = groupLanes(tables, true, t)
   const seats = tables
     .filter((l) => value.includes(l.owner_id))
@@ -73,50 +102,118 @@ function TablePicker({
     onChange(
       value.includes(id) ? value.filter((x) => x !== id) : [...value, id],
     )
+  const taken = tables.filter((l) => state.get(l.owner_id)?.busy).length
+  const booked = tables.filter((l) => {
+    const s = state.get(l.owner_id)
+    return !s?.busy && s?.next
+  }).length
+  const free = tables.length - taken - booked
 
   return (
-    <div className="space-y-4">
-      {groups.map((g) => (
-        <section key={g.key} className="space-y-2">
-          <h3 className="text-sm font-semibold">{g.label}</h3>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {g.lanes.map((l) => {
-              const { busy, next } = tableState(l, now, exclude)
-              const on = value.includes(l.owner_id)
-              return (
-                <button
-                  key={l.owner_id}
-                  type="button"
-                  aria-pressed={on}
-                  disabled={busy && !on}
-                  onClick={() => toggle(l.owner_id)}
-                  className={cn(
-                    "flex min-h-16 flex-col items-start justify-center rounded-lg border px-2.5 py-1.5 text-left text-sm transition-colors",
-                    on
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : busy
-                        ? "border-dashed bg-muted text-muted-foreground"
-                        : "bg-background hover:bg-muted",
-                  )}
-                >
-                  <span className="font-semibold">{l.name}</span>
-                  <span className="flex items-center gap-1 text-xs opacity-80">
-                    <UsersIcon className="size-3" />
-                    {l.seats}
-                  </span>
-                  <span className="text-xs opacity-80">
-                    {busy
-                      ? t("desk.tableTaken")
-                      : next
-                        ? t("desk.tableNext", { time: timeIn(next, tz) })
-                        : t("desk.tableFree")}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </section>
-      ))}
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        <span className="flex items-center gap-1.5">
+          <span className="size-3 rounded border bg-background" />
+          {t("desk.countFree", { count: free })}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-3 rounded border border-amber-500 bg-amber-100" />
+          {t("desk.countBooked", { count: booked })}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-3 rounded border border-dashed border-rose-400 bg-rose-100" />
+          {t("desk.countTaken", { count: taken })}
+        </span>
+      </div>
+      <div className="relative">
+        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="search"
+          value={query}
+          placeholder={t("desk.findTable")}
+          aria-label={t("desk.findTable")}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter finds and picks (it must not send the form)
+            if (e.key !== "Enter") return
+            e.preventDefault()
+            const hit = found[0]
+            if (hit && !state.get(hit.owner_id)?.busy) toggle(hit.owner_id)
+          }}
+          className="h-11 pl-9 lg:h-9"
+        />
+        {q && found.length === 0 && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("desk.noTableNamed", { name: query.trim() })}
+          </p>
+        )}
+      </div>
+      <div
+        className={cn(
+          "space-y-4 overflow-y-auto rounded-lg border p-2",
+          listClass,
+        )}
+      >
+        {groups.map((g) => (
+          <section key={g.key} className="space-y-2">
+            <h3 className="text-sm font-semibold">{g.label}</h3>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {g.lanes.map((l) => {
+                const { busy, next } = state.get(l.owner_id) ?? {
+                  busy: false,
+                  next: undefined,
+                }
+                const on = value.includes(l.owner_id)
+                const hit = foundIds.has(l.owner_id)
+                return (
+                  <button
+                    key={l.owner_id}
+                    ref={(el) => {
+                      if (el) nodes.current.set(l.owner_id, el)
+                      else nodes.current.delete(l.owner_id)
+                    }}
+                    type="button"
+                    aria-pressed={on}
+                    disabled={busy && !on}
+                    onClick={() => toggle(l.owner_id)}
+                    className={cn(
+                      "flex min-h-16 flex-col items-start justify-center rounded-lg border px-2.5 py-1.5 text-left text-sm transition-colors",
+                      on
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : busy
+                          ? "border-dashed border-rose-400 bg-rose-50 text-rose-900 dark:bg-rose-950/40 dark:text-rose-200"
+                          : next
+                            ? "border-amber-500 bg-amber-50 text-amber-950 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-100"
+                            : "bg-background hover:bg-muted",
+                      // the table the search found
+                      hit &&
+                        "ring-3 ring-sky-500 ring-offset-2 ring-offset-background",
+                    )}
+                  >
+                    <span className="font-semibold">{l.name}</span>
+                    <span className="flex items-center gap-1 text-xs opacity-80">
+                      <UsersIcon className="size-3" />
+                      {l.seats}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-xs",
+                        next && !busy && !on ? "font-semibold" : "opacity-80",
+                      )}
+                    >
+                      {busy
+                        ? t("desk.tableTaken")
+                        : next
+                          ? t("desk.tableNext", { time: timeIn(next, tz) })
+                          : t("desk.tableFree")}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
       <p
         className={cn(
           "text-sm font-medium",
@@ -220,10 +317,13 @@ export function WalkInDialog({
         <Label>{t("public.tables.people")}</Label>
         <GuestsStepper value={guests} onChange={setGuests} />
       </div>
-      {/* the tables scroll in their own box: the name, phone, note and the buttons stay in view */}
-      <div className="max-h-[24dvh] overflow-y-auto rounded-lg border p-2 sm:max-h-[34dvh]">
-        <TablePicker value={tables} onChange={setTables} guests={guests} />
-      </div>
+      {/* the counts and the search stay in view, the tables scroll in their own box */}
+      <TablePicker
+        value={tables}
+        onChange={setTables}
+        guests={guests}
+        listClass="max-h-[16dvh] sm:max-h-[26dvh]"
+      />
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="walkin-name">{t("desk.nameOptional")}</Label>
