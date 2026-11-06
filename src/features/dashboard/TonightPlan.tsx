@@ -431,7 +431,7 @@ function SeatDialog({
           <Switch
             id="keep-walkin"
             checked={kept}
-            disabled={keep.pending}
+            disabled={keep.pending || walkIn.isPending}
             onCheckedChange={(on) => void keep.set(table, on, onClose)}
           />
         </div>
@@ -472,7 +472,7 @@ function SeatDialog({
         {canSeat && (
           <Button
             className="h-12 w-full bg-rose-600 text-base text-white hover:bg-rose-700"
-            disabled={walkIn.isPending}
+            disabled={walkIn.isPending || keep.pending}
             onClick={() =>
               walkIn.mutate(
                 { table_ids: [table.id], guests },
@@ -550,7 +550,12 @@ function FreeDialog({
             {status.isPending && <Spinner />}
             {t("tonight.freeTable")}
           </Button>
-          <Button variant="outline" className="h-11" onClick={onDetails}>
+          <Button
+            variant="outline"
+            className="h-11"
+            disabled={status.isPending}
+            onClick={onDetails}
+          >
             {t("tonight.details")}
           </Button>
         </div>

@@ -228,7 +228,7 @@ function CloseButton({ branch: b }: { branch: BranchSummary }) {
           <Button
             variant={closed ? "default" : "destructive"}
             className="h-11 lg:h-9"
-            disabled={change.isPending}
+            loading={change.isPending}
             onClick={() =>
               change.mutate(
                 { id: b.id, closed: !closed },

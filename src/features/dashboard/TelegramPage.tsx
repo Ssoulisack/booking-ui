@@ -214,7 +214,8 @@ function Connection({ tg }: { tg: TelegramSettings }) {
                       <Button
                         variant={g.current ? "outline" : "default"}
                         className="h-11 lg:h-9"
-                        disabled={g.current || save.isPending}
+                        disabled={g.current}
+                        loading={save.isPending}
                         onClick={() =>
                           save.mutate(
                             { chat_id: g.id },
@@ -249,7 +250,8 @@ function Connection({ tg }: { tg: TelegramSettings }) {
                 <Button
                   variant="outline"
                   className="h-11 lg:h-9"
-                  disabled={!chat.trim() || save.isPending}
+                  disabled={!chat.trim()}
+                  loading={save.isPending}
                   onClick={() =>
                     save.mutate(
                       { chat_id: chat.trim() },

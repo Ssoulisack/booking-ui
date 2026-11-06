@@ -275,7 +275,7 @@ export function RuleForm({
               type="button"
               variant="outline"
               className="h-11 lg:h-9"
-              disabled={reset.isPending}
+              loading={reset.isPending}
               onClick={() => reset.mutate()}
             >
               {t("rules.reset")}

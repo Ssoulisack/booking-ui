@@ -14,7 +14,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { StatusBadge } from "@/features/public/BookingCard"
 import { ConfirmDialog } from "../ui"
@@ -80,6 +79,8 @@ function Details({ booking: b }: { booking: Booking }) {
   const status = useChangeStatus()
   const payment = useSetPayment()
   const arrive = useMarkArrived()
+  // one change at a time: while any action below is working, all the other actions wait (no cancel on top of a confirm)
+  const busy = status.isPending || payment.isPending || arrive.isPending
   // a payment is only recorded after "Are you sure?": the method being confirmed, or "unpaid"
   const [confirming, setConfirming] = useState<PaymentMethod | "unpaid" | null>(
     null,
@@ -348,7 +349,7 @@ function Details({ booking: b }: { booking: Booking }) {
                 <Button
                   variant="ghost"
                   className="h-11 px-2 text-muted-foreground lg:h-9"
-                  disabled={payment.isPending}
+                  disabled={busy}
                   onClick={() => setConfirming("unpaid")}
                 >
                   {t("desk.markUnpaid")}
@@ -364,7 +365,7 @@ function Details({ booking: b }: { booking: Booking }) {
                     key={m}
                     variant="outline"
                     className="h-12 lg:h-10"
-                    disabled={payment.isPending}
+                    disabled={busy}
                     onClick={() => setConfirming(m)}
                   >
                     {t(`desk.methods.${m}`)}
@@ -426,7 +427,10 @@ function Details({ booking: b }: { booking: Booking }) {
             {b.status === "pending" && !isEvent && (
               <Button
                 className="h-11 lg:h-9"
-                disabled={status.isPending}
+                disabled={busy}
+                loading={
+                  status.isPending && status.variables?.status === "confirmed"
+                }
                 onClick={() => change("confirmed")}
               >
                 {t("desk.confirm")}
@@ -438,7 +442,11 @@ function Details({ booking: b }: { booking: Booking }) {
                 {b.arrived_at ? (
                   <Button
                     className="h-11 lg:h-9"
-                    disabled={status.isPending}
+                    disabled={busy}
+                    loading={
+                      status.isPending &&
+                      status.variables?.status === "completed"
+                    }
                     onClick={() => change("completed")}
                   >
                     {t("desk.closeBill")}
@@ -446,7 +454,8 @@ function Details({ booking: b }: { booking: Booking }) {
                 ) : (
                   <Button
                     className="h-11 lg:h-9"
-                    disabled={arrive.isPending}
+                    disabled={busy}
+                    loading={arrive.isPending}
                     onClick={() =>
                       arrive.mutate(b.id, {
                         onSuccess: () => toast.success(t("desk.arrivedDone")),
@@ -458,13 +467,17 @@ function Details({ booking: b }: { booking: Booking }) {
                 )}
                 {!b.arrived_at && started && (
                   <NoShowAction
-                    pending={status.isPending}
+                    busy={busy}
+                    loading={
+                      status.isPending && status.variables?.status === "no_show"
+                    }
                     onConfirm={() => change("no_show")}
                   />
                 )}
                 <Button
                   variant="outline"
                   className="h-11 lg:h-9"
+                  disabled={busy}
                   onClick={() => setMoving(true)}
                 >
                   {t("desk.moveTable")}
@@ -475,13 +488,19 @@ function Details({ booking: b }: { booking: Booking }) {
               <>
                 <Button
                   className="h-11 lg:h-9"
-                  disabled={status.isPending}
+                  disabled={busy}
+                  loading={
+                    status.isPending && status.variables?.status === "completed"
+                  }
                   onClick={() => change("completed")}
                 >
                   {t("desk.complete")}
                 </Button>
                 <NoShowAction
-                  pending={status.isPending}
+                  busy={busy}
+                  loading={
+                    status.isPending && status.variables?.status === "no_show"
+                  }
                   onConfirm={() => change("no_show")}
                 />
               </>
@@ -490,6 +509,8 @@ function Details({ booking: b }: { booking: Booking }) {
               <Button
                 variant="destructive"
                 className="h-11 lg:h-9"
+                // one change at a time: while Confirm (or Arrived, Complete…) is working, Cancel waits
+                disabled={busy}
                 onClick={() => setCancelling(true)}
               >
                 {waitingForMoney ? t("eventPay.release") : t("booking.cancel")}
@@ -566,15 +587,18 @@ function Details({ booking: b }: { booking: Booking }) {
                 <Button
                   variant="destructive"
                   className="h-11 lg:h-9"
-                  disabled={status.isPending}
+                  disabled={busy}
+                  loading={
+                    status.isPending && status.variables?.status === "cancelled"
+                  }
                   onClick={() => change("cancelled", reason.trim())}
                 >
-                  {status.isPending && <Spinner />}
                   {t("booking.cancelConfirm")}
                 </Button>
                 <Button
                   variant="ghost"
                   className="h-11 lg:h-9"
+                  disabled={busy}
                   onClick={() => setCancelling(false)}
                 >
                   {t("booking.keep")}
@@ -595,10 +619,14 @@ function Details({ booking: b }: { booking: Booking }) {
 /** "No show" asks once before it frees the table and counts a lost booking */
 function NoShowAction({
   onConfirm,
-  pending,
+  busy,
+  loading,
 }: {
   onConfirm: () => void
-  pending: boolean
+  /** some action of the dialog is working: nothing else can be pressed */
+  busy: boolean
+  /** this action itself is working */
+  loading: boolean
 }) {
   const { t } = useTranslation()
   const [asking, setAsking] = useState(false)
@@ -607,7 +635,7 @@ function NoShowAction({
       <Button
         variant="outline"
         className="h-11 lg:h-9"
-        disabled={pending}
+        disabled={busy}
         onClick={() => setAsking(true)}
       >
         {t("desk.noShow")}
@@ -619,7 +647,8 @@ function NoShowAction({
       <div className="flex gap-2">
         <Button
           className="h-11 lg:h-9"
-          disabled={pending}
+          disabled={busy}
+          loading={loading}
           onClick={() => {
             setAsking(false)
             onConfirm()
