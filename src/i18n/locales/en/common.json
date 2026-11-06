@@ -2173,6 +2173,10 @@
       "space": "Pays a booking of one space, for example a private class. A coach is not included."
     },
     "noSpaces": "This sport has no space yet. Add one in Spaces first.",
+    "classesTitle": "Which classes",
+    "classesAll": "All classes of this sport",
+    "classesHint": "Tick the classes it pays. Leave all unticked: it pays every class of this sport (also classes added later).",
+    "noClasses": "This sport has no weekly class yet. The package pays every class of the sport.",
     "space": "Space",
     "description": "Description (optional)",
     "options": "Ways to buy",
@@ -2202,6 +2206,7 @@
     },
     "coversSpace": "{{space}} (private)",
     "coversClass": "Group class",
+    "coversClasses": "Classes: {{names}}",
     "untilDay": "Until {{day}}",
     "timesLeft": "{{left}} of {{total}} left",
     "useBy": "use by {{day}}",

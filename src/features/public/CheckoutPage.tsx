@@ -28,7 +28,7 @@ import { ApiError } from "@/lib/api/client"
 import { floorName, zoneHolds } from "@/lib/floor-plan"
 import type { CreateBookingInput } from "@/lib/api/types"
 import { dayIn, duration, money, timeIn, todayIn } from "@/lib/format"
-import { leftLabel, ymdLabel } from "@/lib/packages"
+import { coversClassOf, leftLabel, ymdLabel } from "@/lib/packages"
 import { useSession } from "@/stores/session"
 
 import {
@@ -201,6 +201,7 @@ export function CheckoutPage() {
     return isClass
       ? p.covers === "group_class" &&
           p.sport_id === cls?.sport_id &&
+          coversClassOf(p, cls?.timetable_id) &&
           seats === 1
       : p.covers === "space" && p.resource_id === sel.court && !sel.coach
   })

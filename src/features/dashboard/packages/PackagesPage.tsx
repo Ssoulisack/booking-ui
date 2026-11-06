@@ -22,6 +22,7 @@ import {
   useDelete,
   useResourcesList,
   useSportsList,
+  useTimetables,
 } from "../api"
 import {
   ActiveSwitch,
@@ -221,6 +222,7 @@ function PackageDialog({
     (s) => s.active || s.id === item?.sport_id,
   )
   const spaces = useResourcesList().data ?? []
+  const timetables = useTimetables().data ?? []
   const save = useChange(packageApi.save, ["packages"])
   const remove = useDelete(packageApi.remove, onClose)
   const [name, setName] = useState(item?.name ?? "")
@@ -234,6 +236,7 @@ function PackageDialog({
   const [spaceId, setSpaceId] = useState<number | null>(
     item?.resource_id ?? null,
   )
+  const [classIds, setClassIds] = useState<number[]>(item?.class_ids ?? [])
   const [active, setActive] = useState(item?.active ?? true)
   const [rows, setRows] = useState<OptionRow[]>(
     item?.options.map(toRow) ?? [
@@ -255,6 +258,10 @@ function PackageDialog({
     covers === "space"
       ? (sportSpaces.find((s) => s.id === spaceId) ?? sportSpaces[0])
       : undefined
+
+  // the weekly classes of the chosen sport that a group-class package can be limited to
+  const sportClasses = timetables.filter((c) => c.sport_id === sid)
+  const ticked = classIds.filter((id) => sportClasses.some((c) => c.id === id))
 
   const setRow = (i: number, patch: Partial<OptionRow>) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)))
@@ -278,6 +285,7 @@ function PackageDialog({
       description: description.trim(),
       covers,
       resource_id: space?.id ?? null,
+      class_ids: covers === "group_class" ? ticked : [],
       active,
       options: rows.map((r) => ({
         ...(r.id ? { id: r.id } : {}),
@@ -360,6 +368,56 @@ function PackageDialog({
               </span>
             </label>
           ))}
+          {covers === "group_class" &&
+            (sportClasses.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {t("packages.noClasses")}
+              </p>
+            ) : (
+              <div className="space-y-2 rounded-lg border p-3">
+                <p className="text-sm font-medium">
+                  {t("packages.classesTitle")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {ticked.length === 0
+                    ? t("packages.classesAll")
+                    : t("packages.coversClasses", {
+                        names: sportClasses
+                          .filter((c) => ticked.includes(c.id))
+                          .map((c) => c.title)
+                          .join(", "),
+                      })}
+                </p>
+                {sportClasses.map((c) => (
+                  <label
+                    key={c.id}
+                    className="flex min-h-11 cursor-pointer items-center gap-3 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={ticked.includes(c.id)}
+                      onChange={(e) =>
+                        setClassIds(
+                          e.target.checked
+                            ? [...ticked, c.id]
+                            : ticked.filter((id) => id !== c.id),
+                        )
+                      }
+                      className="size-4 accent-primary"
+                    />
+                    <span>
+                      {c.title}{" "}
+                      <span className="text-muted-foreground">
+                        {c.start_time}–{c.end_time}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  {t("packages.classesHint")}
+                </p>
+              </div>
+            ))}
           {covers === "space" &&
             (sportSpaces.length === 0 ? (
               <p className="text-sm text-amber-700 dark:text-amber-300">

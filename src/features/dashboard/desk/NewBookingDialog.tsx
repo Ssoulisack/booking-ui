@@ -19,7 +19,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import type { Booking, StaffBookingInput } from "@/lib/api/types"
 import { money, timeIn } from "@/lib/format"
-import { leftLabel, ymdLabel } from "@/lib/packages"
+import { coversClassOf, leftLabel, ymdLabel } from "@/lib/packages"
 import { displayPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
@@ -150,6 +150,7 @@ export function NewBookingDialog({
         p.covers === "group_class" &&
         !!pickedClass &&
         p.sport_id === pickedClass.sport_id &&
+        coversClassOf(p, pickedClass.timetable_id) &&
         (Number(seats) || 1) === 1
       )
     return (

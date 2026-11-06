@@ -17,11 +17,26 @@ export function optionLabel(
 /** What a package covers, in words: "Group class" or "Space A" */
 export function coversLabel(
   t: TFunction,
-  p: { covers: PackageCovers; resource_name: string },
+  p: {
+    covers: PackageCovers
+    resource_name: string
+    class_names?: string[]
+  },
 ) {
-  return p.covers === "space"
-    ? t("packages.coversSpace", { space: p.resource_name })
+  if (p.covers === "space")
+    return t("packages.coversSpace", { space: p.resource_name })
+  return p.class_names?.length
+    ? t("packages.coversClasses", { names: p.class_names.join(", ") })
     : t("packages.coversClass")
+}
+
+/** Does a group-class package pay this class? No list = every class of the sport; a list = those weekly classes only */
+export function coversClassOf(
+  p: { class_ids?: number[] },
+  timetableId: number | null | undefined,
+) {
+  if (!p.class_ids?.length) return true
+  return !!timetableId && p.class_ids.includes(timetableId)
 }
 
 /** What is left of a customer's package: "7 of 10 left" or "until 6 Dec" */

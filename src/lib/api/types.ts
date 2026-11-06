@@ -1254,6 +1254,9 @@ export interface PackageItem {
   covers: PackageCovers
   resource_id: number | null
   resource_name: string
+  /** the weekly classes a group-class package covers; empty = every class of the sport */
+  class_ids: number[]
+  class_names: string[]
   active: boolean
   currency: string
   options: PackageOption[]
@@ -1265,6 +1268,8 @@ export interface PackageInput {
   description: string
   covers: PackageCovers
   resource_id: number | null
+  /** group classes only: the weekly classes it covers; empty = every class of the sport */
+  class_ids: number[]
   active: boolean
   /** an option with an id is changed, one without is added, one left out is removed */
   options: {
@@ -1297,6 +1302,8 @@ export interface CustomerPackage {
   covers: PackageCovers
   resource_id: number | null
   resource_name: string
+  class_ids: number[]
+  class_names: string[]
   kind: "times" | "months"
   amount: number
   price: number
