@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import type { Booking, CalendarLane } from "@/lib/api/types"
-import { timeIn, todayIn } from "@/lib/format"
+import { dayIn, timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 import { useSettings } from "../api"
@@ -20,7 +20,13 @@ import { groupLanes } from "./lanes"
 const ACTIVE = ["pending", "confirmed"]
 
 /** What a table is doing right now (other than the booking being moved) and its next booking today */
-function tableState(lane: CalendarLane, now: string, exclude?: number) {
+function tableState(
+  lane: CalendarLane,
+  now: string,
+  exclude?: number,
+  /** a booking of another time (moving a booking that has not started): taken = something else holds the table then */
+  window?: { start: string; end: string },
+) {
   let busy = false
   let next: string | undefined
   for (const e of lane.entries) {
@@ -30,6 +36,10 @@ function tableState(lane: CalendarLane, now: string, exclude?: number) {
     )
       continue
     if (e.kind === "class") continue
+    if (window) {
+      if (e.starts_at < window.end && e.ends_at > window.start) busy = true
+      continue
+    }
     if (e.starts_at <= now && e.ends_at > now) busy = true
     else if (
       e.kind === "booking" &&
@@ -52,6 +62,8 @@ function TablePicker({
   guests,
   exclude,
   listClass = "max-h-[34dvh]",
+  date,
+  window,
 }: {
   value: number[]
   onChange: (ids: number[]) => void
@@ -60,10 +72,14 @@ function TablePicker({
   exclude?: number
   /** how tall the scrolling list may be */
   listClass?: string
+  /** the day whose tables are shown (YYYY-MM-DD): today when not given */
+  date?: string
+  /** the time of the booking being moved, when it is not now: the tables free then */
+  window?: { start: string; end: string }
 }) {
   const { t } = useTranslation()
   const tz = useSettings().data?.in_force.timezone ?? "Asia/Vientiane"
-  const calendar = useCalendar(todayIn(tz), 1)
+  const calendar = useCalendar(date ?? todayIn(tz), 1)
   const [now] = useState(() => new Date().toISOString())
   const [query, setQuery] = useState("")
   const nodes = useRef(new Map<number, HTMLButtonElement>())
@@ -71,7 +87,7 @@ function TablePicker({
     (l) => l.owner_type === "resource" && l.seats > 0,
   )
   const state = new Map(
-    tables.map((l) => [l.owner_id, tableState(l, now, exclude)]),
+    tables.map((l) => [l.owner_id, tableState(l, now, exclude, window)]),
   )
 
   // the tables the typed name points at: the exact name, else names that start with it, else names that hold it
@@ -202,7 +218,9 @@ function TablePicker({
                       )}
                     >
                       {busy
-                        ? t("desk.tableTaken")
+                        ? window
+                          ? t("desk.tableBookedThen")
+                          : t("desk.tableTaken")
                         : next
                           ? t("desk.tableNext", { time: timeIn(next, tz) })
                           : t("desk.tableFree")}
@@ -370,7 +388,11 @@ export function MoveTablesDialog({
   onClose: () => void
 }) {
   const { t } = useTranslation()
+  const tz = useSettings().data?.in_force.timezone ?? "Asia/Vientiane"
   const move = useMoveTables()
+  // a booking that has not started is moved at ITS time: the tables shown are the ones of its day and free then
+  // (a started booking moves from now on: today's tables, taken or free now)
+  const later = Date.parse(b.starts_at) > Date.now()
   // nothing is preselected: the old tables are freed by the move, so tapping a new table moves the group there
   // (a preselected old table made "31 + 22" instead of "22")
   const [tables, setTables] = useState<number[]>([])
@@ -379,7 +401,7 @@ export function MoveTablesDialog({
       open
       onOpenChange={(o) => !o && onClose()}
       title={t("desk.moveTable")}
-      description={t("desk.moveLead", { count: b.guests ?? 0 })}
+      description={`${t("desk.moveFor", { when: `${dayIn(b.starts_at, tz)} ${timeIn(b.starts_at, tz)}` })} ${t("desk.moveLead", { count: b.guests ?? 0 })}`}
       submitLabel={t("desk.moveHere")}
       pending={move.isPending}
       error={move.error}
@@ -402,6 +424,8 @@ export function MoveTablesDialog({
         onChange={setTables}
         guests={b.guests ?? 0}
         exclude={b.id}
+        date={later ? todayIn(tz, new Date(b.starts_at)) : undefined}
+        window={later ? { start: b.starts_at, end: b.ends_at } : undefined}
       />
     </FormDialog>
   )

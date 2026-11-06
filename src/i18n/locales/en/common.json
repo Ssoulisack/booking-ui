@@ -1194,6 +1194,8 @@
     "moveLead_one": "For {{count}} person. Tap the table to move to; their old tables are free again.",
     "moveLead_other": "For {{count}} people. Tap the table to move to; their old tables are free again.",
     "moveHere": "Move here",
+    "moveFor": "Booking of {{when}}.",
+    "tableBookedThen": "Booked then",
     "moved": "Moved to the new table.",
     "walkInTitle": "Walk-in",
     "walkInLead": "A group without booking sits down now.",
