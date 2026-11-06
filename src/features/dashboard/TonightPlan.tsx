@@ -99,26 +99,54 @@ export function TonightPlan() {
   )
   // what a booked table needs from the team: an event table is paid and confirmed, or waiting for money, or the slip
   // must be checked; anything odd (paid but not confirmed, confirmed but not paid) is flagged
+  // the table shows who it is for (shortName); the state is the colour, and the tooltip says it all
   const stateOf = (b: Booking): StaffTable => {
     const time = timeIn(b.arrive_by ?? b.starts_at, tz)
     const paid = b.payment_status === "paid"
+    const who = b.customer_name ?? b.guest_name ?? ""
+    const note = shortName(who) || time
+    const detail = (state: string) =>
+      [state, time, who].filter(Boolean).join(" · ")
     if (b.event_id) {
       if (b.status === "confirmed" && paid)
-        return { tone: "confirmed", note: t("tonight.sConfirmed") }
+        return {
+          tone: "confirmed",
+          note,
+          detail: detail(t("tonight.sConfirmed")),
+        }
       if (b.status === "pending" && paid)
-        return { tone: "review", note: t("tonight.sPaidConfirm") }
+        return {
+          tone: "review",
+          note,
+          detail: detail(t("tonight.sPaidConfirm")),
+        }
       if (b.status === "confirmed")
-        return { tone: "review", note: t("tonight.sConfirmedUnpaid") }
-      if (b.slip_sent_at) return { tone: "slip", note: t("tonight.sSlip") }
-      return { tone: "unpaid", note: t("tonight.sUnpaid") }
+        return {
+          tone: "review",
+          note,
+          detail: detail(t("tonight.sConfirmedUnpaid")),
+        }
+      if (b.slip_sent_at)
+        return { tone: "slip", note, detail: detail(t("tonight.sSlip")) }
+      return { tone: "unpaid", note, detail: detail(t("tonight.sUnpaid")) }
     }
     // a normal booking: waiting for the team's approval, or approved
     if (b.status === "pending")
-      return { tone: "booked", note: `${time} · ${t("tonight.sApprove")}` }
-    return { tone: "booked", note: time }
+      return { tone: "booked", note, detail: detail(t("tonight.sApprove")) }
+    return { tone: "booked", note, detail: detail("") }
   }
   const look = (id: number): StaffTable => {
-    if (seated.has(id)) return { tone: "taken", note: t("tonight.taken") }
+    const sitting = seated.get(id)
+    if (sitting) {
+      const who = sitting.customer_name ?? sitting.guest_name ?? ""
+      return {
+        tone: "taken",
+        note: shortName(who) || t("tonight.taken"),
+        detail: [timeIn(sitting.arrived_at ?? sitting.starts_at, tz), who]
+          .filter(Boolean)
+          .join(" · "),
+      }
+    }
     const b = coming.get(id)
     if (b) return stateOf(b)
     // kept for walk-ins: free for the desk to seat, not bookable online
@@ -593,4 +621,23 @@ function StateChip({
       {children}
     </span>
   )
+}
+
+/**
+ * A name for the small box of a table: up to 10 characters as written, longer ones cut to the first 3 (a letter of
+ * Lao, Thai or an emoji counts as one, so nothing is cut in the middle of it)
+ */
+export function shortName(name: string): string {
+  const trimmed = name.trim()
+  if (!trimmed) return ""
+  const letters =
+    typeof Intl !== "undefined" && "Segmenter" in Intl
+      ? Array.from(
+          new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(
+            trimmed,
+          ),
+          (x) => x.segment,
+        )
+      : Array.from(trimmed)
+  return letters.length > 10 ? letters.slice(0, 3).join("").trim() : trimmed
 }

@@ -19,8 +19,10 @@ export interface StaffTable {
     | "unpaid" // an event booking holding the table until it is paid
     | "slip" // the customer says they paid (slip sent): the team must check it
     | "review" // needs the team: paid but not confirmed, or confirmed but not paid
-  /** a short line under the name: "Taken", "19:30" */
+  /** a short line under the name on the table: the customer's name (short) */
   note?: string
+  /** the full story for the tooltip and screen readers: state, time, full name */
+  detail?: string
 }
 
 const STAFF_TONE: Record<StaffTable["tone"], string> = {
@@ -144,7 +146,7 @@ export function TablePlan({
             aria-pressed={staff ? undefined : isChosen}
             aria-label={
               staff
-                ? `${table.name} · ${t(`tonight.${staff.tone}`)}${staff.note ? ` · ${staff.note}` : ""}`
+                ? `${table.name} · ${t(`tonight.${staff.tone}`)}${staff.detail || staff.note ? ` · ${staff.detail ?? staff.note}` : ""}`
                 : kept
                   ? t("public.tables.tableKept", { name: table.name })
                   : t(
@@ -153,6 +155,11 @@ export function TablePlan({
                         : "public.tables.tableTaken",
                       { name: table.name, count: table.seats },
                     )
+            }
+            title={
+              staff
+                ? `${table.name} · ${t(`tonight.${staff.tone}`)}${staff.detail ? ` · ${staff.detail}` : ""}`
+                : undefined
             }
             onClick={() => onToggle(table.id)}
             className={cn(
