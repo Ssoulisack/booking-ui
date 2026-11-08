@@ -178,3 +178,17 @@ export interface Transactions {
     amount: number
   }>
 }
+
+export type ReportKind =
+  "bookings" | "utilisation" | "finance" | "unpaid" | "transactions"
+
+export type ReportOf = {
+  bookings: BookingsReport
+  utilisation: Utilisation
+  finance: Finance
+  unpaid: UnpaidRow[]
+  transactions: Transactions
+}
+
+/** The filters of the table and event booking reports (empty ones are left out) */
+export type BookingRowsFilter = Record<string, string | number | undefined>

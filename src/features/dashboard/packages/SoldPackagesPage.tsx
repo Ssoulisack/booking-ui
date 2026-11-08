@@ -22,7 +22,7 @@ import {} from "@/lib/roles"
 import { cn } from "@/lib/utils"
 
 import { useSettings } from "@/hooks/use-branch"
-import { useFindCustomer } from "../desk/api"
+import { useFindCustomer } from "@/hooks/use-customer"
 import { PageHeader, FormDialog } from "../ui"
 import { usePackages, useSoldPackages } from "@/hooks/use-package"
 import { PackageActions } from "./PackageActions"

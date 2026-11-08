@@ -14,7 +14,7 @@ import { useSettings } from "@/hooks/use-branch"
 import { PageHeader } from "../ui"
 import { Pager } from "@/components/global/Pager"
 
-import { useCustomers } from "./api"
+import { useCustomers } from "@/hooks/use-customer"
 
 /** /dashboard/:id/customers — people with an account who booked here; open their bookings */
 export function CustomersPage() {

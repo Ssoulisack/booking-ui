@@ -12,7 +12,7 @@ import { dayIn, money, timeIn, todayIn } from "@/lib/format"
 
 import { useSettings } from "@/hooks/use-branch"
 import { PageHeader, Panel } from "../ui"
-import { useCashUp, useCsv } from "./api"
+import { useCashUp, useCsv } from "@/hooks/use-report"
 
 /** /dashboard/:id/cash-up — the money marked paid on one day, to check against the till (staff and up) */
 export function CashUpPage() {

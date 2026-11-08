@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils"
 
 import { useSettings } from "@/hooks/use-branch"
 import { useDashboard } from "../context"
-import { useCalendar } from "./api"
+import { useCalendar } from "@/hooks/use-booking"
 import { BookingSheet } from "./BookingSheet"
 import { NewBookingDialog, type NewBookingStart } from "./NewBookingDialog"
 import { WalkInDialog } from "./TableDesk"

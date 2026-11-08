@@ -32,7 +32,7 @@ import {
   useChangeStatus,
   useMarkArrived,
   useSetPayment,
-} from "./api"
+} from "@/hooks/use-booking"
 import { BookingPayments } from "./BookingPayments"
 import { MoveTablesDialog } from "./TableDesk"
 

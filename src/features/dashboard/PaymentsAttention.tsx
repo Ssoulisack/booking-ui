@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 
 import { useSettings } from "@/hooks/use-branch"
 import { BookingSheet } from "./desk/BookingSheet"
-import { usePaymentsAttention } from "./desk/api"
+import { usePaymentsAttention } from "@/hooks/use-payment"
 import { PaymentRow } from "./desk/PaymentRows"
 import { Panel } from "./ui"
 

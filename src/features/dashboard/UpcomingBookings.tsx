@@ -13,7 +13,7 @@ import { dayIn, nextDays, timeIn, todayIn } from "@/lib/format"
 
 import { useSettings } from "@/hooks/use-branch"
 import { useDashboard } from "./context"
-import { useBookingList } from "./desk/api"
+import { useBookingList } from "@/hooks/use-booking"
 import { Panel } from "./ui"
 
 const SHOWN = 8

@@ -7,7 +7,7 @@ import type { OnlinePaymentStatus, StaffPayment } from "@/types/payment"
 import { dayIn, money, timeIn } from "@/lib/format"
 
 import { DeleteButton } from "../ui"
-import { useRefundPayment } from "./api"
+import { useRefundPayment } from "@/hooks/use-payment"
 
 /** Banks with a logo in public/banks */
 const BANK_LOGOS = new Set([

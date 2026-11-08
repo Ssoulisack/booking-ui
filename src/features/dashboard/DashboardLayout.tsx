@@ -27,7 +27,7 @@ import { useCurrentBranch } from "@/stores/branch"
 import { runsCompany, useSession } from "@/stores/session"
 
 import { BranchSwitcher } from "./BranchSwitcher"
-import { usePendingBookings } from "./desk/api"
+import { usePendingBookings } from "@/hooks/use-booking"
 import { useDashboard, type DashboardContext } from "./context"
 
 /** /dashboard: open the remembered branch, or the first one this person can use */

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { useBiz, useChange } from "@/hooks/use-branch"
 import { paymentService } from "@/services/payment.api"
@@ -27,3 +27,36 @@ export const useSavePayInfo = (refresh = ["event-pay"]) =>
 
 export const useSavePaymentSettings = (refresh = ["payment-settings"]) =>
   useChange(paymentService.savePaymentSettings, refresh)
+
+// ---------- online payments (PhaJay): what was tried, what needs a person, refunds ----------
+
+/** The online payment attempts of one booking */
+export function useBookingPayments(bookingId: number) {
+  const { id: branchId, key } = useBiz()
+  return useQuery({
+    queryKey: key("payments", bookingId),
+    queryFn: () => paymentService.forBooking(branchId, bookingId),
+  })
+}
+
+/** Money to give back, amounts that did not match, disputes and refunds in progress (managers) */
+export function usePaymentsAttention() {
+  const { id: branchId, key } = useBiz()
+  return useQuery({
+    queryKey: key("payments", "attention"),
+    queryFn: () => paymentService.attention(branchId),
+    refetchInterval: 60_000,
+  })
+}
+
+export function useRefundPayment() {
+  const { id: branchId, key } = useBiz()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => paymentService.refund(branchId, id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: key("payments") })
+      void queryClient.invalidateQueries({ queryKey: key("bookings") })
+    },
+  })
+}

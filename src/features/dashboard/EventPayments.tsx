@@ -9,7 +9,7 @@ import { dayIn, money, timeIn } from "@/lib/format"
 
 import { useSettings } from "@/hooks/use-branch"
 import { BookingSheet } from "./desk/BookingSheet"
-import { useBookingList } from "./desk/api"
+import { useBookingList } from "@/hooks/use-booking"
 import { Panel } from "./ui"
 
 /**

@@ -1,8 +1,20 @@
 import { api } from "@/lib/api/client"
 import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
-import type { PayInfo, PaymentSettings } from "@/types/payment"
+import type { PayInfo, PaymentSettings, StaffPayment } from "@/types/payment"
 
 export const paymentService = {
+  /** The online payment attempts of one booking */
+  forBooking: (branchId: number, bookingId: number) =>
+    api<StaffPayment[]>(
+      API_ENDPOINTS.BRANCH.BOOKING_PAYMENTS(branchId, bookingId),
+    ),
+  /** Money to give back, amounts that did not match, disputes and refunds in progress */
+  attention: (branchId: number) =>
+    api<StaffPayment[]>(API_ENDPOINTS.BRANCH.PAYMENTS_ATTENTION(branchId)),
+  refund: (branchId: number, id: number) =>
+    api<StaffPayment>(API_ENDPOINTS.BRANCH.PAYMENT_REFUND(branchId, id), {
+      method: "POST",
+    }),
   settings: (branchId: number) =>
     api<PaymentSettings>(API_ENDPOINTS.BRANCH.PAYMENT_SETTINGS(branchId)),
   payInfo: (branchId: number) =>

@@ -27,7 +27,7 @@ import { dayIn, money, shortPhone, stampIn, todayIn } from "@/lib/format"
 import { useSettings } from "@/hooks/use-branch"
 import { useEvents } from "@/hooks/use-event"
 import { Panel } from "../ui"
-import { useEventReport, useTableReport } from "./api"
+import { useEventReport, useTableReport } from "@/hooks/use-report"
 
 // the banks the pay screen can offer (the gateway's codes)
 const BANKS = ["bcel", "ldb", "jdb", "apb", "ib", "stb", "m-money"]

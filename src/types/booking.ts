@@ -107,3 +107,33 @@ export interface StaffBookingInput extends CreateBookingInput {
   // phone, customer number (CNO000042) or email of an account
   customer?: string
 }
+
+export interface BookingFilters {
+  page?: number
+  limit?: number
+  keyword?: string
+  from?: string
+  to?: string
+  status?: string
+  payment_status?: string
+  sport_id?: number
+  resource_id?: number
+  coach_id?: number
+  customer_id?: number
+}
+
+export interface WalkInInput {
+  table_ids: number[]
+  guests: number
+  name?: string
+  phone?: string
+  notes?: string
+}
+
+export interface ReserveTablesInput {
+  table_ids: number[]
+  guests: number
+  starts_at: string
+  guest: { name: string; phone: string }
+  notes?: string
+}

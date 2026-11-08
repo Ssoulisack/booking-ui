@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 
 import { useSettings } from "@/hooks/use-branch"
-import { useBookingPayments } from "./api"
+import { useBookingPayments } from "@/hooks/use-payment"
 import { PaymentRow } from "./PaymentRows"
 
 /** The online payment attempts of one booking, inside its popup; nothing when none was made */

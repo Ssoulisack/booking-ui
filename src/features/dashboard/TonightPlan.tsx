@@ -35,7 +35,7 @@ import { cn } from "@/lib/utils"
 import { useBiz, useSettings } from "@/hooks/use-branch"
 import { useAllFloorPlans } from "@/hooks/use-space"
 import { useSportsList } from "@/hooks/use-sport"
-import { useBookingList, useChangeStatus, useWalkIn } from "./desk/api"
+import { useBookingList, useChangeStatus, useWalkIn } from "@/hooks/use-booking"
 import { BookingSheet } from "./desk/BookingSheet"
 import { Panel } from "./ui"
 

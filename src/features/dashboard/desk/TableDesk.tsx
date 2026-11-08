@@ -27,7 +27,7 @@ import { useSettings } from "@/hooks/use-branch"
 import { useAllFloorPlans } from "@/hooks/use-space"
 import { useSportsList } from "@/hooks/use-sport"
 import { FormDialog } from "../ui"
-import { useCalendar, useMoveTables, useWalkIn } from "./api"
+import { useCalendar, useMoveTables, useWalkIn } from "@/hooks/use-booking"
 import { groupLanes } from "./lanes"
 
 const ACTIVE = ["pending", "confirmed"]

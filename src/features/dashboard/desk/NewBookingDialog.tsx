@@ -32,11 +32,8 @@ import { useSoldPackages } from "@/hooks/use-package"
 import { FormDialog } from "../ui"
 import { lengthsOf } from "@/components/global/booking/lengths"
 import { TimePicker } from "@/components/global/booking/TimePicker"
-import {
-  useCreateDeskBooking,
-  useDeskAvailability,
-  useFindCustomer,
-} from "./api"
+import { useCreateDeskBooking, useDeskAvailability } from "@/hooks/use-booking"
+import { useFindCustomer } from "@/hooks/use-customer"
 
 type What = "court" | "coach" | "class"
 

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 
 import { useSettings } from "@/hooks/use-branch"
 import { FormDialog } from "../ui"
-import { useDeskTableAvailability, useReserveTables } from "./api"
+import { useDeskTableAvailability, useReserveTables } from "@/hooks/use-booking"
 import { GuestsStepper, TablePicker } from "./TableDesk"
 
 /**

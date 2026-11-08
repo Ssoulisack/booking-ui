@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 import { useSettings } from "@/hooks/use-branch"
 import { Pager } from "@/components/global/Pager"
 import { paginate } from "@/features/company/paging"
-import { useCsv, useReport } from "./api"
+import { useCsv, useReport } from "@/hooks/use-report"
 
 const selectClass =
   "h-11 rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
