@@ -173,7 +173,7 @@ export function TransactionsView({ from, to }: { from: string; to: string }) {
           disabled={csv.isPending}
           onClick={() =>
             csv.mutate({
-              path: "/reports/transactions",
+              report: "transactions",
               query: { from, to },
               filename: `transactions_${from}_${to}.csv`,
             })

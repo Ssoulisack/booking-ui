@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query"
 
 import { api, apiPage, download } from "@/lib/api/client"
+import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import type {
   Booking,
   BookingStatus,
@@ -45,10 +46,13 @@ export interface BookingFilters {
 }
 
 export function useBookingList(q: BookingFilters) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("bookings", q),
-    queryFn: () => apiPage<Booking>(`${base}/bookings`, { query: { ...q } }),
+    queryFn: () =>
+      apiPage<Booking>(API_ENDPOINTS.BRANCH.BOOKINGS(branchId as number), {
+        query: { ...q },
+      }),
     placeholderData: keepPreviousData,
   })
 }
@@ -62,7 +66,7 @@ export function usePendingBookings(branchId: number | undefined) {
   return useQuery({
     queryKey: ["manage", branchId, "bookings", { pending: "count" }],
     queryFn: () =>
-      apiPage<Booking>(`/branches/${branchId}/bookings`, {
+      apiPage<Booking>(API_ENDPOINTS.BRANCH.BOOKINGS(branchId as number), {
         query: { status: "pending", limit: 1 },
       }),
     select: (page) => page.meta.total,
@@ -73,20 +77,24 @@ export function usePendingBookings(branchId: number | undefined) {
 }
 
 export function useBooking(id: number | null) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("booking", id),
-    queryFn: () => api<Booking>(`${base}/bookings/${id}`),
+    queryFn: () =>
+      api<Booking>(API_ENDPOINTS.BRANCH.BOOKING(branchId, id as number)),
     enabled: !!id,
   })
 }
 
 /** Courts and coaches side by side, `days` days from `date` (1 to 7) */
 export function useCalendar(date: string, days: number) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("calendar", date, days),
-    queryFn: () => api<Calendar>(`${base}/calendar`, { query: { date, days } }),
+    queryFn: () =>
+      api<Calendar>(API_ENDPOINTS.BRANCH.CALENDAR(branchId), {
+        query: { date, days },
+      }),
     placeholderData: keepPreviousData,
     // the desk screen stays open all day: pick up online bookings
     refetchInterval: 60_000,
@@ -95,19 +103,21 @@ export function useCalendar(date: string, days: number) {
 
 /** Whose account is it? By phone, customer number (CNO000042) or email — shown before booking for it */
 export function useFindCustomer() {
-  const { base } = useBiz()
+  const { id: branchId } = useBiz()
   return useMutation({
     mutationFn: (q: string) =>
-      api<CustomerMatch>(`${base}/customers/find`, { query: { q } }),
+      api<CustomerMatch>(API_ENDPOINTS.BRANCH.CUSTOMERS_FIND(branchId), {
+        query: { q },
+      }),
   })
 }
 
 export function useCustomers(keyword: string, page: number, limit = 20) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("customers", keyword, page, limit),
     queryFn: () =>
-      apiPage<Customer>(`${base}/customers`, {
+      apiPage<Customer>(API_ENDPOINTS.BRANCH.CUSTOMERS(branchId), {
         query: { keyword, page, limit },
       }),
     placeholderData: keepPreviousData,
@@ -123,11 +133,13 @@ export function useDeskAvailability(
     sport_id?: number
   } | null,
 ) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("availability", q),
     queryFn: () =>
-      api<Availability>(`${base}/availability`, { query: { ...q } }),
+      api<Availability>(API_ENDPOINTS.BRANCH.AVAILABILITY(branchId), {
+        query: { ...q },
+      }),
     enabled: !!q,
     placeholderData: keepPreviousData,
   })
@@ -149,11 +161,13 @@ export function useReport<K extends ReportKind>(
   from: string,
   to: string,
 ) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("reports", kind, from, to),
     queryFn: () =>
-      api<ReportOf[K]>(`${base}/reports/${kind}`, { query: { from, to } }),
+      api<ReportOf[K]>(API_ENDPOINTS.BRANCH.REPORT(branchId, kind), {
+        query: { from, to },
+      }),
     placeholderData: keepPreviousData,
   })
 }
@@ -165,11 +179,11 @@ export function useUnpaidPage(
   page: number,
   limit: number,
 ) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("reports", "unpaid", from, to, page, limit),
     queryFn: () =>
-      apiPage<UnpaidRow>(`${base}/reports/unpaid`, {
+      apiPage<UnpaidRow>(API_ENDPOINTS.BRANCH.REPORTS_UNPAID(branchId), {
         query: { from, to, page, limit },
       }),
     placeholderData: keepPreviousData,
@@ -177,24 +191,27 @@ export function useUnpaidPage(
 }
 
 export function useCashUp(date: string) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("cashup", date),
-    queryFn: () => api<CashUp>(`${base}/reports/cash-up`, { query: { date } }),
+    queryFn: () =>
+      api<CashUp>(API_ENDPOINTS.BRANCH.REPORTS_CASH_UP(branchId), {
+        query: { date },
+      }),
   })
 }
 
 /** Saves a report as CSV (utilisation, finance, unpaid, cash-up) */
 export function useCsv() {
-  const { base } = useBiz()
+  const { id: branchId } = useBiz()
   return useMutation({
     mutationFn: (p: {
-      path: string
+      report: string
       query: Record<string, string>
       filename: string
     }) =>
       download(
-        `${base}${p.path}`,
+        API_ENDPOINTS.BRANCH.REPORT(branchId, p.report),
         { query: { ...p.query, format: "csv" } },
         p.filename,
       ),
@@ -203,11 +220,13 @@ export function useCsv() {
 
 // ---------- changes at the desk: every screen that shows bookings or money refreshes ----------
 
-function useDeskChange<I>(fn: (base: string, input: I) => Promise<Booking>) {
-  const { base, key } = useBiz()
+function useDeskChange<I>(
+  fn: (branchId: number, input: I) => Promise<Booking>,
+) {
+  const { id: branchId, key } = useBiz()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: I) => fn(base, input),
+    mutationFn: (input: I) => fn(branchId, input),
     onSuccess: (booking) => {
       queryClient.setQueryData(key("booking", booking.id), booking)
       for (const part of [
@@ -226,15 +245,18 @@ function useDeskChange<I>(fn: (base: string, input: I) => Promise<Booking>) {
 }
 
 export function useCreateDeskBooking() {
-  return useDeskChange((base, body: StaffBookingInput) =>
-    api<Booking>(`${base}/bookings`, { method: "POST", body }),
+  return useDeskChange((branchId, body: StaffBookingInput) =>
+    api<Booking>(API_ENDPOINTS.BRANCH.BOOKINGS(branchId), {
+      method: "POST",
+      body,
+    }),
   )
 }
 
 export function useChangeStatus() {
   return useDeskChange(
-    (base, p: { id: number; status: BookingStatus; reason?: string }) =>
-      api<Booking>(`${base}/bookings/${p.id}/status`, {
+    (branchId, p: { id: number; status: BookingStatus; reason?: string }) =>
+      api<Booking>(API_ENDPOINTS.BRANCH.BOOKING_STATUS(branchId, p.id), {
         method: "POST",
         body: { status: p.status, reason: p.reason ?? "" },
       }),
@@ -244,10 +266,10 @@ export function useChangeStatus() {
 export function useSetPayment() {
   return useDeskChange(
     (
-      base,
+      branchId,
       p: { id: number; status: "paid" | "unpaid"; method?: PaymentMethod },
     ) =>
-      api<Booking>(`${base}/bookings/${p.id}/payment`, {
+      api<Booking>(API_ENDPOINTS.BRANCH.BOOKING_PAYMENT(branchId, p.id), {
         method: "POST",
         body: { status: p.status, method: p.method ?? "" },
       }),
@@ -257,14 +279,16 @@ export function useSetPayment() {
 // ---------- restaurants: the group came in, other tables, a group without booking ----------
 
 export function useMarkArrived() {
-  return useDeskChange((base, id: number) =>
-    api<Booking>(`${base}/bookings/${id}/arrived`, { method: "POST" }),
+  return useDeskChange((branchId, id: number) =>
+    api<Booking>(API_ENDPOINTS.BRANCH.BOOKING_ARRIVED(branchId, id), {
+      method: "POST",
+    }),
   )
 }
 
 export function useMoveTables() {
-  return useDeskChange((base, p: { id: number; table_ids: number[] }) =>
-    api<Booking>(`${base}/bookings/${p.id}/move`, {
+  return useDeskChange((branchId, p: { id: number; table_ids: number[] }) =>
+    api<Booking>(API_ENDPOINTS.BRANCH.BOOKING_MOVE(branchId, p.id), {
       method: "POST",
       body: { table_ids: p.table_ids },
     }),
@@ -280,8 +304,11 @@ export interface WalkInInput {
 }
 
 export function useWalkIn() {
-  return useDeskChange((base, body: WalkInInput) =>
-    api<Booking>(`${base}/walk-ins`, { method: "POST", body }),
+  return useDeskChange((branchId, body: WalkInInput) =>
+    api<Booking>(API_ENDPOINTS.BRANCH.WALK_INS(branchId), {
+      method: "POST",
+      body,
+    }),
   )
 }
 
@@ -289,30 +316,35 @@ export function useWalkIn() {
 
 /** The online payment attempts of one booking */
 export function useBookingPayments(bookingId: number) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("payments", bookingId),
     queryFn: () =>
-      api<StaffPayment[]>(`${base}/bookings/${bookingId}/payments`),
+      api<StaffPayment[]>(
+        API_ENDPOINTS.BRANCH.BOOKING_PAYMENTS(branchId, bookingId),
+      ),
   })
 }
 
 /** Money to give back, amounts that did not match, disputes and refunds in progress (managers) */
 export function usePaymentsAttention() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("payments", "attention"),
-    queryFn: () => api<StaffPayment[]>(`${base}/payments/attention`),
+    queryFn: () =>
+      api<StaffPayment[]>(API_ENDPOINTS.BRANCH.PAYMENTS_ATTENTION(branchId)),
     refetchInterval: 60_000,
   })
 }
 
 export function useRefundPayment() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: number) =>
-      api<StaffPayment>(`${base}/payments/${id}/refund`, { method: "POST" }),
+      api<StaffPayment>(API_ENDPOINTS.BRANCH.PAYMENT_REFUND(branchId, id), {
+        method: "POST",
+      }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: key("payments") })
       void queryClient.invalidateQueries({ queryKey: key("bookings") })
@@ -330,22 +362,26 @@ const clean = (f: BookingRowsFilter) =>
   Object.fromEntries(Object.entries(f).filter(([, v]) => v !== "" && v != null))
 
 export function useTableReport(f: BookingRowsFilter) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("reports", "table-bookings", f),
     queryFn: () =>
-      api<TableReport>(`${base}/reports/table-bookings`, { query: clean(f) }),
+      api<TableReport>(API_ENDPOINTS.BRANCH.REPORTS_TABLE_BOOKINGS(branchId), {
+        query: clean(f),
+      }),
     placeholderData: keepPreviousData,
     refetchInterval: REPORT_REFRESH_MS,
   })
 }
 
 export function useEventReport(f: BookingRowsFilter, enabled = true) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("reports", "event-bookings", f),
     queryFn: () =>
-      api<EventReport>(`${base}/reports/event-bookings`, { query: clean(f) }),
+      api<EventReport>(API_ENDPOINTS.BRANCH.REPORTS_EVENT_BOOKINGS(branchId), {
+        query: clean(f),
+      }),
     enabled,
     placeholderData: keepPreviousData,
     refetchInterval: REPORT_REFRESH_MS,
@@ -356,13 +392,16 @@ export function useEventReport(f: BookingRowsFilter, enabled = true) {
 
 /** The free times and tables of a day for a group, as the team sees them (kept tables included) */
 export function useDeskTableAvailability(date: string, guests: number) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("table-availability", date, guests),
     queryFn: () =>
-      api<TableAvailability>(`${base}/table-availability`, {
-        query: { date, guests },
-      }),
+      api<TableAvailability>(
+        API_ENDPOINTS.BRANCH.TABLE_AVAILABILITY(branchId),
+        {
+          query: { date, guests },
+        },
+      ),
     enabled: !!date && guests > 0,
     placeholderData: keepPreviousData,
   })
@@ -378,7 +417,10 @@ export interface ReserveTablesInput {
 
 /** Book tables for a customer who phoned: confirmed at once */
 export function useReserveTables() {
-  return useDeskChange((base, body: ReserveTablesInput) =>
-    api<Booking>(`${base}/bookings`, { method: "POST", body }),
+  return useDeskChange((branchId, body: ReserveTablesInput) =>
+    api<Booking>(API_ENDPOINTS.BRANCH.BOOKINGS(branchId), {
+      method: "POST",
+      body,
+    }),
   )
 }

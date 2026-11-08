@@ -359,7 +359,7 @@ function Swatch({
 
 /** Keep a table for walk-ins, or give it back to online booking (it stays so until switched: no day or time) */
 function useKeepForWalkIns() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   const queryClient = useQueryClient()
   const { t } = useTranslation()
   const [pending, setPending] = useState(false)
@@ -368,7 +368,7 @@ function useKeepForWalkIns() {
     setPending(true)
     setError(null)
     try {
-      await manage.saveResource(base, {
+      await manage.saveResource(branchId, {
         ...(table as ManagedTable),
         kind: "table",
         walk_in_only: keep,
@@ -468,7 +468,7 @@ function SeatDialog({
         {canSeat && <ErrorAlert error={walkIn.error} />}
         {canSeat && (
           <Button
-            className="h-12 w-full bg-rose-600 text-base text-white hover:bg-rose-700"
+            className="text-branchId h-12 w-full bg-rose-600 text-white hover:bg-rose-700"
             disabled={walkIn.isPending || keep.pending}
             onClick={() =>
               walkIn.mutate(
@@ -530,7 +530,7 @@ function FreeDialog({
         <ErrorAlert error={status.error} />
         <div className="grid gap-2">
           <Button
-            className="h-12 w-full text-base"
+            className="text-branchId h-12 w-full"
             disabled={status.isPending}
             onClick={() =>
               status.mutate(

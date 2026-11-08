@@ -299,7 +299,7 @@ function AreaDialog({
           value={name}
           placeholder={t("restaurant.area.namePlaceholder")}
           onChange={(e) => setName(e.target.value)}
-          className="h-11 text-base lg:h-9 lg:text-sm"
+          className="text-branchId h-11 lg:h-9 lg:text-sm"
         />
       </div>
       <div className="space-y-1.5">
@@ -309,7 +309,7 @@ function AreaDialog({
           id="area-floor"
           value={floor}
           onChange={(e) => setFloor(Number(e.target.value))}
-          className="h-11 w-full rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
+          className="text-branchId h-11 w-full rounded-lg border border-input bg-background px-2.5 lg:h-9 lg:text-sm"
         >
           {[...FLOORS].reverse().map((f) => (
             <option key={f} value={f}>
@@ -388,7 +388,7 @@ function NumberBox({
       min={1}
       value={Number.isFinite(value) ? value : ""}
       onChange={(e) => onChange(e.target.valueAsNumber)}
-      className="h-11 w-20 text-base lg:h-9 lg:text-sm"
+      className="text-branchId h-11 w-20 lg:h-9 lg:text-sm"
     />
   )
 }
@@ -444,7 +444,7 @@ function Editor({
   onEditArea: () => void
 }) {
   const { t } = useTranslation()
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   const queryClient = useQueryClient()
   const [tables, setTables] = useState(initial)
   const [items, setItems] = useState(initialItems)
@@ -719,7 +719,7 @@ function Editor({
   // one Save: every table's place and every object (checked together), then the tables whose details changed
   const save = useMutation({
     mutationFn: async () => {
-      await manage.saveFloorPlan(base, {
+      await manage.saveFloorPlan(branchId, {
         areaId: area.id,
         plan_width: W,
         plan_height: H,
@@ -762,7 +762,7 @@ function Editor({
             was.active !== x.active ||
             !!was.walk_in_only !== !!x.walk_in_only)
         ) {
-          await manage.saveResource(base, { ...x, kind: "table" })
+          await manage.saveResource(branchId, { ...x, kind: "table" })
         }
       }
     },
@@ -1121,7 +1121,7 @@ function ItemPanel({
             value={item.label}
             maxLength={40}
             onChange={(e) => onChange({ label: e.target.value })}
-            className="h-11 text-base lg:h-9 lg:text-sm"
+            className="text-branchId h-11 lg:h-9 lg:text-sm"
           />
         </div>
         {item.kind === "stairs" && (
@@ -1136,7 +1136,7 @@ function ItemPanel({
                     e.target.value === "" ? null : Number(e.target.value),
                 })
               }
-              className="h-11 w-full rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
+              className="text-branchId h-11 w-full rounded-lg border border-input bg-background px-2.5 lg:h-9 lg:text-sm"
             >
               <option value="">{t("restaurant.floors.notSet")}</option>
               {[...FLOORS]
@@ -2146,7 +2146,7 @@ function TablePanel({
             id="t-name"
             value={table.name}
             onChange={(e) => onChange({ name: e.target.value })}
-            className="h-11 text-base lg:h-9 lg:text-sm"
+            className="text-branchId h-11 lg:h-9 lg:text-sm"
           />
         </div>
         <Stepper
@@ -2348,7 +2348,7 @@ function AddTableDialog({
           id="new-table-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="h-11 text-base lg:h-9 lg:text-sm"
+          className="text-branchId h-11 lg:h-9 lg:text-sm"
         />
       </div>
       <Stepper

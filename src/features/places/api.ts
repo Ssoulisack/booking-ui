@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { api, apiPage } from "@/lib/api/client"
+import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import type { DirectoryBranch } from "@/types/place"
 import type { PublicCompany } from "@/types/public"
 
@@ -14,7 +15,7 @@ const CATALOG = { staleTime: 5 * 60_000 }
 export function usePublicCompany() {
   return useQuery({
     queryKey: ["public", "company"],
-    queryFn: () => api<PublicCompany>("/public/company"),
+    queryFn: () => api<PublicCompany>(API_ENDPOINTS.PUBLIC_HOME.COMPANY),
     ...CATALOG,
   })
 }
@@ -25,7 +26,7 @@ export function useLiveBranches() {
     queryKey: ["public", "branches"],
     queryFn: async () =>
       (
-        await apiPage<DirectoryBranch>("/public/branches", {
+        await apiPage<DirectoryBranch>(API_ENDPOINTS.PUBLIC_HOME.BRANCHES, {
           query: { limit: ALL },
         })
       ).items,

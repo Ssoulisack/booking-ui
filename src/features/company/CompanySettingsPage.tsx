@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -141,14 +142,14 @@ function CompanyForm({ company }: { company: Company }) {
           <ImageField
             label={t("settings.logo")}
             folder="branding"
-            base="/company"
+            base={API_ENDPOINTS.COMPANY.BASE}
             url={company.logo_url}
             onChange={(key) => savePicture({ logo_key: key })}
           />
           <ImageField
             label={t("settings.cover")}
             folder="branding"
-            base="/company"
+            base={API_ENDPOINTS.COMPANY.BASE}
             url={company.cover_url}
             wide
             onChange={(key) => savePicture({ cover_key: key })}

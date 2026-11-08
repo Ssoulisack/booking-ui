@@ -266,11 +266,11 @@ function Tile({
 }
 
 function CsvButton({
-  path,
+  report,
   query,
   filename,
 }: {
-  path: string
+  report: string
   query: Record<string, string>
   filename: string
 }) {
@@ -282,7 +282,7 @@ function CsvButton({
         variant="outline"
         className="h-11 lg:h-9"
         disabled={csv.isPending}
-        onClick={() => csv.mutate({ path, query, filename })}
+        onClick={() => csv.mutate({ report, query, filename })}
       >
         {csv.isPending ? <Spinner /> : <DownloadIcon />}
         {t("reports.csv")}
@@ -474,7 +474,7 @@ function FinanceView({ from, to }: { from: string; to: string }) {
           {t("reports.financeRule")}
         </p>
         <CsvButton
-          path="/reports/finance"
+          report="finance"
           query={{ from, to }}
           filename={`finance_${from}_${to}.csv`}
         />
@@ -623,7 +623,7 @@ function UtilisationView({ from, to }: { from: string; to: string }) {
       lead={t("reports.utilisationLead")}
       actions={
         <CsvButton
-          path="/reports/utilisation"
+          report="utilisation"
           query={{ from, to }}
           filename={`utilisation_${from}_${to}.csv`}
         />
@@ -677,7 +677,7 @@ function UnpaidView({ from, to }: { from: string; to: string }) {
       lead={t("reports.unpaidLead")}
       actions={
         <CsvButton
-          path="/reports/unpaid"
+          report="unpaid"
           query={{ from, to }}
           filename={`unpaid_${from}_${to}.csv`}
         />

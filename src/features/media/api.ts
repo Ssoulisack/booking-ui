@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api, apiMessage } from "@/lib/api/client"
+import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import type { Media, MediaItem } from "@/types/media"
 
 /** `base` is "/company" or "/branches/{id}": the library of that scope only, never another's */
@@ -9,7 +10,7 @@ const mediaKey = (base: string) => ["media", base] as const
 export function useMedia(base: string) {
   return useQuery({
     queryKey: mediaKey(base),
-    queryFn: () => api<MediaItem[]>(`${base}/uploads`),
+    queryFn: () => api<MediaItem[]>(API_ENDPOINTS.MEDIA.UPLOADS(base)),
   })
 }
 
@@ -19,7 +20,7 @@ export function useUploadMedia(base: string) {
     mutationFn: (file: File) => {
       const form = new FormData()
       form.append("file", file)
-      return api<Media>(`${base}/uploads`, {
+      return api<Media>(API_ENDPOINTS.MEDIA.UPLOADS(base), {
         method: "POST",
         form,
         query: { folder: "branding" },
@@ -34,7 +35,10 @@ export function useDeleteMedia(base: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (key: string) =>
-      apiMessage(`${base}/uploads`, { method: "DELETE", query: { key } }),
+      apiMessage(API_ENDPOINTS.MEDIA.UPLOADS(base), {
+        method: "DELETE",
+        query: { key },
+      }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: mediaKey(base) }),
   })

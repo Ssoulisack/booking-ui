@@ -36,7 +36,7 @@ export function CashUpPage() {
               disabled={csv.isPending}
               onClick={() =>
                 csv.mutate({
-                  path: "/reports/cash-up",
+                  report: "cash-up",
                   query: { date },
                   filename: `cash-up_${date}.csv`,
                 })

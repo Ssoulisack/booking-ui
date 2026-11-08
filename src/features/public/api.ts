@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query"
 
 import { api, apiPage } from "@/lib/api/client"
+import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import type {
   Booking,
   CreateBookingInput,
@@ -37,8 +38,6 @@ import type {
 } from "@/types/public"
 import type { Sport } from "@/types/sport"
 
-const pub = (slug: string) => `/public/branches/${encodeURIComponent(slug)}`
-
 export const publicKeys = {
   business: (slug: string) => ["public", slug] as const,
   sports: (slug: string) => ["public", slug, "sports"] as const,
@@ -66,7 +65,7 @@ const CATALOG = { staleTime: 5 * 60_000 }
 export function usePublicBranch(slug: string, enabled = true) {
   return useQuery({
     queryKey: publicKeys.business(slug),
-    queryFn: () => api<PublicBranch>(`${pub(slug)}/`),
+    queryFn: () => api<PublicBranch>(API_ENDPOINTS.PUBLIC.ROOT(slug)),
     enabled,
     ...CATALOG,
   })
@@ -75,7 +74,7 @@ export function usePublicBranch(slug: string, enabled = true) {
 export function useSports(slug: string) {
   return useQuery({
     queryKey: publicKeys.sports(slug),
-    queryFn: () => api<Sport[]>(`${pub(slug)}/sports`),
+    queryFn: () => api<Sport[]>(API_ENDPOINTS.PUBLIC.SPORTS(slug)),
     ...CATALOG,
   })
 }
@@ -83,7 +82,7 @@ export function useSports(slug: string) {
 export function useResources(slug: string) {
   return useQuery({
     queryKey: publicKeys.resources(slug),
-    queryFn: () => api<PublicResource[]>(`${pub(slug)}/resources`),
+    queryFn: () => api<PublicResource[]>(API_ENDPOINTS.PUBLIC.RESOURCES(slug)),
     ...CATALOG,
   })
 }
@@ -91,7 +90,7 @@ export function useResources(slug: string) {
 export function useCoaches(slug: string) {
   return useQuery({
     queryKey: publicKeys.coaches(slug),
-    queryFn: () => api<PublicCoach[]>(`${pub(slug)}/coaches`),
+    queryFn: () => api<PublicCoach[]>(API_ENDPOINTS.PUBLIC.COACHES(slug)),
     ...CATALOG,
   })
 }
@@ -102,7 +101,7 @@ export function useClassesOn(slug: string, date: string) {
     queryKey: publicKeys.classes(slug, date),
     queryFn: async () =>
       (
-        await apiPage<ClassSession>(`${pub(slug)}/class-sessions`, {
+        await apiPage<ClassSession>(API_ENDPOINTS.PUBLIC.CLASS_SESSIONS(slug), {
           query: { date, limit: 100 },
         })
       ).items,
@@ -119,7 +118,7 @@ export function useUpcomingClasses(slug: string) {
     queryKey: publicKeys.upcomingClasses(slug),
     queryFn: async () =>
       (
-        await apiPage<ClassSession>(`${pub(slug)}/class-sessions`, {
+        await apiPage<ClassSession>(API_ENDPOINTS.PUBLIC.CLASS_SESSIONS(slug), {
           query: { limit: CLASS_PAGE },
         })
       ).items,
@@ -132,7 +131,7 @@ export function useUpcomingClassPages(slug: string) {
     queryKey: [...publicKeys.upcomingClasses(slug), "pages"],
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
-      apiPage<ClassSession>(`${pub(slug)}/class-sessions`, {
+      apiPage<ClassSession>(API_ENDPOINTS.PUBLIC.CLASS_SESSIONS(slug), {
         query: { limit: 20, page: pageParam },
       }),
     getNextPageParam: (last) =>
@@ -151,7 +150,7 @@ export function useAvailability(slug: string, q: AvailabilityQuery | null) {
   return useQuery({
     queryKey: publicKeys.availability(slug, q ?? { date: "" }),
     queryFn: () =>
-      api<Availability>(`${pub(slug)}/availability`, {
+      api<Availability>(API_ENDPOINTS.PUBLIC.AVAILABILITY(slug), {
         query: { ...q },
       }),
     enabled: !!q,
@@ -164,15 +163,17 @@ export function useAvailability(slug: string, q: AvailabilityQuery | null) {
 export function useCreateBooking(slug: string) {
   return useMutation({
     mutationFn: (body: CreateBookingInput) =>
-      api<CreatedBooking>(`${pub(slug)}/bookings`, { method: "POST", body }),
+      api<CreatedBooking>(API_ENDPOINTS.PUBLIC.BOOKINGS(slug), {
+        method: "POST",
+        body,
+      }),
   })
 }
 
 export function useGuestBooking(slug: string, token: string) {
   return useQuery({
     queryKey: publicKeys.guestBooking(slug, token),
-    queryFn: () =>
-      api<Booking>(`${pub(slug)}/bookings/${encodeURIComponent(token)}`),
+    queryFn: () => api<Booking>(API_ENDPOINTS.PUBLIC.BOOKING(slug, token)),
     retry: false,
     // the team may approve or cancel it, a payment may arrive: keep asking while it is open
     refetchOnWindowFocus: true,
@@ -191,7 +192,7 @@ export function useGuestBooking(slug: string, token: string) {
 export function useMyBooking(id: number) {
   return useQuery({
     queryKey: ["me", "bookings", "one", id] as const,
-    queryFn: () => api<Booking>(`/me/bookings/${id}`),
+    queryFn: () => api<Booking>(API_ENDPOINTS.ME.BOOKING(id)),
     retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: (q) => {
@@ -208,27 +209,32 @@ export function useMyBooking(id: number) {
 export const bookingApi = {
   /** a booking without its link: the code and the phone it was made with */
   find: (slug: string, code: string, phone: string) =>
-    api<Booking>(`${pub(slug)}/bookings/find`, {
+    api<Booking>(API_ENDPOINTS.PUBLIC.BOOKINGS_FIND(slug), {
       method: "POST",
       body: { code, phone },
     }),
   cancelFound: (slug: string, code: string, phone: string, reason: string) =>
-    api<Booking>(`${pub(slug)}/bookings/find/cancel`, {
+    api<Booking>(API_ENDPOINTS.PUBLIC.BOOKINGS_FIND_CANCEL(slug), {
       method: "POST",
       body: { code, phone, reason },
     }),
   cancelGuest: (slug: string, token: string, reason: string) =>
-    api<Booking>(`${pub(slug)}/bookings/${encodeURIComponent(token)}/cancel`, {
+    api<Booking>(API_ENDPOINTS.PUBLIC.BOOKING_CANCEL(slug, token), {
       method: "POST",
       body: { reason },
     }),
   myBookings: (status?: string) =>
-    apiPage<Booking>("/me/bookings", { query: { limit: 100, status } }),
+    apiPage<Booking>(API_ENDPOINTS.ME.BOOKINGS, {
+      query: { limit: 100, status },
+    }),
   /** add a booking made as a guest to this account: it must have been made with the phone on the account */
   claim: (code: string) =>
-    api<Booking>("/me/bookings/claim", { method: "POST", body: { code } }),
+    api<Booking>(API_ENDPOINTS.ME.BOOKINGS_CLAIM, {
+      method: "POST",
+      body: { code },
+    }),
   cancelMine: (id: number, reason: string) =>
-    api<Booking>(`/me/bookings/${id}/cancel`, {
+    api<Booking>(API_ENDPOINTS.ME.BOOKING_CANCEL(id), {
       method: "POST",
       body: { reason },
     }),
@@ -238,7 +244,7 @@ export const bookingApi = {
 export function useFloorPlans(slug: string, enabled = true) {
   return useQuery({
     queryKey: publicKeys.floorPlans(slug),
-    queryFn: () => api<PublicArea[]>(`${pub(slug)}/floor-plans`),
+    queryFn: () => api<PublicArea[]>(API_ENDPOINTS.PUBLIC.FLOOR_PLANS(slug)),
     enabled,
     // the plan says which tables are kept for walk-ins: that changes while a customer has the page open, and the list
     // of free tables is refreshed every 15 s, so a longer cache would draw a kept table as "taken"
@@ -256,7 +262,7 @@ export function useTableAvailability(
   return useQuery({
     queryKey: publicKeys.tableAvailability(slug, q?.date ?? "", q?.guests ?? 0),
     queryFn: () =>
-      api<TableAvailability>(`${pub(slug)}/table-availability`, {
+      api<TableAvailability>(API_ENDPOINTS.PUBLIC.TABLE_AVAILABILITY(slug), {
         query: { date: q!.date, guests: q!.guests },
       }),
     enabled: !!q,
@@ -269,7 +275,7 @@ export function useTableAvailability(
 export function useEvents(slug: string, enabled = true) {
   return useQuery({
     queryKey: publicKeys.events(slug),
-    queryFn: () => api<PublicEvent[]>(`${pub(slug)}/events`),
+    queryFn: () => api<PublicEvent[]>(API_ENDPOINTS.PUBLIC.EVENTS(slug)),
     enabled,
     staleTime: 60_000,
   })
@@ -280,7 +286,7 @@ export function useEventDetail(slug: string, id: number, date: string) {
   return useQuery({
     queryKey: publicKeys.event(slug, id, date),
     queryFn: () =>
-      api<PublicEventDetail>(`${pub(slug)}/events/${id}`, {
+      api<PublicEventDetail>(API_ENDPOINTS.PUBLIC.EVENT(slug, id), {
         query: date ? { date } : undefined,
       }),
     placeholderData: keepPreviousData,
@@ -292,7 +298,7 @@ export function useEventDetail(slug: string, id: number, date: string) {
 export function useBuyEventTables(slug: string, id: number) {
   return useMutation({
     mutationFn: (body: BuyEventTablesInput) =>
-      api<CreatedBooking>(`${pub(slug)}/events/${id}/bookings`, {
+      api<CreatedBooking>(API_ENDPOINTS.PUBLIC.EVENT_BOOKINGS(slug, id), {
         method: "POST",
         body,
       }),
@@ -315,18 +321,18 @@ function slipForm(s: SlipInput) {
 /** "I paid and sent the slip": by the private link, or for a logged-in customer's own booking */
 export const slipApi = {
   guest: (slug: string, token: string, s: SlipInput = { via: "whatsapp" }) =>
-    api<Booking>(
-      `${pub(slug)}/bookings/${encodeURIComponent(token)}/slip-sent`,
-      { method: "POST", form: slipForm(s) },
-    ),
+    api<Booking>(API_ENDPOINTS.PUBLIC.BOOKING_SLIP_SENT(slug, token), {
+      method: "POST",
+      form: slipForm(s),
+    }),
   mine: (id: number, s: SlipInput = { via: "whatsapp" }) =>
-    api<Booking>(`/me/bookings/${id}/slip-sent`, {
+    api<Booking>(API_ENDPOINTS.ME.BOOKING_SLIP_SENT(id), {
       method: "POST",
       form: slipForm(s),
     }),
   /** the same for a package the customer bought */
   package: (id: number, s: SlipInput = { via: "whatsapp" }) =>
-    api<CustomerPackage>(`/me/packages/${id}/slip`, {
+    api<CustomerPackage>(API_ENDPOINTS.ME.PACKAGE_SLIP(id), {
       method: "POST",
       form: slipForm(s),
     }),
@@ -337,7 +343,7 @@ export function usePaymentOptions(slug: string, forPackage = false) {
   return useQuery({
     queryKey: ["public", slug, "payment-options", forPackage] as const,
     queryFn: () =>
-      api<PaymentOption[]>(`${pub(slug)}/payment-options`, {
+      api<PaymentOption[]>(API_ENDPOINTS.PUBLIC.PAYMENT_OPTIONS(slug), {
         query: forPackage ? { for: "package" } : undefined,
       }),
     staleTime: 5 * 60_000,
@@ -352,16 +358,16 @@ export const payApi = {
     body: { provider: string; method: string },
   ) =>
     "packageId" in who
-      ? api<OnlinePayment>(`/me/packages/${who.packageId}/pay`, {
+      ? api<OnlinePayment>(API_ENDPOINTS.ME.PACKAGE_PAY(who.packageId), {
           method: "POST",
           body,
         })
       : "token" in who
         ? api<OnlinePayment>(
-            `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/pay`,
+            API_ENDPOINTS.PUBLIC.BOOKING_PAY(slug, who.token),
             { method: "POST", body },
           )
-        : api<OnlinePayment>(`/me/bookings/${who.bookingId}/pay`, {
+        : api<OnlinePayment>(API_ENDPOINTS.ME.BOOKING_PAY(who.bookingId), {
             method: "POST",
             body,
           }),
@@ -371,31 +377,39 @@ export const payApi = {
     who: { token: string } | { bookingId: number } | { packageId: number },
   ) =>
     "packageId" in who
-      ? api<OnlinePayment | null>(`/me/packages/${who.packageId}/payment`)
+      ? api<OnlinePayment | null>(
+          API_ENDPOINTS.ME.PACKAGE_PAYMENT(who.packageId),
+        )
       : "token" in who
         ? api<OnlinePayment | null>(
-            `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/payment`,
+            API_ENDPOINTS.PUBLIC.BOOKING_PAYMENT(slug, who.token),
           )
-        : api<OnlinePayment | null>(`/me/bookings/${who.bookingId}/payment`),
+        : api<OnlinePayment | null>(
+            API_ENDPOINTS.ME.BOOKING_PAYMENT(who.bookingId),
+          ),
   check: (
     slug: string,
     who: { token: string } | { bookingId: number } | { packageId: number },
     id: number,
   ) =>
     "packageId" in who
-      ? api<OnlinePayment>(`/me/packages/${who.packageId}/payments/${id}`)
+      ? api<OnlinePayment>(
+          API_ENDPOINTS.ME.PACKAGE_PAYMENT_ONE(who.packageId, id),
+        )
       : "token" in who
         ? api<OnlinePayment>(
-            `${pub(slug)}/bookings/${encodeURIComponent(who.token)}/payments/${id}`,
+            API_ENDPOINTS.PUBLIC.BOOKING_PAYMENT_ONE(slug, who.token, id),
           )
-        : api<OnlinePayment>(`/me/bookings/${who.bookingId}/payments/${id}`),
+        : api<OnlinePayment>(
+            API_ENDPOINTS.ME.BOOKING_PAYMENT_ONE(who.bookingId, id),
+          ),
 }
 
 /** How to pay the branch outside the system (QR, account, WhatsApp), for a page opened on any device */
 export function usePublicPayInfo(slug: string, enabled = true) {
   return useQuery({
     queryKey: ["public", slug, "event-pay"] as const,
-    queryFn: () => api<PublicPayInfo>(`${pub(slug)}/event-pay`),
+    queryFn: () => api<PublicPayInfo>(API_ENDPOINTS.PUBLIC.EVENT_PAY(slug)),
     enabled,
     staleTime: 60_000,
   })
@@ -412,7 +426,7 @@ export const packageKeys = {
 export function usePublicPackages(slug: string, enabled = true) {
   return useQuery({
     queryKey: packageKeys.list(slug),
-    queryFn: () => api<PackageItem[]>(`${pub(slug)}/packages`),
+    queryFn: () => api<PackageItem[]>(API_ENDPOINTS.PUBLIC.PACKAGES(slug)),
     enabled,
     ...CATALOG,
   })
@@ -422,7 +436,7 @@ export function usePublicPackages(slug: string, enabled = true) {
 export function useMyPackages(enabled = true) {
   return useQuery({
     queryKey: packageKeys.mine,
-    queryFn: () => api<CustomerPackage[]>("/me/packages"),
+    queryFn: () => api<CustomerPackage[]>(API_ENDPOINTS.ME.PACKAGES),
     enabled,
     refetchOnWindowFocus: true,
     refetchInterval: (q) =>
@@ -435,17 +449,20 @@ export function useMyPackages(enabled = true) {
 export function useMyPackageVisits(id: number | null) {
   return useQuery({
     queryKey: [...packageKeys.mine, "visits", id] as const,
-    queryFn: () => api<PackageVisit[]>(`/me/packages/${id}/visits`),
+    queryFn: () =>
+      api<PackageVisit[]>(API_ENDPOINTS.ME.PACKAGE_VISITS(id as number)),
     enabled: id !== null,
   })
 }
 
 export const myPackageApi = {
   buy: (slug: string, packageId: number, optionId: number) =>
-    api<CustomerPackage>(`${pub(slug)}/packages/${packageId}/buy`, {
+    api<CustomerPackage>(API_ENDPOINTS.PUBLIC.PACKAGE_BUY(slug, packageId), {
       method: "POST",
       body: { option_id: optionId },
     }),
   cancel: (id: number) =>
-    api<CustomerPackage>(`/me/packages/${id}/cancel`, { method: "POST" }),
+    api<CustomerPackage>(API_ENDPOINTS.ME.PACKAGE_CANCEL(id), {
+      method: "POST",
+    }),
 }

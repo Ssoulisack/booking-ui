@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query"
 
 import { api, apiMessage, apiPage, ApiError } from "@/lib/api/client"
+import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import type {
   ClassSession,
   Timetable,
@@ -63,39 +64,46 @@ const ALL = { query: { limit: 100 } }
 // ---------- reads ----------
 
 export function useSettings() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("settings"),
-    queryFn: () => api<BranchSettings>(`${base}/settings`),
+    queryFn: () => api<BranchSettings>(API_ENDPOINTS.BRANCH.SETTINGS(branchId)),
     // the page remounts its form when this data changes: a refocus (e.g. after the file picker) must not wipe unsaved edits
     refetchOnWindowFocus: false,
   })
 }
 
 export function useSportsList() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("sports"),
     queryFn: async () =>
-      (await apiPage<ManagedSport>(`${base}/sports`, ALL)).items,
+      (await apiPage<ManagedSport>(API_ENDPOINTS.BRANCH.SPORTS(branchId), ALL))
+        .items,
   })
 }
 
 export function useResourcesList() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("resources"),
     queryFn: async () =>
-      (await apiPage<ManagedResource>(`${base}/resources`, ALL)).items,
+      (
+        await apiPage<ManagedResource>(
+          API_ENDPOINTS.BRANCH.RESOURCES(branchId),
+          ALL,
+        )
+      ).items,
   })
 }
 
 export function useCoachesList() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("coaches"),
     queryFn: async () =>
-      (await apiPage<ManagedCoach>(`${base}/coaches`, ALL)).items,
+      (await apiPage<ManagedCoach>(API_ENDPOINTS.BRANCH.COACHES(branchId), ALL))
+        .items,
   })
 }
 
@@ -108,7 +116,7 @@ export function hoursQuery(
   return {
     queryKey: biz.key("hours", owner, id),
     queryFn: () =>
-      api<OpeningHour[]>(`${biz.base}/opening-hours/${owner}/${id}`),
+      api<OpeningHour[]>(API_ENDPOINTS.BRANCH.OPENING_HOURS(biz.id, owner, id)),
   }
 }
 
@@ -122,7 +130,7 @@ export function priceQuery(
     queryKey: biz.key("price", owner, id),
     queryFn: async () => {
       try {
-        return await api<Price>(`${biz.base}/prices/${owner}/${id}`)
+        return await api<Price>(API_ENDPOINTS.BRANCH.PRICES(biz.id, owner, id))
       } catch (err) {
         if (err instanceof ApiError && err.status === 404) return null
         throw err
@@ -141,10 +149,11 @@ export function usePrice(owner: ScheduleOwner, id: number) {
 
 /** A restaurant area with its tables, for the floor plan editor */
 export function useFloorPlan(areaId: number) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("plan", areaId),
-    queryFn: () => api<FloorPlan>(`${base}/sports/${areaId}/plan`),
+    queryFn: () =>
+      api<FloorPlan>(API_ENDPOINTS.BRANCH.SPORT_PLAN(branchId, areaId)),
     enabled: areaId > 0,
     // the editor keeps unsaved moves in its own state: a refocus must not reset them
     refetchOnWindowFocus: false,
@@ -157,111 +166,121 @@ export function useAllFloorPlans(areaIds: number[]) {
   return useQueries({
     queries: areaIds.map((id) => ({
       queryKey: biz.key("plan", id),
-      queryFn: () => api<FloorPlan>(`${biz.base}/sports/${id}/plan`),
+      queryFn: () =>
+        api<FloorPlan>(API_ENDPOINTS.BRANCH.SPORT_PLAN(biz.id, id)),
     })),
   })
 }
 
 export function useTableSettings() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("table-settings"),
-    queryFn: () => api<TableSettings>(`${base}/table-settings`),
+    queryFn: () =>
+      api<TableSettings>(API_ENDPOINTS.BRANCH.TABLE_SETTINGS(branchId)),
     refetchOnWindowFocus: false,
   })
 }
 
 export function useEvents() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("events"),
-    queryFn: () => api<EventItem[]>(`${base}/events`),
+    queryFn: () => api<EventItem[]>(API_ENDPOINTS.BRANCH.EVENTS(branchId)),
   })
 }
 
 export function useEventPrices(eventId: number) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("events", "prices", eventId),
-    queryFn: () => api<EventPrices>(`${base}/events/${eventId}/prices`),
+    queryFn: () =>
+      api<EventPrices>(API_ENDPOINTS.BRANCH.EVENT_PRICES(branchId, eventId)),
     refetchOnWindowFocus: false,
   })
 }
 
 export function usePaymentSettings() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("payment-settings"),
-    queryFn: () => api<PaymentSettings>(`${base}/payment-settings`),
+    queryFn: () =>
+      api<PaymentSettings>(API_ENDPOINTS.BRANCH.PAYMENT_SETTINGS(branchId)),
     refetchOnWindowFocus: false,
   })
 }
 
 export function useTelegram() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("telegram"),
-    queryFn: () => api<TelegramSettings>(`${base}/telegram`),
+    queryFn: () =>
+      api<TelegramSettings>(API_ENDPOINTS.BRANCH.TELEGRAM(branchId)),
     refetchOnWindowFocus: false,
   })
 }
 
 export function usePayInfo() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("event-pay"),
-    queryFn: () => api<PayInfo>(`${base}/event-pay`),
+    queryFn: () => api<PayInfo>(API_ENDPOINTS.BRANCH.EVENT_PAY(branchId)),
     refetchOnWindowFocus: false,
   })
 }
 
 export function useClosures() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("closures"),
     queryFn: async () =>
-      (await apiPage<Closure>(`${base}/closures`, ALL)).items,
+      (await apiPage<Closure>(API_ENDPOINTS.BRANCH.CLOSURES(branchId), ALL))
+        .items,
   })
 }
 
 /** Classes between two dates (YYYY-MM-DD, business time zone, both included) */
 export function useClassList(from: string, to: string) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("classes", from, to),
     queryFn: async () =>
       (
-        await apiPage<ClassSession>(`${base}/class-sessions`, {
-          query: { from, to, limit: 100 },
-        })
+        await apiPage<ClassSession>(
+          API_ENDPOINTS.BRANCH.CLASS_SESSIONS(branchId),
+          {
+            query: { from, to, limit: 100 },
+          },
+        )
       ).items,
   })
 }
 
 /** The branch's weekly class timetables */
 export function useTimetables() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("timetables"),
-    queryFn: () => api<Timetable[]>(`${base}/class-timetables`),
+    queryFn: () =>
+      api<Timetable[]>(API_ENDPOINTS.BRANCH.CLASS_TIMETABLES(branchId)),
   })
 }
 
 export function useRules() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("rules"),
-    queryFn: () => api<Rule[]>(`${base}/rules`),
+    queryFn: () => api<Rule[]>(API_ENDPOINTS.BRANCH.RULES(branchId)),
   })
 }
 
 /** The rule in force for a sport or a court (default ← sport ← court) */
 /** The company rule this branch starts from (read only here; the owner and admins change it) */
 export function useCompanyRuleAtBranch() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("rules", "company"),
-    queryFn: () => api<Rule>(`${base}/rules/company`),
+    queryFn: () => api<Rule>(API_ENDPOINTS.BRANCH.RULES_COMPANY(branchId)),
   })
 }
 
@@ -269,10 +288,13 @@ export function useEffectiveRule(q: {
   sport_id?: number
   resource_id?: number
 }) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("rules", "effective", q),
-    queryFn: () => api<EffectiveRule>(`${base}/rules/effective`, { query: q }),
+    queryFn: () =>
+      api<EffectiveRule>(API_ENDPOINTS.BRANCH.RULES_EFFECTIVE(branchId), {
+        query: q,
+      }),
     retry: false,
   })
 }
@@ -284,13 +306,13 @@ export function useEffectiveRule(q: {
  * pages, which most changes affect).
  */
 export function useChange<I, O>(
-  fn: (base: string, input: I) => Promise<O>,
+  fn: (branchId: number, input: I) => Promise<O>,
   refresh: string[],
 ) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: I) => fn(base, input),
+    mutationFn: (input: I) => fn(branchId, input),
     onSuccess: () => {
       for (const part of refresh) {
         void queryClient.invalidateQueries({ queryKey: key(part) })
@@ -302,17 +324,24 @@ export function useChange<I, O>(
 }
 
 export const manage = {
-  saveSettings: (base: string, body: SettingsInput) =>
-    api<BranchSettings>(`${base}/settings`, { method: "PUT", body }),
-  publish: (base: string) =>
-    api<BranchSettings>(`${base}/publish`, { method: "POST" }),
-  unpublish: (base: string) =>
-    api<BranchSettings>(`${base}/unpublish`, { method: "POST" }),
+  saveSettings: (branchId: number, body: SettingsInput) =>
+    api<BranchSettings>(API_ENDPOINTS.BRANCH.SETTINGS(branchId), {
+      method: "PUT",
+      body,
+    }),
+  publish: (branchId: number) =>
+    api<BranchSettings>(API_ENDPOINTS.BRANCH.PUBLISH(branchId), {
+      method: "POST",
+    }),
+  unpublish: (branchId: number) =>
+    api<BranchSettings>(API_ENDPOINTS.BRANCH.UNPUBLISH(branchId), {
+      method: "POST",
+    }),
 
-  upload: (base: string, folder: string, file: File) => {
+  upload: (scope: string, folder: string, file: File) => {
     const form = new FormData()
     form.append("file", file)
-    return api<Media>(`${base}/uploads`, {
+    return api<Media>(API_ENDPOINTS.MEDIA.UPLOADS(scope), {
       method: "POST",
       form,
       query: { folder },
@@ -320,7 +349,7 @@ export const manage = {
   },
 
   saveSport: (
-    base: string,
+    branchId: number,
     s: { id?: number } & Omit<
       ManagedSport,
       "id" | "slug" | "image_url" | "plan_width" | "plan_height" | "floor"
@@ -328,27 +357,38 @@ export const manage = {
       Partial<Pick<ManagedSport, "plan_width" | "plan_height" | "floor">>,
   ) =>
     s.id
-      ? api<ManagedSport>(`${base}/sports/${s.id}`, { method: "PUT", body: s })
-      : api<ManagedSport>(`${base}/sports`, { method: "POST", body: s }),
-  deleteSport: (base: string, id: number) =>
-    apiMessage(`${base}/sports/${id}`, { method: "DELETE" }),
+      ? api<ManagedSport>(API_ENDPOINTS.BRANCH.SPORT(branchId, s.id), {
+          method: "PUT",
+          body: s,
+        })
+      : api<ManagedSport>(API_ENDPOINTS.BRANCH.SPORTS(branchId), {
+          method: "POST",
+          body: s,
+        }),
+  deleteSport: (branchId: number, id: number) =>
+    apiMessage(API_ENDPOINTS.BRANCH.SPORT(branchId, id), { method: "DELETE" }),
 
   saveResource: (
-    base: string,
+    branchId: number,
     r: { id?: number } & Omit<ManagedResource, "id">,
   ) =>
     r.id
-      ? api<ManagedResource>(`${base}/resources/${r.id}`, {
+      ? api<ManagedResource>(API_ENDPOINTS.BRANCH.RESOURCE(branchId, r.id), {
           method: "PUT",
           body: r,
         })
-      : api<ManagedResource>(`${base}/resources`, { method: "POST", body: r }),
-  deleteResource: (base: string, id: number) =>
-    apiMessage(`${base}/resources/${id}`, { method: "DELETE" }),
+      : api<ManagedResource>(API_ENDPOINTS.BRANCH.RESOURCES(branchId), {
+          method: "POST",
+          body: r,
+        }),
+  deleteResource: (branchId: number, id: number) =>
+    apiMessage(API_ENDPOINTS.BRANCH.RESOURCE(branchId, id), {
+      method: "DELETE",
+    }),
 
   /** Saves an area's plan size and where every table stands, at once */
   saveFloorPlan: (
-    base: string,
+    branchId: number,
     p: {
       areaId: number
       plan_width: number
@@ -384,7 +424,7 @@ export const manage = {
       >
     },
   ) =>
-    api<FloorPlan>(`${base}/sports/${p.areaId}/plan`, {
+    api<FloorPlan>(API_ENDPOINTS.BRANCH.SPORT_PLAN(branchId, p.areaId), {
       method: "PUT",
       body: {
         plan_width: p.plan_width,
@@ -395,32 +435,44 @@ export const manage = {
         items: p.items.map((i) => ({ ...i, id: i.id > 0 ? i.id : 0 })),
       },
     }),
-  saveTableSettings: (base: string, body: TableSettings) =>
-    api<TableSettings>(`${base}/table-settings`, { method: "PUT", body }),
+  saveTableSettings: (branchId: number, body: TableSettings) =>
+    api<TableSettings>(API_ENDPOINTS.BRANCH.TABLE_SETTINGS(branchId), {
+      method: "PUT",
+      body,
+    }),
 
   saveCoach: (
-    base: string,
+    branchId: number,
     c: { id?: number; sport_ids: number[] } & Omit<
       ManagedCoach,
       "id" | "sports" | "image_url"
     >,
   ) =>
     c.id
-      ? api<ManagedCoach>(`${base}/coaches/${c.id}`, { method: "PUT", body: c })
-      : api<ManagedCoach>(`${base}/coaches`, { method: "POST", body: c }),
-  deleteCoach: (base: string, id: number) =>
-    apiMessage(`${base}/coaches/${id}`, { method: "DELETE" }),
+      ? api<ManagedCoach>(API_ENDPOINTS.BRANCH.COACH(branchId, c.id), {
+          method: "PUT",
+          body: c,
+        })
+      : api<ManagedCoach>(API_ENDPOINTS.BRANCH.COACHES(branchId), {
+          method: "POST",
+          body: c,
+        }),
+  deleteCoach: (branchId: number, id: number) =>
+    apiMessage(API_ENDPOINTS.BRANCH.COACH(branchId, id), { method: "DELETE" }),
 
   saveHours: (
-    base: string,
+    branchId: number,
     p: { owner: HoursOwner; id: number; hours: OpeningHour[] },
   ) =>
-    api<OpeningHour[]>(`${base}/opening-hours/${p.owner}/${p.id}`, {
-      method: "PUT",
-      body: { hours: p.hours },
-    }),
+    api<OpeningHour[]>(
+      API_ENDPOINTS.BRANCH.OPENING_HOURS(branchId, p.owner, p.id),
+      {
+        method: "PUT",
+        body: { hours: p.hours },
+      },
+    ),
   savePrice: (
-    base: string,
+    branchId: number,
     p: {
       owner: ScheduleOwner
       id: number
@@ -428,27 +480,33 @@ export const manage = {
       currency: string
     },
   ) =>
-    api<Price>(`${base}/prices/${p.owner}/${p.id}`, {
+    api<Price>(API_ENDPOINTS.BRANCH.PRICES(branchId, p.owner, p.id), {
       method: "PUT",
       body: { price_per_hour: p.price_per_hour, currency: p.currency },
     }),
 
-  saveEvent: (base: string, e: { id?: number } & EventInput) =>
+  saveEvent: (branchId: number, e: { id?: number } & EventInput) =>
     e.id
-      ? api<EventItem>(`${base}/events/${e.id}`, { method: "PUT", body: e })
-      : api<EventItem>(`${base}/events`, { method: "POST", body: e }),
-  deleteEvent: (base: string, id: number) =>
-    apiMessage(`${base}/events/${id}`, { method: "DELETE" }),
+      ? api<EventItem>(API_ENDPOINTS.BRANCH.EVENT(branchId, e.id), {
+          method: "PUT",
+          body: e,
+        })
+      : api<EventItem>(API_ENDPOINTS.BRANCH.EVENTS(branchId), {
+          method: "POST",
+          body: e,
+        }),
+  deleteEvent: (branchId: number, id: number) =>
+    apiMessage(API_ENDPOINTS.BRANCH.EVENT(branchId, id), { method: "DELETE" }),
   copyEvent: (
-    base: string,
+    branchId: number,
     c: { id: number; name: string; starts_on: string; ends_on: string },
   ) =>
-    api<EventItem>(`${base}/events/${c.id}/copy`, {
+    api<EventItem>(API_ENDPOINTS.BRANCH.EVENT_COPY(branchId, c.id), {
       method: "POST",
       body: { name: c.name, starts_on: c.starts_on, ends_on: c.ends_on },
     }),
-  saveEventPrices: (base: string, p: { id: number } & EventPricesInput) =>
-    api<EventPrices>(`${base}/events/${p.id}/prices`, {
+  saveEventPrices: (branchId: number, p: { id: number } & EventPricesInput) =>
+    api<EventPrices>(API_ENDPOINTS.BRANCH.EVENT_PRICES(branchId, p.id), {
       method: "PUT",
       body: {
         default_price: p.default_price,
@@ -456,18 +514,28 @@ export const manage = {
         tables: p.tables,
       },
     }),
-  saveTelegram: (base: string, body: TelegramInput) =>
-    api<TelegramSettings>(`${base}/telegram`, { method: "PUT", body }),
-  findTelegramGroups: (base: string, _: void) =>
-    api<TelegramGroups>(`${base}/telegram/find-groups`, { method: "POST" }),
-  testTelegram: (base: string, _: void) =>
-    api<TelegramSettings>(`${base}/telegram/test`, { method: "POST" }),
-  disconnectTelegram: (base: string, _: void) =>
-    apiMessage(`${base}/telegram`, { method: "DELETE" }),
-  savePayInfo: (base: string, body: PayInfo) =>
-    api<PayInfo>(`${base}/event-pay`, { method: "PUT", body }),
+  saveTelegram: (branchId: number, body: TelegramInput) =>
+    api<TelegramSettings>(API_ENDPOINTS.BRANCH.TELEGRAM(branchId), {
+      method: "PUT",
+      body,
+    }),
+  findTelegramGroups: (branchId: number, _: void) =>
+    api<TelegramGroups>(API_ENDPOINTS.BRANCH.TELEGRAM_FIND_GROUPS(branchId), {
+      method: "POST",
+    }),
+  testTelegram: (branchId: number, _: void) =>
+    api<TelegramSettings>(API_ENDPOINTS.BRANCH.TELEGRAM_TEST(branchId), {
+      method: "POST",
+    }),
+  disconnectTelegram: (branchId: number, _: void) =>
+    apiMessage(API_ENDPOINTS.BRANCH.TELEGRAM(branchId), { method: "DELETE" }),
+  savePayInfo: (branchId: number, body: PayInfo) =>
+    api<PayInfo>(API_ENDPOINTS.BRANCH.EVENT_PAY(branchId), {
+      method: "PUT",
+      body,
+    }),
   savePaymentSettings: (
-    base: string,
+    branchId: number,
     body: {
       online_enabled: boolean
       online_bookings?: boolean
@@ -475,63 +543,83 @@ export const manage = {
       charge_minutes: number
     },
   ) =>
-    api<PaymentSettings>(`${base}/payment-settings`, { method: "PUT", body }),
+    api<PaymentSettings>(API_ENDPOINTS.BRANCH.PAYMENT_SETTINGS(branchId), {
+      method: "PUT",
+      body,
+    }),
 
-  saveClosure: (base: string, c: { id?: number } & Omit<Closure, "id">) =>
+  saveClosure: (branchId: number, c: { id?: number } & Omit<Closure, "id">) =>
     c.id
-      ? api<Closure>(`${base}/closures/${c.id}`, { method: "PUT", body: c })
-      : api<Closure>(`${base}/closures`, { method: "POST", body: c }),
-  deleteClosure: (base: string, id: number) =>
-    apiMessage(`${base}/closures/${id}`, { method: "DELETE" }),
+      ? api<Closure>(API_ENDPOINTS.BRANCH.CLOSURE(branchId, c.id), {
+          method: "PUT",
+          body: c,
+        })
+      : api<Closure>(API_ENDPOINTS.BRANCH.CLOSURES(branchId), {
+          method: "POST",
+          body: c,
+        }),
+  deleteClosure: (branchId: number, id: number) =>
+    apiMessage(API_ENDPOINTS.BRANCH.CLOSURE(branchId, id), {
+      method: "DELETE",
+    }),
 
   saveClass: (
-    base: string,
+    branchId: number,
     c: { id?: number } & Omit<ClassSession, "id" | "seats_left">,
   ) =>
     c.id
-      ? api<ClassSession>(`${base}/class-sessions/${c.id}`, {
+      ? api<ClassSession>(API_ENDPOINTS.BRANCH.CLASS_SESSION(branchId, c.id), {
           method: "PUT",
           body: c,
         })
-      : api<ClassSession>(`${base}/class-sessions`, {
+      : api<ClassSession>(API_ENDPOINTS.BRANCH.CLASS_SESSIONS(branchId), {
           method: "POST",
           body: c,
         }),
-  deleteClass: (base: string, id: number) =>
-    apiMessage(`${base}/class-sessions/${id}`, { method: "DELETE" }),
-  saveTimetable: (base: string, t: { id?: number } & TimetableInput) =>
+  deleteClass: (branchId: number, id: number) =>
+    apiMessage(API_ENDPOINTS.BRANCH.CLASS_SESSION(branchId, id), {
+      method: "DELETE",
+    }),
+  saveTimetable: (branchId: number, t: { id?: number } & TimetableInput) =>
     t.id
-      ? api<TimetableResult>(`${base}/class-timetables/${t.id}`, {
-          method: "PUT",
-          body: t,
-        })
-      : api<TimetableResult>(`${base}/class-timetables`, {
+      ? api<TimetableResult>(
+          API_ENDPOINTS.BRANCH.CLASS_TIMETABLE(branchId, t.id),
+          {
+            method: "PUT",
+            body: t,
+          },
+        )
+      : api<TimetableResult>(API_ENDPOINTS.BRANCH.CLASS_TIMETABLES(branchId), {
           method: "POST",
           body: t,
         }),
-  stopTimetable: (base: string, id: number) =>
-    api<TimetableStop>(`${base}/class-timetables/${id}`, { method: "DELETE" }),
+  stopTimetable: (branchId: number, id: number) =>
+    api<TimetableStop>(API_ENDPOINTS.BRANCH.CLASS_TIMETABLE(branchId, id), {
+      method: "DELETE",
+    }),
 
   saveRule: (
-    base: string,
+    branchId: number,
     r: { scope: RuleScope; id: number; fields: RuleFields },
   ) =>
-    api<Rule>(`${base}/rules/${r.scope}/${r.id}`, {
+    api<Rule>(API_ENDPOINTS.BRANCH.RULE(branchId, r.scope, r.id), {
       method: "PUT",
       body: r.fields,
     }),
-  deleteRule: (base: string, r: { scope: RuleScope; id: number }) =>
-    apiMessage(`${base}/rules/${r.scope}/${r.id}`, { method: "DELETE" }),
+  deleteRule: (branchId: number, r: { scope: RuleScope; id: number }) =>
+    apiMessage(API_ENDPOINTS.BRANCH.RULE(branchId, r.scope, r.id), {
+      method: "DELETE",
+    }),
 }
 
 /** Mutation helper for one delete button: closes its dialog when done */
 export function useDelete(
-  fn: (base: string, id: number) => Promise<unknown>,
+  fn: (branchId: number, id: number) => Promise<unknown>,
   onDone: () => void,
 ) {
-  const { base } = useBiz()
+  const { id: branchId } = useBiz()
   return useMutation({
-    mutationFn: (id: number) => fn(base, id),
+    mutationFn: (id: number) => fn(branchId, id),
     onSuccess: onDone,
   })
 }

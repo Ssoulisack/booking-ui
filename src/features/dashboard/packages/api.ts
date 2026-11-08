@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { api, apiMessage } from "@/lib/api/client"
+import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import type {
   CustomerPackage,
   PackageInput,
@@ -14,10 +15,10 @@ import { useBiz } from "../api"
 
 /** The packages the branch sells (the team sees inactive ones too) */
 export function usePackages() {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("packages"),
-    queryFn: () => api<PackageItem[]>(`${base}/packages`),
+    queryFn: () => api<PackageItem[]>(API_ENDPOINTS.BRANCH.PACKAGES(branchId)),
   })
 }
 
@@ -26,7 +27,7 @@ export function useSoldPackages(
   f: { customerId?: number; status?: string; q?: string },
   enabled = true,
 ) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key(
       "sold-packages",
@@ -35,7 +36,7 @@ export function useSoldPackages(
       f.q ?? "",
     ),
     queryFn: () =>
-      api<CustomerPackage[]>(`${base}/customer-packages`, {
+      api<CustomerPackage[]>(API_ENDPOINTS.BRANCH.CUSTOMER_PACKAGES(branchId), {
         query: {
           ...(f.customerId ? { customer_id: f.customerId } : {}),
           ...(f.status ? { status: f.status } : {}),
@@ -49,11 +50,13 @@ export function useSoldPackages(
 
 /** A package's log: every use, give-back and adjustment */
 export function usePackageVisits(id: number | null) {
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   return useQuery({
     queryKey: key("sold-packages", "visits", id),
     queryFn: () =>
-      api<PackageVisit[]>(`${base}/customer-packages/${id}/visits`),
+      api<PackageVisit[]>(
+        API_ENDPOINTS.BRANCH.CUSTOMER_PACKAGE_VISITS(branchId, id as number),
+      ),
     enabled: id !== null,
   })
 }
@@ -61,14 +64,22 @@ export function usePackageVisits(id: number | null) {
 // ---------- changes (used with useChange) ----------
 
 export const packageApi = {
-  save: (base: string, p: { id?: number } & PackageInput) =>
+  save: (branchId: number, p: { id?: number } & PackageInput) =>
     p.id
-      ? api<PackageItem>(`${base}/packages/${p.id}`, { method: "PUT", body: p })
-      : api<PackageItem>(`${base}/packages`, { method: "POST", body: p }),
-  remove: (base: string, id: number) =>
-    apiMessage(`${base}/packages/${id}`, { method: "DELETE" }),
+      ? api<PackageItem>(API_ENDPOINTS.BRANCH.PACKAGE(branchId, p.id), {
+          method: "PUT",
+          body: p,
+        })
+      : api<PackageItem>(API_ENDPOINTS.BRANCH.PACKAGES(branchId), {
+          method: "POST",
+          body: p,
+        }),
+  remove: (branchId: number, id: number) =>
+    apiMessage(API_ENDPOINTS.BRANCH.PACKAGE(branchId, id), {
+      method: "DELETE",
+    }),
   sell: (
-    base: string,
+    branchId: number,
     s: {
       customer_id: number
       package_id: number
@@ -77,25 +88,34 @@ export const packageApi = {
       notes: string
     },
   ) =>
-    api<CustomerPackage>(`${base}/customer-packages`, {
+    api<CustomerPackage>(API_ENDPOINTS.BRANCH.CUSTOMER_PACKAGES(branchId), {
       method: "POST",
       body: s,
     }),
-  markPaid: (base: string, p: { id: number; method: string }) =>
-    api<CustomerPackage>(`${base}/customer-packages/${p.id}/paid`, {
-      method: "POST",
-      body: { method: p.method },
-    }),
-  cancel: (base: string, id: number) =>
-    api<CustomerPackage>(`${base}/customer-packages/${id}/cancel`, {
-      method: "POST",
-    }),
+  markPaid: (branchId: number, p: { id: number; method: string }) =>
+    api<CustomerPackage>(
+      API_ENDPOINTS.BRANCH.CUSTOMER_PACKAGE_PAID(branchId, p.id),
+      {
+        method: "POST",
+        body: { method: p.method },
+      },
+    ),
+  cancel: (branchId: number, id: number) =>
+    api<CustomerPackage>(
+      API_ENDPOINTS.BRANCH.CUSTOMER_PACKAGE_CANCEL(branchId, id),
+      {
+        method: "POST",
+      },
+    ),
   adjust: (
-    base: string,
+    branchId: number,
     a: { id: number; visits: number; extend_days: number; note: string },
   ) =>
-    api<CustomerPackage>(`${base}/customer-packages/${a.id}/adjust`, {
-      method: "POST",
-      body: { visits: a.visits, extend_days: a.extend_days, note: a.note },
-    }),
+    api<CustomerPackage>(
+      API_ENDPOINTS.BRANCH.CUSTOMER_PACKAGE_ADJUST(branchId, a.id),
+      {
+        method: "POST",
+        body: { visits: a.visits, extend_days: a.extend_days, note: a.note },
+      },
+    ),
 }

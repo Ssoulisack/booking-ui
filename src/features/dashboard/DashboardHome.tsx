@@ -344,13 +344,13 @@ export function PublishButton({
   disabled?: boolean
 }) {
   const { t } = useTranslation()
-  const { base, key } = useBiz()
+  const { id: branchId, key } = useBiz()
   const { branch } = useDashboard()
   const queryClient = useQueryClient()
   const [confirming, setConfirming] = useState(false)
   const change = useMutation({
     mutationFn: () =>
-      published ? manage.unpublish(base) : manage.publish(base),
+      published ? manage.unpublish(branchId) : manage.publish(branchId),
     onSuccess: () => {
       setConfirming(false)
       void queryClient.invalidateQueries({ queryKey: key("settings") })

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import { ImagePlusIcon, ImagesIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
@@ -295,7 +296,8 @@ export function ImageField({
   const { t } = useTranslation()
   const dashboard = useOutletContext<DashboardContext | undefined>()
   const base =
-    uploadTo ?? (dashboard ? `/branches/${dashboard.branch.branch_id}` : "")
+    uploadTo ??
+    (dashboard ? API_ENDPOINTS.BRANCH.ROOT(dashboard.branch.branch_id) : "")
   const input = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState(url)
   const [picking, setPicking] = useState(false)

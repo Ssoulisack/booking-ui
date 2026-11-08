@@ -110,7 +110,7 @@ export function RuleEditor({
   title: string
   lead?: string
 }) {
-  const { base } = useBiz()
+  const { id: branchId } = useBiz()
   const tables = useDashboard().branch.type === "restaurant"
   const rules = useRules()
   const company = useCompanyRuleAtBranch()
@@ -136,13 +136,13 @@ export function RuleEditor({
       lead={lead}
       tables={tables}
       onSave={async (fields) => {
-        await manage.saveRule(base, { scope, id: scopeId, fields })
+        await manage.saveRule(branchId, { scope, id: scopeId, fields })
         invalidate()
       }}
       onReset={
         own
           ? async () => {
-              await manage.deleteRule(base, { scope, id: scopeId })
+              await manage.deleteRule(branchId, { scope, id: scopeId })
               invalidate()
             }
           : undefined
@@ -231,7 +231,7 @@ export function RuleForm({
                           [key]: e.target.value.replace(/[^\d]/g, ""),
                         })
                       }
-                      className="h-11 w-28 text-base lg:h-9 lg:text-sm"
+                      className="text-branchId h-11 w-28 lg:h-9 lg:text-sm"
                     />
                     {unit && (
                       <span className="text-sm text-muted-foreground">

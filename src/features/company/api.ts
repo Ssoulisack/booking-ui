@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query"
 
 import { api, apiMessage, apiPage } from "@/lib/api/client"
+import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import type { BranchType, User } from "@/types/auth"
 import type {
   BranchSummary,
@@ -42,7 +43,7 @@ export const companyKeys = {
 export function useCompany() {
   return useQuery({
     queryKey: companyKeys.company,
-    queryFn: () => api<Company>("/company/"),
+    queryFn: () => api<Company>(API_ENDPOINTS.COMPANY.ROOT),
     // the page remounts its form when this data changes: a refocus (e.g. after the file picker) must not wipe unsaved edits
     refetchOnWindowFocus: false,
   })
@@ -51,7 +52,7 @@ export function useCompany() {
 export function useCompanyRule() {
   return useQuery({
     queryKey: companyKeys.rule,
-    queryFn: () => api<Rule>("/company/rules"),
+    queryFn: () => api<Rule>(API_ENDPOINTS.COMPANY.RULES),
     // the page remounts its form when this data changes: a refocus (e.g. after the file picker) must not wipe unsaved edits
     refetchOnWindowFocus: false,
   })
@@ -60,21 +61,21 @@ export function useCompanyRule() {
 export function useBranches() {
   return useQuery({
     queryKey: companyKeys.branches,
-    queryFn: () => api<BranchSummary[]>("/company/branches"),
+    queryFn: () => api<BranchSummary[]>(API_ENDPOINTS.COMPANY.BRANCHES),
   })
 }
 
 export function useTeam() {
   return useQuery({
     queryKey: companyKeys.team,
-    queryFn: () => api<TeamMember[]>("/company/team"),
+    queryFn: () => api<TeamMember[]>(API_ENDPOINTS.COMPANY.TEAM),
   })
 }
 
 export function useInvitations() {
   return useQuery({
     queryKey: companyKeys.invitations,
-    queryFn: () => api<Invitation[]>("/company/invitations"),
+    queryFn: () => api<Invitation[]>(API_ENDPOINTS.COMPANY.INVITATIONS),
   })
 }
 
@@ -82,7 +83,7 @@ export function useUsers(q: { keyword: string; page: number }) {
   return useQuery({
     queryKey: companyKeys.users(q),
     queryFn: () =>
-      apiPage<User>("/company/users", {
+      apiPage<User>(API_ENDPOINTS.COMPANY.USERS, {
         query: { keyword: q.keyword || undefined, page: q.page, limit: 20 },
       }),
     placeholderData: keepPreviousData,
@@ -93,7 +94,7 @@ export function useCompanyCustomers(q: { keyword: string; page: number }) {
   return useQuery({
     queryKey: companyKeys.customers(q),
     queryFn: () =>
-      apiPage<Customer>("/company/customers", {
+      apiPage<Customer>(API_ENDPOINTS.COMPANY.CUSTOMERS, {
         query: { keyword: q.keyword || undefined, page: q.page, limit: 20 },
       }),
     placeholderData: keepPreviousData,
@@ -103,7 +104,8 @@ export function useCompanyCustomers(q: { keyword: string; page: number }) {
 export function useCompanyReport(q: { from: string; to: string }) {
   return useQuery({
     queryKey: companyKeys.report(q),
-    queryFn: () => api<CompanyReport>("/company/report", { query: q }),
+    queryFn: () =>
+      api<CompanyReport>(API_ENDPOINTS.COMPANY.REPORT, { query: q }),
     placeholderData: keepPreviousData,
   })
 }
@@ -124,18 +126,18 @@ function useCompanyMutation<In, Out>(fn: (input: In) => Promise<Out>) {
 
 export const useUpdateCompany = () =>
   useCompanyMutation((body: CompanyInput) =>
-    api<Company>("/company/", { method: "PUT", body }),
+    api<Company>(API_ENDPOINTS.COMPANY.ROOT, { method: "PUT", body }),
   )
 
 export const useSetCompanyRule = () =>
   useCompanyMutation((fields: RuleFields) =>
-    api<Rule>("/company/rules", { method: "PUT", body: fields }),
+    api<Rule>(API_ENDPOINTS.COMPANY.RULES, { method: "PUT", body: fields }),
   )
 
 export const uploadCompanyImage = (folder: string, file: File) => {
   const form = new FormData()
   form.append("file", file)
-  return api<Media>("/company/uploads", {
+  return api<Media>(API_ENDPOINTS.COMPANY.UPLOADS, {
     method: "POST",
     form,
     query: { folder },
@@ -149,30 +151,39 @@ export const useCreateBranch = () =>
       slug: string
       type?: BranchType
       clone_from?: number
-    }) => api<BranchSummary>("/company/branches", { method: "POST", body }),
+    }) =>
+      api<BranchSummary>(API_ENDPOINTS.COMPANY.BRANCHES, {
+        method: "POST",
+        body,
+      }),
   )
 
 export const useSetClosed = () =>
   useCompanyMutation(({ id, closed }: { id: number; closed: boolean }) =>
     api<BranchSummary>(
-      `/company/branches/${id}/${closed ? "close" : "reopen"}`,
+      closed
+        ? API_ENDPOINTS.COMPANY.BRANCH_CLOSE(id)
+        : API_ENDPOINTS.COMPANY.BRANCH_REOPEN(id),
       { method: "POST" },
     ),
   )
 
 export const useUpdateTeamMember = () =>
   useCompanyMutation(({ id, ...body }: TeamMemberInput & { id: number }) =>
-    api<TeamMember>(`/company/team/${id}`, { method: "PUT", body }),
+    api<TeamMember>(API_ENDPOINTS.COMPANY.TEAM_MEMBER(id), {
+      method: "PUT",
+      body,
+    }),
   )
 
 export const useRemoveTeamMember = () =>
   useCompanyMutation((id: number) =>
-    apiMessage(`/company/team/${id}`, { method: "DELETE" }),
+    apiMessage(API_ENDPOINTS.COMPANY.TEAM_MEMBER(id), { method: "DELETE" }),
   )
 
 export const useTransferOwnership = () =>
   useCompanyMutation((userId: number) =>
-    apiMessage("/company/transfer-ownership", {
+    apiMessage(API_ENDPOINTS.COMPANY.TRANSFER_OWNERSHIP, {
       method: "POST",
       body: { user_id: userId },
     }),
@@ -180,22 +191,27 @@ export const useTransferOwnership = () =>
 
 export const useInvite = () =>
   useCompanyMutation((body: InviteInput) =>
-    api<Invitation>("/company/invitations", { method: "POST", body }),
+    api<Invitation>(API_ENDPOINTS.COMPANY.INVITATIONS, {
+      method: "POST",
+      body,
+    }),
   )
 
 export const useCancelInvitation = () =>
   useCompanyMutation((id: number) =>
-    apiMessage(`/company/invitations/${id}`, { method: "DELETE" }),
+    apiMessage(API_ENDPOINTS.COMPANY.INVITATION(id), { method: "DELETE" }),
   )
 
 export const useResendInvitation = () =>
   useCompanyMutation((id: number) =>
-    api<Invitation>(`/company/invitations/${id}/resend`, { method: "POST" }),
+    api<Invitation>(API_ENDPOINTS.COMPANY.INVITATION_RESEND(id), {
+      method: "POST",
+    }),
   )
 
 export const useUserStatus = () =>
   useCompanyMutation(({ id, status }: { id: number; status: boolean }) =>
-    apiMessage(`/company/users/${id}/status`, {
+    apiMessage(API_ENDPOINTS.COMPANY.USER_STATUS(id), {
       method: "PATCH",
       body: { status },
     }),
@@ -203,7 +219,7 @@ export const useUserStatus = () =>
 
 export const useSetPassword = () =>
   useCompanyMutation(({ id, password }: { id: number; password: string }) =>
-    apiMessage(`/company/users/${id}/password`, {
+    apiMessage(API_ENDPOINTS.COMPANY.USER_PASSWORD(id), {
       method: "POST",
       body: { password },
     }),
