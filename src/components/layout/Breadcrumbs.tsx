@@ -5,7 +5,7 @@ import { Link } from "react-router"
 
 import { cn } from "@/lib/utils"
 
-import type { Crumb } from "./crumbs"
+import type { Crumb } from "@/lib/breadcrumbs"
 
 /**
  * "🏠 Company › Branches › …": where this page sits. The first crumb is the area's home; the last

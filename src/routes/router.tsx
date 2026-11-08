@@ -8,6 +8,8 @@ import {
 import { LegalPage } from "@/pages/public/legal"
 import { TrackPage } from "@/components/public/booking/TrackPage"
 
+import { PAGE_MIN_ROLE } from "@/lib/constants/roles"
+
 import { GuestOnly, OldCourtsLink, RequireCompany, RequireUser } from "./guards"
 
 // Each area is its own download, so a customer opening /b/{slug} on a phone never loads the
@@ -240,7 +242,7 @@ export const router = createBrowserRouter([
               {
                 lazy: async () => {
                   const { RequireRole } = await dashboard()
-                  return { element: <RequireRole min="manager" /> }
+                  return { element: <RequireRole min={PAGE_MIN_ROLE.setup} /> }
                 },
                 children: [
                   {
@@ -289,7 +291,9 @@ export const router = createBrowserRouter([
               {
                 lazy: async () => {
                   const { RequireRole } = await dashboard()
-                  return { element: <RequireRole min="admin" /> }
+                  return {
+                    element: <RequireRole min={PAGE_MIN_ROLE.branchSettings} />,
+                  }
                 },
                 children: [
                   page("settings", "SettingsPage"),

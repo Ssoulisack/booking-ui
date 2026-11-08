@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next"
 import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
 import type { CustomerPackage } from "@/types/package"
-import { roleAtLeast } from "@/lib/roles"
+import { roleAtLeast } from "@/lib/constants/roles"
 
 import { useDashboard } from "@/components/provider/dashboard-context"
 import {

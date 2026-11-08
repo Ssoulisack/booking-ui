@@ -1,15 +1,3 @@
-import {
-  BarChart3Icon,
-  Building2Icon,
-  CalendarRangeIcon,
-  ImagesIcon,
-  KeyRoundIcon,
-  LayoutDashboardIcon,
-  QrCodeIcon,
-  SettingsIcon,
-  UsersIcon,
-  UsersRoundIcon,
-} from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, Outlet, useLocation } from "react-router"
@@ -20,27 +8,15 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { LiveStrip } from "@/components/protected/branch/LiveStrip"
 import { PageHeader, Panel } from "@/components/protected/branch/ui"
 import { money } from "@/lib/format"
-import { AppShell } from "@/components/layout/AppShell"
-import { crumbsFor } from "@/components/layout/crumbs"
+import { AppShell, type NavItem } from "@/components/layout/AppShell"
+import { crumbsFor } from "@/lib/breadcrumbs"
+import { COMPANY_CRUMBS } from "@/lib/constants/breadcrumb"
+import { COMPANY_NAV } from "@/lib/constants/nav"
 
 import { useBranches, useCompany, useCompanyReport } from "@/hooks/use-company"
 import { thisMonth } from "@/components/protected/company/period"
 import { paginate } from "@/components/protected/company/paging"
 import { Pager, StatusBadge } from "@/components/protected/company/ui"
-
-// the name of each /company/… path segment in the breadcrumbs
-const COMPANY_CRUMBS: Record<string, string> = {
-  branches: "nav.branches",
-  team: "nav.team",
-  invite: "breadcrumb.invite",
-  customers: "nav.customers",
-  reports: "nav.reports",
-  users: "nav.users",
-  rules: "nav.bookingRules",
-  media: "nav.media",
-  share: "nav.share",
-  settings: "nav.companySettings",
-}
 
 // the overview shows fewer branch cards per page than the Branches list
 const OVERVIEW_PAGE = 10
@@ -50,35 +26,12 @@ export function CompanyLayout() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const company = useCompany()
-  const nav = [
-    {
-      to: "/company",
-      label: t("nav.overview"),
-      icon: LayoutDashboardIcon,
-      end: true,
-    },
-    { to: "/company/branches", label: t("nav.branches"), icon: Building2Icon },
-    { to: "/company/team", label: t("nav.team"), icon: UsersIcon },
-    {
-      to: "/company/customers",
-      label: t("nav.customers"),
-      icon: UsersRoundIcon,
-    },
-    { to: "/company/reports", label: t("nav.reports"), icon: BarChart3Icon },
-    { to: "/company/users", label: t("nav.users"), icon: KeyRoundIcon },
-    {
-      to: "/company/rules",
-      label: t("nav.bookingRules"),
-      icon: CalendarRangeIcon,
-    },
-    { to: "/company/share", label: t("nav.share"), icon: QrCodeIcon },
-    { to: "/company/media", label: t("nav.media"), icon: ImagesIcon },
-    {
-      to: "/company/settings",
-      label: t("nav.companySettings"),
-      icon: SettingsIcon,
-    },
-  ]
+  const nav: NavItem[] = COMPANY_NAV.map(({ path, key, icon, end }) => ({
+    to: path ? `/company/${path}` : "/company",
+    label: t(`nav.${key}`),
+    icon,
+    end,
+  }))
   const crumbs = crumbsFor(
     { label: company.data?.name || t("nav.company"), to: "/company" },
     "/company",

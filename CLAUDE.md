@@ -34,7 +34,7 @@ All URL paths live in `src/lib/constants/api-endpoints.ts` (`API_ENDPOINTS`). Ne
 - `src/components/ui/` — primitives (shadcn). `global/` — shared pieces (forms, pickers, floor-plan, booking). `layout/` — shells (Dashboard, Company, Public, Account, Setup, Auth), breadcrumbs, user menu. `provider/` — app-wide providers and contexts.
 - `src/components/protected/<feature>/` — logged-in UI: `branch` (dashboard home, settings, Telegram, share), `desk` (bookings, calendar, reports, cash-up), `package`, `setup` (courts, sports, coaches, classes, events, closures, rules, payments), `company`, `account`, `settings`, `media`.
 - `src/components/public/<feature>/` — customer-facing UI: `booking` (branch page, checkout, pay, events), `home`, `auth`, `legal`.
-- `src/lib/constants/` — endpoints today; navigation, breadcrumbs, roles in phase 5.
+- `src/lib/constants/` — `api-endpoints.ts` (URLs), `nav.ts` (sidebar menus), `breadcrumb.ts` (trail names), `roles.ts` (role ranks and the minimum role per dashboard page: the menu and the router both read it), `setup-tabs.ts`. Add a page to the menu, the trail and the role table here, not in the layout components. `lib/breadcrumbs.ts` builds the trail.
 - `src/stores/` — zustand, client-only state (session, active branch, unsaved guard). Server data goes through React Query, never zustand.
 
 ### Errors
@@ -55,7 +55,7 @@ Add every user-visible string to all three locale files (en, lo, th); the parity
 | 2 | Foundation: API_ENDPOINTS, split `lib/api/types.ts`, toast helper, provider/global folders | done |
 | 3 | Services + hooks per feature | done |
 | 4 | UI to `components/protected|public|layout`, route entries in `pages/` | done |
-| 5 | Nav / breadcrumb / roles config, router | next |
-| 6 | Cleanup, README, full tests | — |
+| 5 | Nav / breadcrumb / roles config, router | done |
+| 6 | Cleanup, README, full tests | next |
 
 Services (`src/services/*.api.ts`) and hooks (`src/hooks/use-*.ts`) are in place; no component imports a service or the fetch client. `src/features/` is gone.

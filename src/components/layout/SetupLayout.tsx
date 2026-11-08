@@ -4,7 +4,7 @@ import { Navigate, NavLink, Outlet } from "react-router"
 import { cn } from "@/lib/utils"
 
 import { useDashboard } from "@/components/provider/dashboard-context"
-import { setupTabs } from "@/components/protected/setup/tabs"
+import { setupTabs } from "@/lib/constants/setup-tabs"
 
 /** /dashboard/:id/setup/* — what can be booked, when, and at what price (managers and the owner) */
 export function SetupLayout() {

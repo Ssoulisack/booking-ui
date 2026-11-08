@@ -5,7 +5,7 @@ import { ErrorAlert } from "@/components/global/form"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { roleAtLeast } from "@/lib/roles"
+import { roleAtLeast } from "@/lib/constants/roles"
 
 import { useSettings } from "@/hooks/use-branch"
 import { useDashboard } from "@/components/provider/dashboard-context"

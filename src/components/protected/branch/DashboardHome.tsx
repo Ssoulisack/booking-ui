@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Spinner } from "@/components/ui/spinner"
-import { roleAtLeast } from "@/lib/roles"
+import { roleAtLeast } from "@/lib/constants/roles"
 import { cn } from "@/lib/utils"
 import { useSession } from "@/stores/session"
 

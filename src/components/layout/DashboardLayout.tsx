@@ -1,17 +1,3 @@
-import {
-  BarChart3Icon,
-  CalendarDaysIcon,
-  ClipboardListIcon,
-  HandCoinsIcon,
-  ImagesIcon,
-  LayoutDashboardIcon,
-  QrCodeIcon,
-  SendIcon,
-  SettingsIcon,
-  TicketIcon,
-  UsersRoundIcon,
-  WrenchIcon,
-} from "lucide-react"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { Navigate, Outlet, useLocation, useParams } from "react-router"
@@ -19,9 +5,11 @@ import { Navigate, Outlet, useLocation, useParams } from "react-router"
 import { PageLoader, PageError } from "@/components/global/page-state"
 import { usableBranches, useMyBranches } from "@/hooks/use-auth"
 import type { BranchRole } from "@/types/auth"
-import { roleAtLeast } from "@/lib/roles"
+import { DASHBOARD_CRUMBS } from "@/lib/constants/breadcrumb"
+import { DASHBOARD_NAV } from "@/lib/constants/nav"
+import { roleAtLeast } from "@/lib/constants/roles"
 import { AppShell, type NavItem } from "@/components/layout/AppShell"
-import { crumbsFor } from "@/components/layout/crumbs"
+import { crumbsFor } from "@/lib/breadcrumbs"
 import { EndSession } from "@/routes/guards"
 import { useCurrentBranch } from "@/stores/branch"
 import { runsCompany, useSession } from "@/stores/session"
@@ -61,78 +49,6 @@ export function DashboardIndex() {
 
   const pick = usable.find((b) => b.branch_id === currentId) ?? usable[0]
   return <Navigate to={`/dashboard/${pick.branch_id}`} replace />
-}
-
-const NAV: Array<
-  Omit<NavItem, "to" | "label"> & {
-    path: string
-    key: string
-    min: BranchRole
-    /** courts only: a restaurant has no money to count or court use to report */
-    sportOnly?: boolean
-  }
-> = [
-  {
-    path: "",
-    key: "overview",
-    icon: LayoutDashboardIcon,
-    min: "staff",
-    end: true,
-  },
-  { path: "calendar", key: "calendar", icon: CalendarDaysIcon, min: "staff" },
-  { path: "bookings", key: "bookings", icon: ClipboardListIcon, min: "staff" },
-  { path: "customers", key: "customers", icon: UsersRoundIcon, min: "staff" },
-  {
-    path: "packages",
-    key: "packages",
-    icon: TicketIcon,
-    min: "staff",
-    sportOnly: true,
-  },
-  {
-    path: "cash-up",
-    key: "cashUp",
-    icon: HandCoinsIcon,
-    min: "staff",
-    sportOnly: true,
-  },
-  { path: "setup", key: "setup", icon: WrenchIcon, min: "manager" },
-  {
-    path: "reports",
-    key: "reports",
-    icon: BarChart3Icon,
-    min: "manager",
-  },
-  { path: "share", key: "share", icon: QrCodeIcon, min: "staff" },
-  { path: "media", key: "media", icon: ImagesIcon, min: "manager" },
-  { path: "telegram", key: "telegram", icon: SendIcon, min: "admin" },
-  { path: "settings", key: "branchSettings", icon: SettingsIcon, min: "admin" },
-]
-
-// the name of each /dashboard/:id/… path segment in the breadcrumbs (ids are "Details")
-const DASHBOARD_CRUMBS: Record<string, string> = {
-  calendar: "nav.calendar",
-  bookings: "nav.bookings",
-  customers: "nav.customers",
-  packages: "nav.packages",
-  "cash-up": "nav.cashUp",
-  setup: "nav.setup",
-  reports: "nav.reports",
-  share: "nav.share",
-  media: "nav.media",
-  telegram: "nav.telegram",
-  settings: "nav.branchSettings",
-  sports: "setup.tabs.sports",
-  spaces: "setup.tabs.spaces",
-  coaches: "setup.tabs.coaches",
-  classes: "setup.tabs.classes",
-  payments: "setup.tabs.payments",
-  events: "setup.tabs.events",
-  closures: "setup.tabs.closures",
-  rules: "setup.tabs.rules",
-  "floor-plan": "setup.tabs.floor-plan",
-  hours: "setup.tabs.hours",
-  "table-settings": "setup.tabs.table-settings",
 }
 
 /**
@@ -176,11 +92,11 @@ export function DashboardLayout() {
   const base = `/dashboard/${branch.branch_id}`
   const restaurant = branch.type === "restaurant"
   // a restaurant's address for a sport-only page (an old bookmark): back to its overview
-  const hidden = NAV.find(
+  const hidden = DASHBOARD_NAV.find(
     (item) => item.sportOnly && pathname.startsWith(`${base}/${item.path}`),
   )
   if (restaurant && hidden) return <Navigate to={base} replace />
-  const nav: NavItem[] = NAV.filter(
+  const nav: NavItem[] = DASHBOARD_NAV.filter(
     (item) =>
       roleAtLeast(branch.role, item.min) && !(restaurant && item.sportOnly),
   ).map(({ path, key, icon, end }) => ({
