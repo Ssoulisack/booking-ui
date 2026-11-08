@@ -35,6 +35,7 @@ import { TonightPlan } from "./TonightPlan"
 import { UpcomingBookings } from "./UpcomingBookings"
 import { EventPayments } from "./EventPayments"
 import { PaymentsAttention } from "./PaymentsAttention"
+import { RefreshPage } from "@/components/global/RefreshButton"
 import { PageHeader, Panel } from "./ui"
 
 /** /dashboard/:id — what to do next: get the booking page live, then share it */
@@ -52,6 +53,7 @@ export function DashboardHome() {
           role: t(`roles.${branch.role}`),
           branch: branch.name,
         })}
+        actions={<RefreshPage />}
       />
       {branch.type === "sport" && <PackageFinder />}
       {canSetUp ? (

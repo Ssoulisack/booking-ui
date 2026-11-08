@@ -1168,6 +1168,7 @@
     "tableSeats_other": "{{name}} ({{count}} ບ່ອນນັ່ງ)",
     "arrived": "ມາເຖິງແລ້ວ",
     "markArrived": "ມາເຖິງແລ້ວ",
+    "arrivedWrongDay": "ກົດ “ມາຮອດແລ້ວ” ໄດ້ສະເພາະວັນຂອງການຈອງ ({{day}}).",
     "arrivedDone": "ໝາຍວ່າມາເຖິງແລ້ວ.",
     "closeBill": "ປິດບິນ",
     "billClosed": "ປິດບິນແລ້ວ. ໂຕະວ່າງອີກຄັ້ງ.",
@@ -2376,6 +2377,8 @@
   },
   "common": {
     "updating": "ກຳລັງອັບເດດ…",
+    "refresh": "ໂຫຼດໃໝ່",
+    "updatedAt": "ອັບເດດ {{time}}",
     "offlineStale": "ຕິດຕໍ່ເຊີບເວີບໍ່ໄດ້ ລາຍການດ້ານລຸ່ມອາດເກົ່າ"
   }
 }

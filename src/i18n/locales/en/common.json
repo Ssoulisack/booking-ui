@@ -1203,6 +1203,7 @@
     "tableSeats_other": "{{name}} ({{count}} seats)",
     "arrived": "Arrived",
     "markArrived": "Arrived",
+    "arrivedWrongDay": "Arrived can only be marked on the booking's day ({{day}}).",
     "arrivedDone": "Marked as arrived.",
     "closeBill": "Close bill",
     "billClosed": "Bill closed. The table is free again.",
@@ -2447,6 +2448,8 @@
   },
   "common": {
     "updating": "Updating…",
+    "refresh": "Refresh",
+    "updatedAt": "Updated {{time}}",
     "offlineStale": "Cannot reach the server. The list below may be old."
   }
 }

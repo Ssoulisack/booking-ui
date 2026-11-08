@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils"
 
 import { useSettings } from "@/hooks/use-branch"
 import { useDashboard } from "@/components/provider/dashboard-context"
+import { RefreshButton } from "@/components/global/RefreshButton"
 import { useCalendar } from "@/hooks/use-booking"
 import { BookingSheet } from "./BookingSheet"
 import { NewBookingDialog, type NewBookingStart } from "./NewBookingDialog"
@@ -168,6 +169,11 @@ export function CalendarPage() {
         <h1 className="mr-auto text-2xl font-semibold tracking-tight">
           {t("nav.calendar")}
         </h1>
+        <RefreshButton
+          fetching={calendar.isFetching}
+          updatedAt={calendar.dataUpdatedAt}
+          onRefresh={() => void calendar.refetch()}
+        />
         {restaurant ? (
           <Button className="h-11 lg:h-9" onClick={() => setWalkIn({})}>
             <PlusIcon />

@@ -25,7 +25,7 @@ import {
 import { eventBookingWhen } from "@/components/public/booking/event-program"
 import type { Booking, PaymentMethod } from "@/types/booking"
 import { floorName } from "@/lib/floor-plan"
-import { dayIn, duration, money, timeIn } from "@/lib/format"
+import { dayIn, duration, money, timeIn, todayIn } from "@/lib/format"
 import { displayPhone, telHref } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
@@ -93,6 +93,9 @@ function Details({ booking: b }: { booking: Booking }) {
   const [reason, setReason] = useState("")
   const [now] = useState(() => Date.now())
   const started = Date.parse(b.starts_at) <= now
+  // "Arrived" belongs to the booking's own day (the branch's date): a booking for the 9th is not arrived on the 8th
+  const ownDay =
+    started || todayIn(tz, new Date(b.starts_at)) === todayIn(tz, new Date(now))
   const active = b.status === "pending" || b.status === "confirmed"
   const minutes = Math.round(
     (Date.parse(b.ends_at) - Date.parse(b.starts_at)) / 60_000,
@@ -463,7 +466,7 @@ function Details({ booking: b }: { booking: Booking }) {
                 ) : (
                   <Button
                     className="h-11 lg:h-9"
-                    disabled={busy}
+                    disabled={busy || !ownDay}
                     loading={arrive.isPending}
                     onClick={() =>
                       arrive.mutate(b.id, {
@@ -526,6 +529,11 @@ function Details({ booking: b }: { booking: Booking }) {
               </Button>
             )}
           </div>
+          {isTable && b.status === "confirmed" && !b.arrived_at && !ownDay && (
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              {t("desk.arrivedWrongDay", { day: dayIn(b.starts_at, tz) })}
+            </p>
+          )}
           {/* what each desk button does, in plain words (owners asked: "what is Move table? what is No show?") */}
           {b.status === "confirmed" && (isTable || started) && !cancelling && (
             <ul className="space-y-1 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">

@@ -222,6 +222,7 @@
   "CONFIRM_FIRST": "Confirm the booking first.",
   "ALREADY_ARRIVED": "This group is already marked as arrived.",
   "BOOKING_OVER": "This booking's time is over.",
+  "NOT_BOOKING_DAY": "This booking is for another day: Arrived can only be marked on the booking's own day.",
   "NOT_A_TABLE_BOOKING": "This is not a table booking.",
   "TABLE_BOOKED_LATER": "This table is booked later today. Choose another table, or allow walk-ins before a booking in Table settings.",
   "VENUE_CLOSED": "The place is closed now, so walk-ins cannot be seated. Walk-ins are seated only during the opening hours (Setup › Opening hours).",

@@ -24,6 +24,7 @@ import { dayIn, nextDays, timeIn, todayIn } from "@/lib/format"
 
 import { useSettings } from "@/hooks/use-branch"
 import { useDashboard } from "@/components/provider/dashboard-context"
+import { RefreshButton } from "@/components/global/RefreshButton"
 import { PageHeader } from "@/components/protected/branch/ui"
 import { useBookingList, usePendingBookings } from "@/hooks/use-booking"
 import { type BookingFilters } from "@/types/booking"
@@ -108,13 +109,24 @@ export function BookingsPage() {
     <div className="space-y-4">
       <PageHeader
         title={t("nav.bookings")}
-        lead={params.get("q") ? t("desk.searchAll") : undefined}
+        lead={
+          params.get("q") || params.get("code")
+            ? t("desk.searchAll")
+            : undefined
+        }
         // a restaurant: the team books tables for a customer who phoned (a court's form does not fit a table)
         actions={
-          <Button className="h-11 lg:h-9" onClick={() => setAdding(true)}>
-            <PlusIcon />
-            {restaurant ? t("desk.reserve.button") : t("desk.newBooking")}
-          </Button>
+          <>
+            <RefreshButton
+              fetching={list.isFetching}
+              updatedAt={list.dataUpdatedAt}
+              onRefresh={() => void list.refetch()}
+            />
+            <Button className="h-11 lg:h-9" onClick={() => setAdding(true)}>
+              <PlusIcon />
+              {restaurant ? t("desk.reserve.button") : t("desk.newBooking")}
+            </Button>
+          </>
         }
       />
       <Tabs
