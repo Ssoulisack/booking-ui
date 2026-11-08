@@ -1,4 +1,11 @@
-import { MinusIcon, PlusIcon, SearchIcon, UsersIcon } from "lucide-react"
+import {
+  LayoutGridIcon,
+  ListIcon,
+  MinusIcon,
+  PlusIcon,
+  SearchIcon,
+  UsersIcon,
+} from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -8,11 +15,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
-import type { Booking, CalendarLane } from "@/lib/api/types"
+import { Plans } from "@/features/public/TableBookingPanel"
+import type { StaffTable } from "@/features/public/TablePlan"
+import type { Booking, CalendarLane, PublicArea } from "@/lib/api/types"
 import { dayIn, timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { useSettings } from "../api"
+import { useAllFloorPlans, useSettings, useSportsList } from "../api"
 import { FormDialog } from "../ui"
 import { useCalendar, useMoveTables, useWalkIn } from "./api"
 import { groupLanes } from "./lanes"
@@ -62,6 +71,7 @@ export function TablePicker({
   guests,
   exclude,
   listClass = "max-h-[34dvh]",
+  planClass = "max-h-[44dvh]",
   date,
   window,
   allowed,
@@ -73,6 +83,8 @@ export function TablePicker({
   exclude?: number
   /** how tall the scrolling list may be */
   listClass?: string
+  /** how tall the scrolling floor plan may be */
+  planClass?: string
   /** the day whose tables are shown (YYYY-MM-DD): today when not given */
   date?: string
   /** the time of the booking being moved, when it is not now: the tables free then */
@@ -85,6 +97,13 @@ export function TablePicker({
   const calendar = useCalendar(date ?? todayIn(tz), 1)
   const [now] = useState(() => new Date().toISOString())
   const [query, setQuery] = useState("")
+  // the real floor plan (as set up in Setup) or a plain list; the plan is how staff know the room
+  const [mode, setMode] = useState<"plan" | "list">("plan")
+  const [floorPick, setFloorPick] = useState<number | null>(null)
+  const areaList = useSportsList()
+  const planQueries = useAllFloorPlans(
+    (areaList.data ?? []).filter((a) => a.active).map((a) => a.id),
+  )
   const nodes = useRef(new Map<number, HTMLButtonElement>())
   const tables = (calendar.data?.lanes ?? []).filter(
     (l) => l.owner_type === "resource" && l.seats > 0,
@@ -119,6 +138,44 @@ export function TablePicker({
 
   if (!calendar.data) return <Skeleton className="h-48 rounded-xl" />
   const groups = groupLanes(tables, true, t)
+  // the plan: every area as drawn in Setup (zones, stage, bar, stairs), tables coloured by what they are doing
+  const shown: PublicArea[] = planQueries
+    .filter((q) => q.data)
+    .map((q) => q.data!)
+    .map(({ area, tables: placed, items }) => ({
+      id: area.id,
+      name: area.name,
+      floor: area.floor ?? 0,
+      plan_width: area.plan_width,
+      plan_height: area.plan_height,
+      tables: placed.filter((x) => x.active),
+      items,
+    }))
+    .sort((a, b) => a.floor - b.floor)
+  const floors = [...new Set(shown.map((a) => a.floor))]
+  const floor =
+    floorPick !== null && floors.includes(floorPick) ? floorPick : floors[0]
+  const planTables = shown.flatMap((a) => a.tables)
+  const planFree = new Set(
+    tables.filter((l) => !state.get(l.owner_id)?.busy).map((l) => l.owner_id),
+  )
+  const look = (id: number): StaffTable => {
+    if (value.includes(id)) return { tone: "chosen", note: "✓" }
+    const s = state.get(id)
+    if (!s || s.busy)
+      return {
+        tone: "taken",
+        note: allowed
+          ? t("desk.tableNotFree")
+          : window
+            ? t("desk.tableBookedThen")
+            : t("desk.tableTaken"),
+      }
+    if (s.next) return { tone: "booked", note: timeIn(s.next, tz) }
+    if (planTables.find((x) => x.id === id)?.walk_in_only)
+      return { tone: "kept", note: t("tonight.keptShort") }
+    return { tone: "free" }
+  }
   const seats = tables
     .filter((l) => value.includes(l.owner_id))
     .reduce((n, l) => n + l.seats, 0)
@@ -172,76 +229,113 @@ export function TablePicker({
           </p>
         )}
       </div>
-      <div
-        className={cn(
-          "space-y-4 overflow-y-auto rounded-lg border p-2",
-          listClass,
-        )}
-      >
-        {groups.map((g) => (
-          <section key={g.key} className="space-y-2">
-            <h3 className="text-sm font-semibold">{g.label}</h3>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {g.lanes.map((l) => {
-                const { busy, next } = state.get(l.owner_id) ?? {
-                  busy: false,
-                  next: undefined,
-                }
-                const on = value.includes(l.owner_id)
-                const hit = foundIds.has(l.owner_id)
-                return (
-                  <button
-                    key={l.owner_id}
-                    ref={(el) => {
-                      if (el) nodes.current.set(l.owner_id, el)
-                      else nodes.current.delete(l.owner_id)
-                    }}
-                    type="button"
-                    aria-pressed={on}
-                    disabled={busy && !on}
-                    onClick={() => toggle(l.owner_id)}
-                    className={cn(
-                      "flex min-h-16 flex-col items-start justify-center rounded-lg border px-2.5 py-1.5 text-left text-sm transition-colors",
-                      on
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : busy
-                          ? "border-dashed border-rose-400 bg-rose-50 text-rose-900 dark:bg-rose-950/40 dark:text-rose-200"
-                          : next
-                            ? "border-amber-500 bg-amber-50 text-amber-950 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-100"
-                            : "bg-background hover:bg-muted",
-                      // the table the search found
-                      hit &&
-                        "ring-3 ring-sky-500 ring-offset-2 ring-offset-background",
-                    )}
-                  >
-                    <span className="font-semibold">{l.name}</span>
-                    <span className="flex items-center gap-1 text-xs opacity-80">
-                      <UsersIcon className="size-3" />
-                      {l.seats}
-                    </span>
-                    <span
-                      className={cn(
-                        "text-xs",
-                        next && !busy && !on ? "font-semibold" : "opacity-80",
-                      )}
-                    >
-                      {busy
-                        ? allowed
-                          ? t("desk.tableNotFree")
-                          : window
-                            ? t("desk.tableBookedThen")
-                            : t("desk.tableTaken")
-                        : next
-                          ? t("desk.tableNext", { time: timeIn(next, tz) })
-                          : t("desk.tableFree")}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
+      <div className="flex gap-1" role="tablist">
+        {(["plan", "list"] as const).map((m) => (
+          <Button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            size="sm"
+            variant={mode === m ? "default" : "outline"}
+            className="h-9 lg:h-8"
+            onClick={() => setMode(m)}
+          >
+            {m === "plan" ? <LayoutGridIcon /> : <ListIcon />}
+            {t(m === "plan" ? "desk.viewPlan" : "desk.viewList")}
+          </Button>
         ))}
       </div>
+      {mode === "plan" && shown.length > 0 ? (
+        <div className={cn("overflow-y-auto rounded-lg border p-2", planClass)}>
+          <Plans
+            areas={shown}
+            floors={floors}
+            floor={floor}
+            free={planFree}
+            chosen={new Set(value)}
+            onFloor={setFloorPick}
+            onToggle={(id) => {
+              // a table that is not free cannot be picked (a chosen one can always be put back)
+              if (value.includes(id) || planFree.has(id)) toggle(id)
+            }}
+            staffLook={look}
+            highlight={foundIds}
+            focus={firstFound}
+          />
+        </div>
+      ) : (
+        <div
+          className={cn(
+            "space-y-4 overflow-y-auto rounded-lg border p-2",
+            listClass,
+          )}
+        >
+          {groups.map((g) => (
+            <section key={g.key} className="space-y-2">
+              <h3 className="text-sm font-semibold">{g.label}</h3>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {g.lanes.map((l) => {
+                  const { busy, next } = state.get(l.owner_id) ?? {
+                    busy: false,
+                    next: undefined,
+                  }
+                  const on = value.includes(l.owner_id)
+                  const hit = foundIds.has(l.owner_id)
+                  return (
+                    <button
+                      key={l.owner_id}
+                      ref={(el) => {
+                        if (el) nodes.current.set(l.owner_id, el)
+                        else nodes.current.delete(l.owner_id)
+                      }}
+                      type="button"
+                      aria-pressed={on}
+                      disabled={busy && !on}
+                      onClick={() => toggle(l.owner_id)}
+                      className={cn(
+                        "flex min-h-16 flex-col items-start justify-center rounded-lg border px-2.5 py-1.5 text-left text-sm transition-colors",
+                        on
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : busy
+                            ? "border-dashed border-rose-400 bg-rose-50 text-rose-900 dark:bg-rose-950/40 dark:text-rose-200"
+                            : next
+                              ? "border-amber-500 bg-amber-50 text-amber-950 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-100"
+                              : "bg-background hover:bg-muted",
+                        // the table the search found
+                        hit &&
+                          "ring-3 ring-sky-500 ring-offset-2 ring-offset-background",
+                      )}
+                    >
+                      <span className="font-semibold">{l.name}</span>
+                      <span className="flex items-center gap-1 text-xs opacity-80">
+                        <UsersIcon className="size-3" />
+                        {l.seats}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-xs",
+                          next && !busy && !on ? "font-semibold" : "opacity-80",
+                        )}
+                      >
+                        {busy
+                          ? allowed
+                            ? t("desk.tableNotFree")
+                            : window
+                              ? t("desk.tableBookedThen")
+                              : t("desk.tableTaken")
+                          : next
+                            ? t("desk.tableNext", { time: timeIn(next, tz) })
+                            : t("desk.tableFree")}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
       <p
         className={cn(
           "text-sm font-medium",
@@ -351,6 +445,7 @@ export function WalkInDialog({
         onChange={setTables}
         guests={guests}
         listClass="max-h-[16dvh] sm:max-h-[26dvh]"
+        planClass="max-h-[28dvh] sm:max-h-[34dvh]"
       />
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">

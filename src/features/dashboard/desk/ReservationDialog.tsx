@@ -184,6 +184,7 @@ export function ReservationDialog({
           date={date}
           allowed={new Set(time.free_table_ids)}
           listClass="max-h-[22dvh] sm:max-h-[26dvh]"
+          planClass="max-h-[30dvh] sm:max-h-[36dvh]"
         />
       )}
 

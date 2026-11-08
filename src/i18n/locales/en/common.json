@@ -1195,6 +1195,8 @@
     "moveLead_other": "For {{count}} people. Tap the table to move to; their old tables are free again.",
     "moveHere": "Move here",
     "moveFor": "Booking of {{when}}.",
+    "viewPlan": "Floor plan",
+    "viewList": "List",
     "reserve": {"button": "New reservation", "title": "New table reservation", "lead": "A customer phoned: book their table. It is confirmed at once.", "day": "Day", "tomorrow": "Tomorrow", "time": "Time", "noTimes_one": "No table is free for {{count}} person on that day.", "noTimes_other": "No table is free for {{count}} people on that day.", "evening": "The evening of {{day}}: arrive by {{time}}", "event": "Event that day: {{name}}. Its tables are sold for the event, so only the other areas can be booked here.", "name": "Name", "phone": "Phone (to call back)", "missing": "Pick a time and the tables, then add a name and a phone number.", "submit": "Book the table", "done": "Reservation made."},
     "tableNotFree": "Not free",
     "tableBookedThen": "Booked then",

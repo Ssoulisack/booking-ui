@@ -18,6 +18,7 @@ export interface StaffTable {
     | "confirmed" // booked and settled: a normal booking the team approved, or an event booking paid and confirmed
     | "unpaid" // an event booking holding the table until it is paid
     | "slip" // the customer says they paid (slip sent): the team must check it
+    | "chosen" // picked in a form: this is the table the team is choosing
     | "review" // needs the team: paid but not confirmed, or confirmed but not paid
   /** a short line under the name on the table: the customer's name (short) */
   note?: string
@@ -33,6 +34,8 @@ const STAFF_TONE: Record<StaffTable["tone"], string> = {
   unpaid:
     "border-dashed border-amber-500 bg-amber-100 text-amber-950 shadow-sm",
   slip: "border-violet-500 bg-violet-100 text-violet-950 shadow-sm ring-2 ring-violet-400/60",
+  chosen:
+    "border-primary bg-primary text-primary-foreground shadow-md ring-2 ring-primary/40",
   review:
     "border-orange-600 bg-orange-100 text-orange-950 shadow-sm ring-2 ring-orange-500",
   // kept for walk-ins: free for the desk to seat, not bookable online
@@ -58,6 +61,7 @@ export function TablePlan({
   priceLabel,
   tint,
   kept: keptIds,
+  highlight,
 }: {
   area: PublicArea
   free: Set<number>
@@ -72,6 +76,8 @@ export function TablePlan({
   tint?: (id: number) => string | undefined
   /** tables kept for walk-ins that the availability answer names (the plan itself may be a little older) */
   kept?: Set<number>
+  /** tables to point at (a search): a blue ring */
+  highlight?: Set<number>
 }) {
   const { t } = useTranslation()
   const box = useRef<HTMLDivElement>(null)
@@ -174,6 +180,8 @@ export function TablePlan({
                     : kept
                       ? KEPT_LOOK
                       : "cursor-not-allowed border-dashed border-border bg-muted text-muted-foreground",
+              highlight?.has(table.id) &&
+                "z-20 ring-3 ring-sky-500 ring-offset-2 ring-offset-background",
             )}
             style={{
               ...place(table),

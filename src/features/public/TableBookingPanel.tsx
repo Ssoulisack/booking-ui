@@ -8,7 +8,7 @@ import {
   PlusIcon,
   UsersIcon,
 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate } from "react-router"
 
@@ -475,6 +475,8 @@ export function Plans({
   priceLabel,
   tint,
   kept,
+  highlight,
+  focus,
 }: {
   areas: PublicArea[]
   floors: number[]
@@ -487,6 +489,10 @@ export function Plans({
   priceLabel?: (id: number) => string | undefined
   tint?: (id: number) => string | undefined
   kept?: Set<number>
+  /** tables to point at (a search): a blue ring */
+  highlight?: Set<number>
+  /** a table to bring into view: its floor and its area open */
+  focus?: number
 }) {
   const { t } = useTranslation()
   const onThisFloor = areas.filter((a) => a.floor === floor)
@@ -494,6 +500,17 @@ export function Plans({
   const [areaPick, setAreaPick] = useState<number | null>(null)
   const freeIn = (a: PublicArea) =>
     a.tables.filter((x) => free.has(x.id)).length
+  useEffect(() => {
+    const where = focus
+      ? areas.find((a) => a.tables.some((x) => x.id === focus))
+      : undefined
+    if (where) {
+      setAreaPick(where.id)
+      onFloor(where.floor)
+    }
+    // only when the table to bring into view changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus])
   const area =
     onThisFloor.find((a) => a.id === areaPick) ??
     onThisFloor.find((a) => a.tables.some((x) => chosen.has(x.id))) ??
@@ -567,6 +584,7 @@ export function Plans({
           priceLabel={priceLabel}
           tint={tint}
           kept={kept}
+          highlight={highlight}
           onStairs={(f) => {
             setAreaPick(null)
             onFloor(f)
