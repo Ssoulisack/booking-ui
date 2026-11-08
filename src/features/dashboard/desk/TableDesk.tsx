@@ -162,14 +162,15 @@ export function TablePicker({
   const look = (id: number): StaffTable => {
     if (value.includes(id)) return { tone: "chosen", note: "✓" }
     const s = state.get(id)
+    // not free: the colour says it, no text on the table; hovering gives the words (the tooltip)
     if (!s || s.busy)
       return {
         tone: "taken",
-        note: allowed
-          ? t("desk.tableNotFree")
+        detail: allowed
+          ? t("desk.notFreeHint")
           : window
             ? t("desk.tableBookedThen")
-            : t("desk.tableTaken"),
+            : undefined,
       }
     if (s.next) return { tone: "booked", note: timeIn(s.next, tz) }
     if (planTables.find((x) => x.id === id)?.walk_in_only)
