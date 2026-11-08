@@ -51,9 +51,9 @@ Add every user-visible string to all three locale files (en, lo, th); the parity
 |---|---|---|
 | 1 | Baseline, `rearch` branch, this file | done |
 | 2 | Foundation: API_ENDPOINTS, split `lib/api/types.ts`, toast helper, provider/global folders | done |
-| 3 | Services + hooks per feature | next |
-| 4 | UI to `components/protected|public`, thin pages | — |
+| 3 | Services + hooks per feature | done |
+| 4 | UI to `components/protected|public`, thin pages | next |
 | 5 | Nav / breadcrumb / roles config, router | — |
 | 6 | Cleanup, README, full tests | — |
 
-Until phase 3 is done, feature code still lives in `src/features/<area>/api.ts` (services and hooks mixed).
+Services (`src/services/*.api.ts`) and hooks (`src/hooks/use-*.ts`) are in place; no component imports a service or the fetch client. UI still lives in `src/features/<area>/` until phase 4.
