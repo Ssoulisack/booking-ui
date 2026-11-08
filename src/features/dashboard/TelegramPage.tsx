@@ -350,6 +350,8 @@ function Messages({ tg }: { tg: TelegramSettings }) {
     ["on_event", "event"],
     ["on_payment", "payment"],
     ["on_cancel", "cancel"],
+    ["on_staff_cancel", "staffCancel"],
+    ["on_no_show", "noShow"],
     ["hide_phone", "hidePhone"],
   ]
   return (

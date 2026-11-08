@@ -1209,6 +1209,10 @@ export interface TelegramSettings {
   on_event: boolean
   on_payment: boolean
   on_cancel: boolean
+  /** a booking cancelled by the team */
+  on_staff_cancel: boolean
+  /** a group that did not come (marked by the team, or not there by its time) */
+  on_no_show: boolean
   hide_phone: boolean
   /** what Telegram said when the last message failed; "" = fine */
   last_error: string
@@ -1228,6 +1232,8 @@ export interface TelegramInput {
   on_event?: boolean
   on_payment?: boolean
   on_cancel?: boolean
+  on_staff_cancel?: boolean
+  on_no_show?: boolean
   hide_phone?: boolean
 }
 

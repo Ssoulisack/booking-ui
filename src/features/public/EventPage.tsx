@@ -23,7 +23,13 @@ import { dayIn, money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useSession } from "@/stores/session"
 
-import { useBuyEventTables, useEventDetail, useFloorPlans } from "./api"
+import {
+  useBuyEventTables,
+  useEventDetail,
+  useFloorPlans,
+  usePaymentOptions,
+  usePublicPayInfo,
+} from "./api"
 import { usePublic } from "./context"
 import { EventLineup, EventWhen } from "./EventProgram"
 import { eventDays } from "./event-program"
@@ -67,6 +73,16 @@ export function EventPage() {
   const plans = useFloorPlans(slug)
   const user = useSession((s) => s.user)
   const buy = useBuyEventTables(slug, id)
+  // how this branch takes the money decides what the hold note says (no slip talk when it takes none)
+  const online = !!usePaymentOptions(slug).data?.length
+  const transfer = usePublicPayInfo(slug).data?.transfer_enabled ?? true
+  const payWay = online
+    ? transfer
+      ? "both"
+      : "online"
+    : transfer
+      ? "slip"
+      : "team"
 
   const chosen = (params.get("tables") ?? "")
     .split("-")
@@ -573,7 +589,7 @@ export function EventPage() {
               </div>
 
               <p className="text-sm text-muted-foreground">
-                {t("public.events.holdNote")}
+                {t(`public.events.holdNote.${payWay}`)}
               </p>
               {touched && !details && (
                 <p className="text-sm text-destructive">

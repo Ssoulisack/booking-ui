@@ -144,7 +144,10 @@ export function EventPayPanel({
           {t("public.events.pay.title")}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {t("public.events.pay.lead")}
+          {/* only the ways this branch really takes: no "send the slip" when it takes no slips */}
+          {t(
+            `public.events.pay.lead.${hasOnline ? (transferOn ? "both" : "online") : transferOn ? "slip" : "team"}`,
+          )}
         </p>
       </div>
       <div className="rounded-lg bg-[var(--brand-soft)] p-3 text-center">
