@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
-import type { OnlinePaymentStatus, StaffPayment } from "@/lib/api/types"
+import type { OnlinePaymentStatus, StaffPayment } from "@/types/payment"
 import { dayIn, money, timeIn } from "@/lib/format"
 
 import { DeleteButton } from "../ui"

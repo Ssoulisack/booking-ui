@@ -3,7 +3,7 @@ import { CheckIcon, UsersIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import type { CalendarEntry, CalendarLane } from "@/lib/api/types"
+import type { CalendarEntry, CalendarLane } from "@/types/calendar"
 import { cn } from "@/lib/utils"
 
 import {

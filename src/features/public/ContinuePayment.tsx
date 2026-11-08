@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
 import { Button } from "@/components/ui/button"
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 
 import { usePaymentOptions } from "./api"
 import { zoneOf } from "./booking-utils"

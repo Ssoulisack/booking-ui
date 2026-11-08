@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { api } from "@/lib/api/client"
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 
 const open = (b: Booking) => b.status === "pending" || b.status === "confirmed"
 

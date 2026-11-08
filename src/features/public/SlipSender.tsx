@@ -11,7 +11,7 @@ import { ErrorAlert } from "@/components/form"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { shrinkImage } from "@/lib/shrink-image"
-import type { SlipWay } from "@/lib/api/types"
+import type { SlipWay } from "@/types/package"
 
 import type { SlipInput } from "./api"
 

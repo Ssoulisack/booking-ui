@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { brandStyle } from "@/features/public/brand"
-import type { BookingMode, BranchType } from "@/lib/api/types"
+import type { BranchType } from "@/types/auth"
+import type { BookingMode } from "@/types/public"
 
 import { MODES } from "./options"
 

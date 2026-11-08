@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-import type { AuthResponse, User } from "@/lib/api/types"
+import type { AuthResponse, User } from "@/types/auth"
 
 interface SessionState {
   accessToken: string | null

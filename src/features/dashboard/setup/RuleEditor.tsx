@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
-import type { EffectiveRule, RuleFields, RuleScope } from "@/lib/api/types"
+import type { EffectiveRule } from "@/types/public"
+import type { RuleFields, RuleScope } from "@/types/schedule"
 import { duration } from "@/lib/format"
 
 import {

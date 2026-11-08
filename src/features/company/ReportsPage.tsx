@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader, Panel } from "@/features/dashboard/ui"
-import type { FinanceTotals } from "@/lib/api/types"
+import type { FinanceTotals } from "@/types/report"
 import { money } from "@/lib/format"
 
 import { useCompany, useCompanyReport } from "./api"

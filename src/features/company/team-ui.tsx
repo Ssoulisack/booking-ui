@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { BranchSummary, MemberRole } from "@/lib/api/types"
+import type { MemberRole } from "@/types/auth"
+import type { BranchSummary } from "@/types/company"
 import { useSession } from "@/stores/session"
 
 export type Role = "admin" | MemberRole

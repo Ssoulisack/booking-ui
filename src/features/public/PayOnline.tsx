@@ -23,12 +23,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
-import type {
-  Booking,
-  CustomerPackage,
-  OnlinePayment,
-  PaymentOption,
-} from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
+import type { CustomerPackage } from "@/types/package"
+import type { OnlinePayment, PaymentOption } from "@/types/payment"
 import { money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 

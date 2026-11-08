@@ -1,6 +1,6 @@
 import { useOutletContext } from "react-router"
 
-import type { MyBranch } from "@/lib/api/types"
+import type { MyBranch } from "@/types/auth"
 
 export interface DashboardContext {
   branch: MyBranch

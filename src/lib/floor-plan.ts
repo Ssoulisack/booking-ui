@@ -2,9 +2,9 @@ import type {
   CutCorner,
   FloorItem,
   FloorItemKind,
-  ManagedTable,
   ZoneShape,
-} from "@/lib/api/types"
+} from "@/types/floor-plan"
+import type { ManagedTable } from "@/types/space"
 
 // Restaurant floor plans: the same rules as the backend (domain/restaurant.go)
 

@@ -29,7 +29,9 @@ import {
   PageHeader,
   Panel,
 } from "@/features/dashboard/ui"
-import type { BranchSummary, MemberRole, TeamMember } from "@/lib/api/types"
+import type { MemberRole } from "@/types/auth"
+import type { BranchSummary } from "@/types/company"
+import type { TeamMember } from "@/types/team"
 import { displayPhone } from "@/lib/phone"
 import { useSession } from "@/stores/session"
 

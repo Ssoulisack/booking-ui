@@ -33,11 +33,8 @@ import {
   TIMEZONES,
   withCurrent,
 } from "@/features/settings/options"
-import type {
-  BookingMode,
-  BranchSettings,
-  SettingsInput,
-} from "@/lib/api/types"
+import type { BookingMode } from "@/types/public"
+import type { BranchSettings, SettingsInput } from "@/types/settings"
 import { PROVINCES, type Province } from "@/lib/places"
 
 import { useUnsaved } from "@/stores/unsaved"

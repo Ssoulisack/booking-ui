@@ -16,7 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import type { PublicBranch } from "@/lib/api/types"
+import type { PublicBranch } from "@/types/public"
 import { useLiveBranches } from "@/features/places/api"
 
 import { brandStyle } from "./brand"

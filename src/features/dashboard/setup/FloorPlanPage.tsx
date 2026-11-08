@@ -37,11 +37,10 @@ import type {
   CutCorner,
   FloorItem,
   FloorItemKind,
-  ManagedSport,
-  ManagedTable,
-  TableShape,
   ZoneShape,
-} from "@/lib/api/types"
+} from "@/types/floor-plan"
+import type { ManagedTable, TableShape } from "@/types/space"
+import type { ManagedSport } from "@/types/sport"
 import { cn } from "@/lib/utils"
 import {
   blocks,

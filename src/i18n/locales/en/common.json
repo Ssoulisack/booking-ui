@@ -464,12 +464,22 @@
       "logIn": "Log in",
       "buy": "Buy tables",
       "buying": "Buying…",
-      "holdNote": {"both": "The tables are held for you until you pay. Pay online and they confirm themselves, or pay by transfer and send us the slip.", "online": "The tables are held for you until you pay. Pay online and they confirm themselves.", "slip": "The tables are held for you until you pay. You pay by QR or transfer, then send us the slip.", "team": "The tables are held for you. The team will contact you to confirm them."},
+      "holdNote": {
+        "both": "The tables are held for you until you pay. Pay online and they confirm themselves, or pay by transfer and send us the slip.",
+        "online": "The tables are held for you until you pay. Pay online and they confirm themselves.",
+        "slip": "The tables are held for you until you pay. You pay by QR or transfer, then send us the slip.",
+        "team": "The tables are held for you. The team will contact you to confirm them."
+      },
       "bigNote": "More than {{n}} tables: they are held for only {{m}} minutes.",
       "taken": "One of those tables was just taken. Choose again.",
       "pay": {
         "title": "Pay to keep your tables",
-        "lead": {"both": "Your tables are held. Pay online and they confirm themselves, or pay by transfer and send the slip so the team can confirm.", "online": "Your tables are held. Pay online and they confirm themselves.", "slip": "Your tables are held. Pay the total, then send the slip so the team can confirm.", "team": "Your tables are held. The team will contact you to confirm them."},
+        "lead": {
+          "both": "Your tables are held. Pay online and they confirm themselves, or pay by transfer and send the slip so the team can confirm.",
+          "online": "Your tables are held. Pay online and they confirm themselves.",
+          "slip": "Your tables are held. Pay the total, then send the slip so the team can confirm.",
+          "team": "Your tables are held. The team will contact you to confirm them."
+        },
         "total": "Total to pay",
         "before": "Pay before {{when}}",
         "scan": "Scan to pay",
@@ -1088,7 +1098,11 @@
     "paidWith": "Paid by {{method}} · {{when}}",
     "markPaidWith": "Mark paid:",
     "createdAt": "Booked on",
-    "createdBy": {"customer": "by the customer, online", "guest": "by a guest, online", "staff": "by the team"},
+    "createdBy": {
+      "customer": "by the customer, online",
+      "guest": "by a guest, online",
+      "staff": "by the team"
+    },
     "confirmPaidTitle": "Mark as paid?",
     "confirmPaid": "Booking {{code}}: {{amount}} received by {{method}}. Make sure you really have the money. It is saved under your name.",
     "confirmPaidYes": "Yes, mark paid",
@@ -1198,7 +1212,23 @@
     "notFreeHint": "Not free for this day and time (another booking, an event, or closed)",
     "viewPlan": "Floor plan",
     "viewList": "List",
-    "reserve": {"button": "New reservation", "title": "New table reservation", "lead": "A customer phoned: book their table. It is confirmed at once.", "day": "Day", "tomorrow": "Tomorrow", "time": "Time", "noTimes_one": "No table is free for {{count}} person on that day.", "noTimes_other": "No table is free for {{count}} people on that day.", "evening": "The evening of {{day}}: arrive by {{time}}", "event": "Event that day: {{name}}. Its tables are sold for the event, so only the other areas can be booked here.", "name": "Name", "phone": "Phone (to call back)", "missing": "Pick a time and the tables, then add a name and a phone number.", "submit": "Book the table", "done": "Reservation made."},
+    "reserve": {
+      "button": "New reservation",
+      "title": "New table reservation",
+      "lead": "A customer phoned: book their table. It is confirmed at once.",
+      "day": "Day",
+      "tomorrow": "Tomorrow",
+      "time": "Time",
+      "noTimes_one": "No table is free for {{count}} person on that day.",
+      "noTimes_other": "No table is free for {{count}} people on that day.",
+      "evening": "The evening of {{day}}: arrive by {{time}}",
+      "event": "Event that day: {{name}}. Its tables are sold for the event, so only the other areas can be booked here.",
+      "name": "Name",
+      "phone": "Phone (to call back)",
+      "missing": "Pick a time and the tables, then add a name and a phone number.",
+      "submit": "Book the table",
+      "done": "Reservation made."
+    },
     "tableNotFree": "Not free",
     "tableBookedThen": "Booked then",
     "moved": "Moved to the new table.",
@@ -1643,9 +1673,7 @@
         },
         {
           "h": "Contact",
-          "p": [
-            "Questions about this policy: {{email}}."
-          ]
+          "p": ["Questions about this policy: {{email}}."]
         }
       ]
     },

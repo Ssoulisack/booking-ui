@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useMyPackageVisits, useMyPackages } from "@/features/public/api"
-import type { CustomerPackage } from "@/lib/api/types"
+import type { CustomerPackage } from "@/types/package"
 import { dayIn, money } from "@/lib/format"
 import { coversLabel, leftLabel, optionLabel, ymdLabel } from "@/lib/packages"
 import { cn } from "@/lib/utils"

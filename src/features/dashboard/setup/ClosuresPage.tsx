@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
-import type { Closure } from "@/lib/api/types"
+import type { Closure } from "@/types/schedule"
 import { dayIn, nextDays, timeIn } from "@/lib/format"
 
 import {

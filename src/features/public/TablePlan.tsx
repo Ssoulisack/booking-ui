@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ITEM_ICONS, itemLook } from "@/components/floor-plan/look"
-import type { PublicArea } from "@/lib/api/types"
+import type { PublicArea } from "@/types/floor-plan"
 import { footprint } from "@/lib/floor-plan"
 import { ZoneOutline } from "@/components/floor-plan/ZoneOutline"
 import { cn } from "@/lib/utils"

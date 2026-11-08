@@ -32,7 +32,8 @@ import {
 } from "@/features/settings/options"
 import { FontField, RingColorsField } from "@/features/settings/look-fields"
 import { LookPreview } from "@/features/settings/LookPreview"
-import type { Company, CompanyInput, EffectiveRule } from "@/lib/api/types"
+import type { Company, CompanyInput } from "@/types/company"
+import type { EffectiveRule } from "@/types/public"
 
 import { useUnsaved } from "@/stores/unsaved"
 

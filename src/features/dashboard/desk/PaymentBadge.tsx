@@ -2,7 +2,7 @@ import { BanknoteIcon, CheckCircle2Icon, TicketIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { money } from "@/lib/format"
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 import { cn } from "@/lib/utils"
 
 type Pay = Pick<

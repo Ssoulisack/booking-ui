@@ -17,7 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
-import type { Booking, StaffBookingInput } from "@/lib/api/types"
+import type { Booking, StaffBookingInput } from "@/types/booking"
 import { money, timeIn } from "@/lib/format"
 import { coversClassOf, leftLabel, ymdLabel } from "@/lib/packages"
 import { displayPhone } from "@/lib/phone"

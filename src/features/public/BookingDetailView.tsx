@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 
 import { dayIn, timeIn } from "@/lib/format"
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 
 import { BookingCard } from "./BookingCard"
 import { canCancel } from "./booking-utils"

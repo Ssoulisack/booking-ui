@@ -9,7 +9,7 @@ import { TimeInput } from "@/components/time-input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
-import type { HoursOwner, OpeningHour } from "@/lib/api/types"
+import type { HoursOwner, OpeningHour } from "@/types/schedule"
 
 import { useUnsaved } from "@/stores/unsaved"
 import { manage, useChange, useOpeningHours } from "../api"

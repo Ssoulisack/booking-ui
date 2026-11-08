@@ -13,7 +13,7 @@ import { authApi, authKeys } from "@/features/auth/api"
 import { IdentityFields } from "@/features/auth/IdentityFields"
 import { safeNext } from "@/features/auth/landing"
 import { profileSchema, type ProfileValues } from "@/features/auth/schemas"
-import type { User } from "@/lib/api/types"
+import type { User } from "@/types/auth"
 import { displayPhone } from "@/lib/phone"
 import { useSession } from "@/stores/session"
 

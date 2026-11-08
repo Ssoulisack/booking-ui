@@ -1,4 +1,4 @@
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 import { todayIn } from "@/lib/format"
 
 /** The time zone written in a backend time ("…+07:00"), so a booking shows the venue's local time */

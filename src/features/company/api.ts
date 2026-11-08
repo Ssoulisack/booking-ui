@@ -6,22 +6,22 @@ import {
 } from "@tanstack/react-query"
 
 import { api, apiMessage, apiPage } from "@/lib/api/client"
+import type { BranchType, User } from "@/types/auth"
 import type {
   BranchSummary,
-  BranchType,
   Company,
   CompanyInput,
   CompanyReport,
-  Customer,
+} from "@/types/company"
+import type { Customer } from "@/types/customer"
+import type { Media } from "@/types/media"
+import type { Rule, RuleFields } from "@/types/schedule"
+import type {
   Invitation,
   InviteInput,
-  Media,
-  Rule,
-  RuleFields,
   TeamMember,
   TeamMemberInput,
-  User,
-} from "@/lib/api/types"
+} from "@/types/team"
 
 // What the company owner and admins run (/company on the API)
 

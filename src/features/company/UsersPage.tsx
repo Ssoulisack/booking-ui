@@ -28,7 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { EmptyState, PageHeader } from "@/features/dashboard/ui"
-import type { User } from "@/lib/api/types"
+import type { User } from "@/types/auth"
 import { displayPhone } from "@/lib/phone"
 import { useSession } from "@/stores/session"
 

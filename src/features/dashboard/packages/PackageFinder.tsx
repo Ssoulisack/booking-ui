@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { CustomerPackage } from "@/lib/api/types"
+import type { CustomerPackage } from "@/types/package"
 import { dayIn, money } from "@/lib/format"
 import { leftLabel, optionLabel, ymdLabel } from "@/lib/packages"
 import { displayPhone } from "@/lib/phone"

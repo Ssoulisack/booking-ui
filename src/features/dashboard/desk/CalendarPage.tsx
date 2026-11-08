@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { CalendarEntry, CalendarLane } from "@/lib/api/types"
+import type { CalendarEntry, CalendarLane } from "@/types/calendar"
 import { dayIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 

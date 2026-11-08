@@ -17,7 +17,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { ClassSession, PublicCoach, PublicResource } from "@/lib/api/types"
+import type { ClassSession } from "@/types/class"
+import type { PublicCoach, PublicResource } from "@/types/public"
 import {
   dayIn,
   duration,

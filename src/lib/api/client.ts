@@ -1,6 +1,7 @@
 import { useSession } from "@/stores/session"
 
-import type { AuthResponse, Envelope, Page } from "./types"
+import type { AuthResponse } from "@/types/auth"
+import type { Envelope, Page } from "@/types/common"
 
 export const API_URL = (
   import.meta.env.VITE_API_URL ?? "http://localhost:3000/api/v1"

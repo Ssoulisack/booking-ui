@@ -11,7 +11,7 @@ import { Link, useLocation } from "react-router"
 
 import { LanguageToggle } from "@/components/LanguageToggle"
 import { Button } from "@/components/ui/button"
-import type { PublicBranch } from "@/lib/api/types"
+import type { PublicBranch } from "@/types/public"
 import { UserMenu } from "@/layouts/UserMenu"
 import { useSession } from "@/stores/session"
 

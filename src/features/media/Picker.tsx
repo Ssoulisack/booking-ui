@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
-import type { Media } from "@/lib/api/types"
+import type { Media } from "@/types/media"
 
 import { useMedia, useUploadMedia } from "./api"
 

@@ -1,4 +1,4 @@
-import type { PageMeta } from "@/lib/api/types"
+import type { PageMeta } from "@/types/common"
 
 /** Rows per page for lists the API sends whole (team, branches, report rows) */
 export const PAGE_SIZE = 20

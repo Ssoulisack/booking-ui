@@ -8,40 +8,45 @@ import {
 
 import { api, apiMessage, apiPage, ApiError } from "@/lib/api/client"
 import type {
-  BranchSettings,
   ClassSession,
-  Closure,
-  ManagedCoach,
-  ManagedResource,
-  ManagedSport,
-  ManagedTable,
-  FloorItem,
-  FloorPlan,
-  HoursOwner,
-  TableSettings,
-  Media,
-  OpeningHour,
-  Price,
   Timetable,
   TimetableInput,
   TimetableResult,
   TimetableStop,
+} from "@/types/class"
+import type { ManagedCoach } from "@/types/coach"
+import type {
+  EventInput,
+  EventItem,
+  EventPrices,
+  EventPricesInput,
+} from "@/types/event"
+import type { FloorItem, FloorPlan } from "@/types/floor-plan"
+import type { Media } from "@/types/media"
+import type { PayInfo, PaymentSettings } from "@/types/payment"
+import type { EffectiveRule } from "@/types/public"
+import type {
+  Closure,
+  HoursOwner,
+  OpeningHour,
+  Price,
   Rule,
   RuleFields,
   RuleScope,
   ScheduleOwner,
-  SettingsInput,
-  EffectiveRule,
-  EventInput,
+} from "@/types/schedule"
+import type { BranchSettings, SettingsInput } from "@/types/settings"
+import type {
+  ManagedResource,
+  ManagedTable,
+  TableSettings,
+} from "@/types/space"
+import type { ManagedSport } from "@/types/sport"
+import type {
   TelegramGroups,
   TelegramInput,
   TelegramSettings,
-  EventItem,
-  EventPrices,
-  EventPricesInput,
-  PayInfo,
-  PaymentSettings,
-} from "@/lib/api/types"
+} from "@/types/telegram"
 
 import { useDashboard } from "./context"
 

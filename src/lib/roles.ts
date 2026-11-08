@@ -1,4 +1,4 @@
-import type { BranchRole } from "@/lib/api/types"
+import type { BranchRole } from "@/types/auth"
 
 // Same order as the backend (domain.MemberRank): a higher role can do everything a lower one can;
 // the company owner and admins rank the same at every branch

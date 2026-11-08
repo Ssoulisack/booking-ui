@@ -1,4 +1,4 @@
-import type { TeamMember } from "@/lib/api/types"
+import type { TeamMember } from "@/types/team"
 
 /**
  * What people type for an employee number ("ENO000007", "eno7", "ENO-7") in the stored form, the

@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next"
 
-import type { MediaItem } from "@/lib/api/types"
+import type { MediaItem } from "@/types/media"
 
 /** "Sport: Boxing", "Branch cover", "Company logo": where a picture is shown */
 export const usedByLabel = (t: TFunction, use: MediaItem["used_by"][number]) =>

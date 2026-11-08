@@ -23,7 +23,7 @@ import type {
   TelegramGroups,
   TelegramInput,
   TelegramSettings,
-} from "@/lib/api/types"
+} from "@/types/telegram"
 import { stampIn } from "@/lib/format"
 
 import { manage, useChange, useSettings, useTelegram } from "./api"

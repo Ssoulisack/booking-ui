@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
-import type { ManagedSport } from "@/lib/api/types"
+import type { ManagedSport } from "@/types/sport"
 import { SPORT_TYPES, type SportType } from "@/lib/places"
 
 import { manage, useChange, useSportsList, useDelete } from "../api"

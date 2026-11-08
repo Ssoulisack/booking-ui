@@ -1,4 +1,5 @@
-import type { FloorItem, ManagedTable, ZoneShape } from "@/lib/api/types"
+import type { FloorItem, ZoneShape } from "@/types/floor-plan"
+import type { ManagedTable } from "@/types/space"
 import { footprint, overlaps } from "@/lib/floor-plan"
 
 // Editing several tables and objects of a floor plan at once: selection, copies, shortcuts

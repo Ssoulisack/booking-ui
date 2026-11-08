@@ -25,12 +25,9 @@ import { Spinner } from "@/components/ui/spinner"
 import { currentItems } from "@/features/public/booking-utils"
 import { Plans } from "@/features/public/TableBookingPanel"
 import type { StaffTable } from "@/features/public/TablePlan"
-import type {
-  Booking,
-  ManagedTable,
-  PublicArea,
-  PublicTable,
-} from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
+import type { PublicArea, PublicTable } from "@/types/floor-plan"
+import type { ManagedTable } from "@/types/space"
 import { dayIn, timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 

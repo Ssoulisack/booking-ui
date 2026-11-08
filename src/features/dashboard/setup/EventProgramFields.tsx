@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { TimeInput } from "@/components/time-input"
 import { Label } from "@/components/ui/label"
-import type { LineupItem } from "@/lib/api/types"
+import type { LineupItem } from "@/types/event"
 
 const input = "h-11 text-base lg:h-9 lg:text-sm"
 

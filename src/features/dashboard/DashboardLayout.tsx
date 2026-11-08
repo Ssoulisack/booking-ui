@@ -18,7 +18,7 @@ import { Navigate, Outlet, useLocation, useParams } from "react-router"
 
 import { PageLoader, PageError } from "@/components/page-state"
 import { usableBranches, useMyBranches } from "@/features/auth/api"
-import type { BranchRole } from "@/lib/api/types"
+import type { BranchRole } from "@/types/auth"
 import { roleAtLeast } from "@/lib/roles"
 import { AppShell, type NavItem } from "@/layouts/AppShell"
 import { crumbsFor } from "@/layouts/crumbs"

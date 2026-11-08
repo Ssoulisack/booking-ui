@@ -1,8 +1,4 @@
-import {
-  EyeIcon,
-  RefreshCwIcon,
-  SearchIcon,
-} from "lucide-react"
+import { EyeIcon, RefreshCwIcon, SearchIcon } from "lucide-react"
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -25,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { BookingReportRow, EventReportRow } from "@/lib/api/types"
+import type { BookingReportRow, EventReportRow } from "@/types/report"
 import { dayIn, money, shortPhone, stampIn, todayIn } from "@/lib/format"
 
 import { useEvents, useSettings } from "../api"

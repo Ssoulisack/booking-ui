@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
-import type { PayInfo, PaymentSettings } from "@/lib/api/types"
+import type { PayInfo, PaymentSettings } from "@/types/payment"
 
 import {
   manage,

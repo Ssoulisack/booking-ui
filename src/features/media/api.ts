@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { api, apiMessage } from "@/lib/api/client"
-import type { Media, MediaItem } from "@/lib/api/types"
+import type { Media, MediaItem } from "@/types/media"
 
 /** `base` is "/company" or "/branches/{id}": the library of that scope only, never another's */
 const mediaKey = (base: string) => ["media", base] as const

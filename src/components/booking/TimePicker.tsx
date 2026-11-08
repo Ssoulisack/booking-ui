@@ -2,7 +2,7 @@ import { CheckIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import type { Availability } from "@/lib/api/types"
+import type { Availability } from "@/types/public"
 import { dayIn, duration, money, timeIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 

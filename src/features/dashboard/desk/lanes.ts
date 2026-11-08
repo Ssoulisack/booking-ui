@@ -1,7 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz"
 import { useSyncExternalStore } from "react"
 
-import type { CalendarEntry, CalendarLane } from "@/lib/api/types"
+import type { CalendarEntry, CalendarLane } from "@/types/calendar"
 import { floorName } from "@/lib/floor-plan"
 
 /** Minutes after midnight of `ymd`, in the business time zone (clamped to that day) */

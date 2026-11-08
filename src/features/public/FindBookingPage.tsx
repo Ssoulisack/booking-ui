@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 import { dayIn, timeIn } from "@/lib/format"
 
 import { bookingApi } from "./api"

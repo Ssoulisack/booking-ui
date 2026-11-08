@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { FinanceTotals, Money } from "@/lib/api/types"
+import type { FinanceTotals, Money } from "@/types/report"
 import { dayIn, money, todayIn } from "@/lib/format"
 
 import { useDashboard } from "../context"

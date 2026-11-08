@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { DeleteButton, PageHeader, Panel } from "@/features/dashboard/ui"
-import type { BranchSummary } from "@/lib/api/types"
+import type { BranchSummary } from "@/types/company"
 
 import {
   useBranches,

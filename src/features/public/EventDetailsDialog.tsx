@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { PublicEvent } from "@/lib/api/types"
+import type { PublicEvent } from "@/types/event"
 import { cn } from "@/lib/utils"
 
 import { EventLineup, EventWhen } from "./EventProgram"

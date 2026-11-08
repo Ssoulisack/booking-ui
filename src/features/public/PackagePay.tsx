@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import type { CustomerPackage } from "@/lib/api/types"
+import type { CustomerPackage } from "@/types/package"
 import { money } from "@/lib/format"
 
 import {

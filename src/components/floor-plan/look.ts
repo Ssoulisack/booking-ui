@@ -17,7 +17,7 @@ import type {
   FloorItem,
   FloorItemKind,
   ZoneColor,
-} from "@/lib/api/types"
+} from "@/types/floor-plan"
 import { cn } from "@/lib/utils"
 
 // How floor plan objects look: the same in the editor and on the public booking page

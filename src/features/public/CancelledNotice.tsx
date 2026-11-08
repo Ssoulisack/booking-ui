@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 
 /**
  * A popup for a booking the team cancelled while the customer was looking at it: it says so, shows the

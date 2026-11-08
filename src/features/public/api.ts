@@ -7,28 +7,35 @@ import {
 
 import { api, apiPage } from "@/lib/api/client"
 import type {
-  Availability,
   Booking,
-  ClassSession,
   CreateBookingInput,
-  BuyEventTablesInput,
   CreatedBooking,
-  CustomerPackage,
-  OnlinePayment,
-  PaymentOption,
-  PackageItem,
-  PackageVisit,
-  PublicPayInfo,
-  SlipWay,
-  PublicArea,
-  PublicBranch,
-  PublicCoach,
+} from "@/types/booking"
+import type { ClassSession } from "@/types/class"
+import type {
+  BuyEventTablesInput,
   PublicEvent,
   PublicEventDetail,
+} from "@/types/event"
+import type { PublicArea, TableAvailability } from "@/types/floor-plan"
+import type {
+  CustomerPackage,
+  PackageItem,
+  PackageVisit,
+  SlipWay,
+} from "@/types/package"
+import type {
+  OnlinePayment,
+  PaymentOption,
+  PublicPayInfo,
+} from "@/types/payment"
+import type {
+  Availability,
+  PublicBranch,
+  PublicCoach,
   PublicResource,
-  Sport,
-  TableAvailability,
-} from "@/lib/api/types"
+} from "@/types/public"
+import type { Sport } from "@/types/sport"
 
 const pub = (slug: string) => `/public/branches/${encodeURIComponent(slug)}`
 

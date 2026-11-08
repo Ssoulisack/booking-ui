@@ -7,7 +7,7 @@ import { UnsavedGuard } from "@/components/UnsavedGuard"
 import { Skeleton } from "@/components/ui/skeleton"
 import { applyBusinessLanguage } from "@/i18n"
 import { ApiError } from "@/lib/api/client"
-import type { PublicBranch } from "@/lib/api/types"
+import type { PublicBranch } from "@/types/public"
 
 import { usePublicBranch } from "./api"
 import { brandStyle, DEFAULT_BRAND } from "./brand"

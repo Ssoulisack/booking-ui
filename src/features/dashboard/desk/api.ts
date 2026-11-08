@@ -7,25 +7,26 @@ import {
 
 import { api, apiPage, download } from "@/lib/api/client"
 import type {
-  Availability,
   Booking,
-  BookingsReport,
   BookingStatus,
-  Calendar,
-  CashUp,
-  Customer,
-  CustomerMatch,
-  Finance,
   PaymentMethod,
-  StaffPayment,
   StaffBookingInput,
+} from "@/types/booking"
+import type { Calendar } from "@/types/calendar"
+import type { Customer, CustomerMatch } from "@/types/customer"
+import type { TableAvailability } from "@/types/floor-plan"
+import type { StaffPayment } from "@/types/payment"
+import type { Availability } from "@/types/public"
+import type {
+  BookingsReport,
+  CashUp,
+  Finance,
   UnpaidRow,
   Transactions,
   Utilisation,
   EventReport,
   TableReport,
-  TableAvailability,
-} from "@/lib/api/types"
+} from "@/types/report"
 
 import { useBiz } from "../api"
 

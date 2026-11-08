@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
-import type { ScheduleOwner } from "@/lib/api/types"
+import type { ScheduleOwner } from "@/types/schedule"
 import { money } from "@/lib/format"
 
 import { useReadiness } from "../api"

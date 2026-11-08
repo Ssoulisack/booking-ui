@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { api, apiPage } from "@/lib/api/client"
-import type { DirectoryBranch, PublicCompany } from "@/lib/api/types"
+import type { DirectoryBranch } from "@/types/place"
+import type { PublicCompany } from "@/types/public"
 
 // a company has a handful of branches: one page holds them all (the API allows 100)
 const ALL = 100

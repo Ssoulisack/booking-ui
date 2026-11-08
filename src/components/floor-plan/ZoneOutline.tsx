@@ -1,4 +1,4 @@
-import type { FloorItem, ZoneColor } from "@/lib/api/types"
+import type { FloorItem, ZoneColor } from "@/types/floor-plan"
 import { footprint, zoneOutline } from "@/lib/floor-plan"
 import { cn } from "@/lib/utils"
 

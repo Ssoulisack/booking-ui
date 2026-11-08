@@ -1,4 +1,4 @@
-import type { MyBranch, User } from "@/lib/api/types"
+import type { MyBranch, User } from "@/types/auth"
 
 import { usableBranches } from "./api"
 

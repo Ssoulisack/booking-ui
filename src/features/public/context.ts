@@ -1,6 +1,6 @@
 import { useOutletContext } from "react-router"
 
-import type { PublicBranch } from "@/lib/api/types"
+import type { PublicBranch } from "@/types/public"
 
 export interface PublicContext {
   slug: string

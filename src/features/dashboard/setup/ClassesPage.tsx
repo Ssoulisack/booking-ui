@@ -19,7 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { BranchSettings, ClassSession, Timetable } from "@/lib/api/types"
+import type { ClassSession, Timetable } from "@/types/class"
+import type { BranchSettings } from "@/types/settings"
 import { dayIn, money, nextDays, timeIn } from "@/lib/format"
 
 import {

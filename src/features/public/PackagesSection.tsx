@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
-import type { PackageItem, PackageOption } from "@/lib/api/types"
+import type { PackageItem, PackageOption } from "@/types/package"
 import { money } from "@/lib/format"
 import { coversLabel, optionLabel } from "@/lib/packages"
 import { useSession } from "@/stores/session"

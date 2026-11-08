@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 import { bookingTitle } from "@/features/public/booking-utils"
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 import { dayIn, money, timeIn } from "@/lib/format"
 
 import { useSettings } from "./api"

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
-import type { ScheduleOwner } from "@/lib/api/types"
+import type { ScheduleOwner } from "@/types/schedule"
 import { duration, money } from "@/lib/format"
 
 import { useUnsaved } from "@/stores/unsaved"

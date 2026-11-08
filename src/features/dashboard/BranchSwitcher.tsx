@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { usableBranches, useMyBranches } from "@/features/auth/api"
-import type { MyBranch } from "@/lib/api/types"
+import type { MyBranch } from "@/types/auth"
 
 /** The current branch; a menu to switch when the person works at several */
 export function BranchSwitcher({ current }: { current: MyBranch }) {

@@ -1,7 +1,7 @@
 import { MapIcon, MapPinIcon, PhoneIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import type { PublicBranch } from "@/lib/api/types"
+import type { PublicBranch } from "@/types/public"
 import { webUrl } from "@/lib/url"
 
 import { usePublic } from "./context"

@@ -16,7 +16,7 @@ import { canCancel, zoneOf } from "@/features/public/booking-utils"
 import { CancelDialog } from "@/features/public/CancelDialog"
 import { ContinuePayment } from "@/features/public/ContinuePayment"
 import { readOriginSlug } from "@/features/public/origin"
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 import { dayIn, timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 

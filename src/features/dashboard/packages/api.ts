@@ -6,7 +6,7 @@ import type {
   PackageInput,
   PackageItem,
   PackageVisit,
-} from "@/lib/api/types"
+} from "@/types/package"
 
 import { useBiz } from "../api"
 

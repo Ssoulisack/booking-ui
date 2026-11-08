@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 import { dayIn, nextDays, timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 

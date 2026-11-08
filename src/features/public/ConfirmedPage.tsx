@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Link, Navigate, useLocation } from "react-router"
 
 import { Button } from "@/components/ui/button"
-import type { CreatedBooking } from "@/lib/api/types"
+import type { CreatedBooking } from "@/types/booking"
 import { timeIn } from "@/lib/format"
 import { useSession } from "@/stores/session"
 

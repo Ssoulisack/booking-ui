@@ -25,11 +25,8 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
-import type {
-  ManagedResource,
-  ManagedSport,
-  ResourceKind,
-} from "@/lib/api/types"
+import type { ManagedResource, ResourceKind } from "@/types/space"
+import type { ManagedSport } from "@/types/sport"
 
 import {
   manage,

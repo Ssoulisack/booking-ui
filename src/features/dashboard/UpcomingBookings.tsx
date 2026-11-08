@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "@/features/public/BookingCard"
 import { bookingTitle } from "@/features/public/booking-utils"
-import type { Booking } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
 import { dayIn, nextDays, timeIn, todayIn } from "@/lib/format"
 
 import { useSettings } from "./api"

@@ -1,13 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
 
 import { api, apiMessage } from "@/lib/api/client"
-import type {
-  AuthResponse,
-  InvitationInfo,
-  MyBranch,
-  SocialConfig,
-  User,
-} from "@/lib/api/types"
+import type { AuthResponse, InvitationInfo, MyBranch, User } from "@/types/auth"
+import type { SocialConfig } from "@/types/settings"
 import { useSession } from "@/stores/session"
 
 export const authKeys = {

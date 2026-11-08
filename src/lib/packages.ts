@@ -4,7 +4,7 @@ import type {
   CustomerPackage,
   PackageCovers,
   PackageOption,
-} from "@/lib/api/types"
+} from "@/types/package"
 
 /** "10 times" or "3 months" */
 export function optionLabel(

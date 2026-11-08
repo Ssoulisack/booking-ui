@@ -5,7 +5,8 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import type { Booking, EventPay } from "@/lib/api/types"
+import type { Booking } from "@/types/booking"
+import type { EventPay } from "@/types/event"
 import { dayIn, money, timeIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 

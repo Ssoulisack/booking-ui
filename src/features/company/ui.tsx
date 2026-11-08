@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
-import type { BranchStatus } from "@/lib/api/types"
+import type { BranchStatus } from "@/types/auth"
 import { cn } from "@/lib/utils"
 
 const STATUS_STYLE: Record<BranchStatus, string> = {

@@ -1,7 +1,7 @@
 import { ClockIcon, MapPinIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import type { LineupItem } from "@/lib/api/types"
+import type { LineupItem } from "@/types/event"
 
 import { eventTimes, lineupFor } from "./event-program"
 

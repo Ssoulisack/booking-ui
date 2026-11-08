@@ -1,4 +1,4 @@
-import type { LineupItem } from "@/lib/api/types"
+import type { LineupItem } from "@/types/event"
 
 /** "19:00 – 01:00", "19:00" alone, or "" when no time was set */
 export function eventTimes(start: string, end: string) {

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { ErrorAlert } from "@/components/form"
 import { Button } from "@/components/ui/button"
-import type { CustomerPackage } from "@/lib/api/types"
+import type { CustomerPackage } from "@/types/package"
 import { roleAtLeast } from "@/lib/roles"
 
 import { useChange } from "../api"

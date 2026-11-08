@@ -7,7 +7,7 @@ import { PageError } from "@/components/page-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { Timetable } from "@/lib/api/types"
+import type { Timetable } from "@/types/class"
 import { dayIn, middayOf, money } from "@/lib/format"
 
 import {

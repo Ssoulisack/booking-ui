@@ -1,4 +1,4 @@
-import type { Availability } from "@/lib/api/types"
+import type { Availability } from "@/types/public"
 
 /** The lengths offered on this day, shortest first */
 export function lengthsOf(availability: Availability): number[] {

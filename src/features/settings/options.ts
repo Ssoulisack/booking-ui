@@ -1,4 +1,4 @@
-import type { BookingMode } from "@/lib/api/types"
+import type { BookingMode } from "@/types/public"
 
 // Choices offered in the company and branch settings
 
