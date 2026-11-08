@@ -1,7 +1,7 @@
 import { type FieldErrors, type UseFormRegister } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
-import { TextField } from "@/components/form"
+import { TextField } from "@/components/global/form"
 import { FieldDescription } from "@/components/ui/field"
 
 interface IdentityValues {

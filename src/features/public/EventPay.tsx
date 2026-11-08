@@ -19,7 +19,7 @@ import {
 } from "./api"
 import { eventStartOverUrl } from "./booking-utils"
 import { PayOnline } from "./PayOnline"
-import { CopyButton } from "@/components/CopyButton"
+import { CopyButton } from "@/components/global/CopyButton"
 import { saveImage } from "./save-image"
 import { SlipSender } from "./SlipSender"
 

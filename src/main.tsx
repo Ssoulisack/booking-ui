@@ -1,12 +1,11 @@
 import "./i18n"
 import "./index.css"
 
-import { QueryClientProvider } from "@tanstack/react-query"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { RouterProvider } from "react-router"
 
-import { Toaster } from "@/components/ui/sonner"
+import { AppProviders } from "@/components/provider/app-providers"
 import { queryClient } from "@/lib/query-client"
 import { router } from "@/routes/router"
 import { useSession } from "@/stores/session"
@@ -18,15 +17,8 @@ useSession.subscribe((state, prev) => {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <AppProviders>
       <RouterProvider router={router} />
-      {/* below the 56 px top bar, so a message never covers the menu or account buttons */}
-      <Toaster
-        position="top-center"
-        richColors
-        offset={{ top: 64 }}
-        mobileOffset={{ top: 64 }}
-      />
-    </QueryClientProvider>
+    </AppProviders>
   </StrictMode>,
 )

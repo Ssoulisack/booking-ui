@@ -11,7 +11,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router"
 
-import { PageError } from "@/components/page-state"
+import { PageError } from "@/components/global/page-state"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {

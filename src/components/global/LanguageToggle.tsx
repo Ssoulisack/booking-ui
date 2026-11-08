@@ -1,7 +1,7 @@
 import { CheckIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { Flag } from "@/components/flags"
+import { Flag } from "@/components/global/flags"
 import {
   DropdownMenu,
   DropdownMenuContent,

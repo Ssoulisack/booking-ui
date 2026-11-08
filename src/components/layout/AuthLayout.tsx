@@ -6,7 +6,7 @@ import { usePublicCompany } from "@/features/places/api"
 import { BrandMark } from "@/features/public/BrandMark"
 import { CustomerTheme } from "@/features/public/CustomerTheme"
 import { ThemeToggle } from "@/features/public/ThemeToggle"
-import { LanguageToggle } from "@/components/LanguageToggle"
+import { LanguageToggle } from "@/components/global/LanguageToggle"
 
 /** The company's name (and logo) at the top left of the customer-themed plain pages */
 export function CompanyLink() {

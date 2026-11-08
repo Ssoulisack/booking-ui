@@ -4,7 +4,7 @@ import { ImagePlusIcon, ImagesIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
-import { ErrorAlert } from "@/components/form"
+import { ErrorAlert } from "@/components/global/form"
 import {
   AlertDialog,
   AlertDialogCancel,

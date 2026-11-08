@@ -2,7 +2,7 @@ import { SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { PageError } from "@/components/page-state"
+import { PageError } from "@/components/global/page-state"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState, PageHeader } from "@/features/dashboard/ui"

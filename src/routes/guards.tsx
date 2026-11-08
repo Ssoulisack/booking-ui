@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { Navigate, Outlet, useLocation } from "react-router"
 
 import { useMe } from "@/features/auth/api"
-import { PageLoader } from "@/components/page-state"
+import { PageLoader } from "@/components/global/page-state"
 import { runsCompany, useSession } from "@/stores/session"
 
 function loginPath(location: { pathname: string; search: string }) {

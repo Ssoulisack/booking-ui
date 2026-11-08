@@ -4,10 +4,10 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useSearchParams } from "react-router"
 
-import { ErrorAlert, SubmitButton, TextField } from "@/components/form"
+import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { FieldGroup } from "@/components/ui/field"
-import { AuthHeading } from "@/layouts/AuthLayout"
+import { AuthHeading } from "@/components/layout/AuthLayout"
 import { codeMessage } from "@/lib/errors"
 import { useSession } from "@/stores/session"
 

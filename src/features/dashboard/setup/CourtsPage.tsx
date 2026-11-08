@@ -7,8 +7,8 @@ import { Link, useParams } from "react-router"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import { ErrorAlert, TextField } from "@/components/form"
-import { PageError } from "@/components/page-state"
+import { ErrorAlert, TextField } from "@/components/global/form"
+import { PageError } from "@/components/global/page-state"
 import { Button } from "@/components/ui/button"
 import {
   Field,

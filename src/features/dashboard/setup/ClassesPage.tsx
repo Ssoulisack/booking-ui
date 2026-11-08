@@ -4,12 +4,12 @@ import { CalendarPlusIcon, PlusIcon, RepeatIcon } from "lucide-react"
 import { fromZonedTime } from "date-fns-tz"
 import { toast } from "sonner"
 
-import { PageError } from "@/components/page-state"
+import { PageError } from "@/components/global/page-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { TimeInput } from "@/components/time-input"
+import { TimeInput } from "@/components/global/time-input"
 import { Label } from "@/components/ui/label"
 import {
   Select,

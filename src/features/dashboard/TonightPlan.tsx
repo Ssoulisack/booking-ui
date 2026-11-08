@@ -9,7 +9,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { ErrorAlert } from "@/components/form"
+import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,

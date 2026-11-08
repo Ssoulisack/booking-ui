@@ -3,7 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { ErrorAlert } from "@/components/form"
+import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,8 +32,8 @@ import {
 } from "../api"
 import { useSoldPackages } from "../packages/api"
 import { FormDialog } from "../ui"
-import { lengthsOf } from "@/components/booking/lengths"
-import { TimePicker } from "@/components/booking/TimePicker"
+import { lengthsOf } from "@/components/global/booking/lengths"
+import { TimePicker } from "@/components/global/booking/TimePicker"
 import {
   useCreateDeskBooking,
   useDeskAvailability,

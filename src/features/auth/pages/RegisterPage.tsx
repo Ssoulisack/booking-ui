@@ -3,9 +3,9 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useSearchParams } from "react-router"
 
-import { ErrorAlert, SubmitButton, TextField } from "@/components/form"
+import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { FieldGroup } from "@/components/ui/field"
-import { AuthHeading } from "@/layouts/AuthLayout"
+import { AuthHeading } from "@/components/layout/AuthLayout"
 
 import { useRegister } from "../api"
 import { IdentityFields } from "../IdentityFields"

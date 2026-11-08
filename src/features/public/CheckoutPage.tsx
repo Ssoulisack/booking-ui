@@ -13,7 +13,7 @@ import {
 } from "react-router"
 import { z } from "zod"
 
-import { ErrorAlert, TextField } from "@/components/form"
+import { ErrorAlert, TextField } from "@/components/global/form"
 import HoldButton from "@/components/reactbits/HoldButton"
 import { Button } from "@/components/ui/button"
 import {

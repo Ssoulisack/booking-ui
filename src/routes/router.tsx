@@ -1,6 +1,10 @@
 import { createBrowserRouter, Outlet, ScrollRestoration } from "react-router"
 
-import { CrashScreen, NotFound, PageLoader } from "@/components/page-state"
+import {
+  CrashScreen,
+  NotFound,
+  PageLoader,
+} from "@/components/global/page-state"
 import { LegalPage } from "@/features/legal"
 import { TrackPage } from "@/features/public/TrackPage"
 
@@ -65,7 +69,8 @@ export const router = createBrowserRouter([
       },
       {
         lazy: async () => ({
-          Component: (await import("@/layouts/AuthLayout")).AuthLayout,
+          Component: (await import("@/components/layout/AuthLayout"))
+            .AuthLayout,
         }),
         children: [
           {

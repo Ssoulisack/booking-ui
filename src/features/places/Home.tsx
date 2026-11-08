@@ -1,6 +1,6 @@
 import { Navigate } from "react-router"
 
-import { PageLoader } from "@/components/page-state"
+import { PageLoader } from "@/components/global/page-state"
 import { usableBranches, useMyBranches } from "@/features/auth/api"
 import { runsCompany, useSession } from "@/stores/session"
 

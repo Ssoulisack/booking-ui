@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 
-import { ErrorAlert } from "@/components/form"
+import { ErrorAlert } from "@/components/global/form"
 import HoldButton from "@/components/reactbits/HoldButton"
 import {
   AlertDialog,

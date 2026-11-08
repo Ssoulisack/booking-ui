@@ -5,9 +5,9 @@ import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router"
 import { toast } from "sonner"
 
-import { ErrorAlert, SubmitButton, TextField } from "@/components/form"
+import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { FieldGroup } from "@/components/ui/field"
-import { AuthHeading } from "@/layouts/AuthLayout"
+import { AuthHeading } from "@/components/layout/AuthLayout"
 import { useSession } from "@/stores/session"
 
 import { authApi } from "../api"

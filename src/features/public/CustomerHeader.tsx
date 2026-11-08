@@ -9,10 +9,10 @@ import {
 import { useTranslation } from "react-i18next"
 import { Link, useLocation } from "react-router"
 
-import { LanguageToggle } from "@/components/LanguageToggle"
+import { LanguageToggle } from "@/components/global/LanguageToggle"
 import { Button } from "@/components/ui/button"
 import type { PublicBranch } from "@/types/public"
-import { UserMenu } from "@/layouts/UserMenu"
+import { UserMenu } from "@/components/layout/UserMenu"
 import { useSession } from "@/stores/session"
 
 import { ThemeToggle } from "./ThemeToggle"

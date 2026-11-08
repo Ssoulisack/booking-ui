@@ -2,7 +2,7 @@ import { ArrowLeftIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link, Navigate, useLocation, useParams } from "react-router"
 
-import { PageError } from "@/components/page-state"
+import { PageError } from "@/components/global/page-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"

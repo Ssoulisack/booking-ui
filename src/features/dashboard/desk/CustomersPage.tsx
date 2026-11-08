@@ -3,7 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
-import { PageError } from "@/components/page-state"
+import { PageError } from "@/components/global/page-state"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -12,7 +12,7 @@ import { displayPhone } from "@/lib/phone"
 
 import { useSettings } from "../api"
 import { PageHeader } from "../ui"
-import { Pager } from "@/components/Pager"
+import { Pager } from "@/components/global/Pager"
 
 import { useCustomers } from "./api"
 

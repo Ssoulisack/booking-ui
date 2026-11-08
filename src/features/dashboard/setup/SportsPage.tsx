@@ -5,8 +5,8 @@ import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 
-import { TextField } from "@/components/form"
-import { PageError } from "@/components/page-state"
+import { TextField } from "@/components/global/form"
+import { PageError } from "@/components/global/page-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {

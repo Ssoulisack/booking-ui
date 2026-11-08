@@ -4,7 +4,7 @@ import {
   MenuIcon,
   type LucideIcon,
 } from "lucide-react"
-import { UnsavedGuard } from "@/components/UnsavedGuard"
+import { UnsavedGuard } from "@/components/global/UnsavedGuard"
 import { motion, MotionConfig } from "motion/react"
 import { useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
@@ -24,7 +24,7 @@ import { MobileNav } from "@/features/public/MobileNav"
 
 import { AreaSwitch, AreaTag } from "./area"
 import { usePreviousArea, type Area } from "./area-state"
-import { ModeToggle } from "@/components/ModeToggle"
+import { ModeToggle } from "@/components/global/ModeToggle"
 import { usePublicCompany } from "@/features/places/api"
 import { CustomerTheme } from "@/features/public/CustomerTheme"
 import { ThemeToggle } from "@/features/public/ThemeToggle"
@@ -33,7 +33,7 @@ import { Breadcrumbs } from "./Breadcrumbs"
 import type { Crumb } from "./crumbs"
 import { UserMenu } from "./UserMenu"
 import { CustomerHeader } from "@/features/public/CustomerHeader"
-import { LanguageToggle } from "@/components/LanguageToggle"
+import { LanguageToggle } from "@/components/global/LanguageToggle"
 
 export interface NavItem {
   /** the same id as the matching item of the customer menu on other pages (see MobileNav) */

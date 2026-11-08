@@ -21,4 +21,4 @@ export function StatusBadge({ status }: { status: BranchStatus }) {
 }
 
 /** The shared pager (first, previous, jump to a page, next, last): see components/Pager */
-export { Pager } from "@/components/Pager"
+export { Pager } from "@/components/global/Pager"

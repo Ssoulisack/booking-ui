@@ -31,7 +31,7 @@ All URL paths live in `src/lib/constants/api-endpoints.ts` (`API_ENDPOINTS`). Ne
 
 ### Folders
 - `src/pages/{public,auth,account,dashboard,company}/` — thin route components: read params, call hooks, compose components. No business logic.
-- `src/components/ui/` — primitives (shadcn). `global/` — shared app pieces. `layout/` — shells, sidebar, breadcrumbs. `provider/` — context/providers. `protected/<feature>/` — staff-side UI. `public/<feature>/` — customer-side UI.
+- `src/components/ui/` — primitives (shadcn). `global/` — shared app pieces (forms, pickers, floor-plan, booking). `layout/` — shells, breadcrumbs, user menu. `provider/` — app-wide providers. `protected/<feature>/` — staff-side UI. `public/<feature>/` — customer-side UI.
 - `src/lib/constants/` — config-driven navigation, breadcrumbs, roles.
 - `src/stores/` — zustand, client-only state (session, active branch, unsaved guard). Server data goes through React Query, never zustand.
 
@@ -50,8 +50,8 @@ Add every user-visible string to all three locale files (en, lo, th); the parity
 | Phase | Scope | State |
 |---|---|---|
 | 1 | Baseline, `rearch` branch, this file | done |
-| 2 | Foundation: API_ENDPOINTS, split `lib/api/types.ts`, toast helper, provider/global folders | next |
-| 3 | Services + hooks per feature | — |
+| 2 | Foundation: API_ENDPOINTS, split `lib/api/types.ts`, toast helper, provider/global folders | done |
+| 3 | Services + hooks per feature | next |
 | 4 | UI to `components/protected|public`, thin pages | — |
 | 5 | Nav / breadcrumb / roles config, router | — |
 | 6 | Cleanup, README, full tests | — |

@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
-import { CompanyLink } from "@/layouts/AuthLayout"
+import { CompanyLink } from "@/components/layout/AuthLayout"
 import { CustomerTheme } from "@/features/public/CustomerTheme"
 import { ThemeToggle } from "@/features/public/ThemeToggle"
-import { LanguageToggle } from "@/components/LanguageToggle"
+import { LanguageToggle } from "@/components/global/LanguageToggle"
 
 /** Address for privacy and deletion requests; set VITE_CONTACT_EMAIL on the host */
 const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL as string | undefined

@@ -1,4 +1,5 @@
 import i18n, { type TFunction } from "i18next"
+import { toast } from "sonner"
 
 import { ApiError } from "@/lib/api/client"
 
@@ -41,4 +42,12 @@ export function codeMessage(code: string, t: TFunction): string {
 /** A readable sentence for any thrown value */
 export function errorMessage(err: unknown, t: TFunction): string {
   return codeMessage(errorCode(err), t)
+}
+
+/**
+ * The one way to tell the user an API call failed with a toast. Mutation hooks call this (never
+ * `toast.error` by hand). Screens that show the error inline (ErrorAlert) do not need it.
+ */
+export function toastApiError(err: unknown) {
+  toast.error(errorMessage(err, i18n.t.bind(i18n) as TFunction))
 }

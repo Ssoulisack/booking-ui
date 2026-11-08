@@ -1,4 +1,4 @@
-import { ModeToggle } from "@/components/ModeToggle"
+import { ModeToggle } from "@/components/global/ModeToggle"
 
 import { setPubMode, usePubMode } from "./theme"
 

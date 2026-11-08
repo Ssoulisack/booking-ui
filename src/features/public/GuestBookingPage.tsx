@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router"
 import { toast } from "sonner"
 
-import { ErrorAlert } from "@/components/form"
+import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 

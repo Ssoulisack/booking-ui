@@ -5,10 +5,10 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { PageError } from "@/components/page-state"
+import { PageError } from "@/components/global/page-state"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { TimeInput } from "@/components/time-input"
+import { TimeInput } from "@/components/global/time-input"
 import { Label } from "@/components/ui/label"
 import {
   Select,

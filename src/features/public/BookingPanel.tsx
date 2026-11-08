@@ -8,7 +8,7 @@ import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router"
 
-import { ErrorAlert } from "@/components/form"
+import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -54,9 +54,9 @@ import {
   type BookWhat,
   type Selection,
 } from "./selection"
-import { lengthsOf } from "@/components/booking/lengths"
+import { lengthsOf } from "@/components/global/booking/lengths"
 import AnimatedList from "@/components/reactbits/AnimatedList"
-import { TimePicker } from "@/components/booking/TimePicker"
+import { TimePicker } from "@/components/global/booking/TimePicker"
 
 // the month calendar is only needed after "More dates": load it then
 const Calendar = lazy(async () => ({

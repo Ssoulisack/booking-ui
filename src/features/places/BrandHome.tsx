@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useSearchParams } from "react-router"
 
-import { PageError } from "@/components/page-state"
+import { PageError } from "@/components/global/page-state"
 import BlurText from "@/components/reactbits/BlurText"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,12 +28,12 @@ import { money } from "@/lib/format"
 import { placeTypes } from "@/lib/places"
 import { webUrl } from "@/lib/url"
 import { cn } from "@/lib/utils"
-import { UserMenu } from "@/layouts/UserMenu"
+import { UserMenu } from "@/components/layout/UserMenu"
 import { useSession } from "@/stores/session"
 
 import { useLiveBranches, usePublicCompany } from "./api"
 import { BrandRings } from "@/features/public/BrandRings"
-import { LanguageToggle } from "@/components/LanguageToggle"
+import { LanguageToggle } from "@/components/global/LanguageToggle"
 
 /** From this many branches on, the list gets a search, sport chips and a province picker */
 const MANY = 5

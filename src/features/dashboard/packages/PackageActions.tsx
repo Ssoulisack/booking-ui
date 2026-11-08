@@ -2,7 +2,7 @@ import { HistoryIcon, SlidersHorizontalIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { ErrorAlert } from "@/components/form"
+import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
 import type { CustomerPackage } from "@/types/package"
 import { roleAtLeast } from "@/lib/roles"

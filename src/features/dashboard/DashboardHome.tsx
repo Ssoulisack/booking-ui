@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 import { toast } from "sonner"
 
-import { ErrorAlert } from "@/components/form"
+import { ErrorAlert } from "@/components/global/form"
 import {
   AlertDialog,
   AlertDialogCancel,

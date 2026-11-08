@@ -5,7 +5,7 @@ import { usePublicBranch } from "@/features/public/api"
 import { BranchSwitcher } from "@/features/public/BranchSwitcher"
 import { useCustomerMenu } from "@/features/public/CustomerHeader"
 import { readOriginSlug } from "@/features/public/origin"
-import { AppShell } from "@/layouts/AppShell"
+import { AppShell } from "@/components/layout/AppShell"
 
 /**
  * /account/*: the customer's own area (My bookings, My packages, My account). It wears the same header and the same menu

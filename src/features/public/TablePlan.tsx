@@ -2,10 +2,10 @@ import { FootprintsIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { ITEM_ICONS, itemLook } from "@/components/floor-plan/look"
+import { ITEM_ICONS, itemLook } from "@/components/global/floor-plan/look"
 import type { PublicArea } from "@/types/floor-plan"
 import { footprint } from "@/lib/floor-plan"
-import { ZoneOutline } from "@/components/floor-plan/ZoneOutline"
+import { ZoneOutline } from "@/components/global/floor-plan/ZoneOutline"
 import { cn } from "@/lib/utils"
 
 /** A table on the team's plan: free, taken (a group sits there) or booked (a group is coming) */

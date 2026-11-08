@@ -2,7 +2,7 @@ import { ImagePlusIcon } from "lucide-react"
 import { useRef } from "react"
 import { useTranslation } from "react-i18next"
 
-import { ErrorAlert } from "@/components/form"
+import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router"
 import { toast } from "sonner"
 
-import { PageError } from "@/components/page-state"
+import { PageError } from "@/components/global/page-state"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { bookingApi, publicKeys, useMyBooking } from "@/features/public/api"

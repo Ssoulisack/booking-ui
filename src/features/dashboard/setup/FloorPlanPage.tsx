@@ -20,8 +20,8 @@ import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router"
 import { toast } from "sonner"
 
-import { ErrorAlert } from "@/components/form"
-import { PageError } from "@/components/page-state"
+import { ErrorAlert } from "@/components/global/form"
+import { PageError } from "@/components/global/page-state"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -59,8 +59,8 @@ import {
   itemLook,
   ZONE_COLORS,
   ZONE_STYLES,
-} from "@/components/floor-plan/look"
-import { ZoneOutline } from "@/components/floor-plan/ZoneOutline"
+} from "@/components/global/floor-plan/look"
+import { ZoneOutline } from "@/components/global/floor-plan/ZoneOutline"
 import { useUnsaved } from "@/stores/unsaved"
 
 import {

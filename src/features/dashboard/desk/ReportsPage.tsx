@@ -12,9 +12,9 @@ import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
-import { ErrorAlert } from "@/components/form"
-import { PageError } from "@/components/page-state"
-import { Pager } from "@/components/Pager"
+import { ErrorAlert } from "@/components/global/form"
+import { PageError } from "@/components/global/page-state"
+import { Pager } from "@/components/global/Pager"
 import { Button } from "@/components/ui/button"
 import {
   ChartContainer,

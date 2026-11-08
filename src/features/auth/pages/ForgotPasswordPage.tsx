@@ -5,9 +5,9 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
-import { ErrorAlert, SubmitButton, TextField } from "@/components/form"
+import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { FieldGroup } from "@/components/ui/field"
-import { AuthHeading } from "@/layouts/AuthLayout"
+import { AuthHeading } from "@/components/layout/AuthLayout"
 
 import { authApi } from "../api"
 import { forgotSchema, type ForgotValues } from "../schemas"

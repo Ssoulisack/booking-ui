@@ -2,8 +2,8 @@ import { EyeIcon, RefreshCwIcon, SearchIcon } from "lucide-react"
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
-import { PageError } from "@/components/page-state"
-import { Pager } from "@/components/Pager"
+import { PageError } from "@/components/global/page-state"
+import { Pager } from "@/components/global/Pager"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,

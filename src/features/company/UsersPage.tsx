@@ -10,8 +10,8 @@ import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router"
 import { toast } from "sonner"
 
-import { ErrorAlert } from "@/components/form"
-import { PageError } from "@/components/page-state"
+import { ErrorAlert } from "@/components/global/form"
+import { PageError } from "@/components/global/page-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
