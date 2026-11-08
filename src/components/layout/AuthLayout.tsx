@@ -3,9 +3,9 @@ import { useTranslation } from "react-i18next"
 import { Link, Outlet } from "react-router"
 
 import { usePublicCompany } from "@/hooks/use-place"
-import { BrandMark } from "@/features/public/BrandMark"
-import { CustomerTheme } from "@/features/public/CustomerTheme"
-import { ThemeToggle } from "@/features/public/ThemeToggle"
+import { BrandMark } from "@/components/public/booking/BrandMark"
+import { CustomerTheme } from "@/components/public/booking/CustomerTheme"
+import { ThemeToggle } from "@/components/public/booking/ThemeToggle"
 import { LanguageToggle } from "@/components/global/LanguageToggle"
 
 /** The company's name (and logo) at the top left of the customer-themed plain pages */

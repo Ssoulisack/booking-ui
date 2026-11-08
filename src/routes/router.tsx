@@ -5,17 +5,17 @@ import {
   NotFound,
   PageLoader,
 } from "@/components/global/page-state"
-import { LegalPage } from "@/features/legal"
-import { TrackPage } from "@/features/public/TrackPage"
+import { LegalPage } from "@/pages/public/legal"
+import { TrackPage } from "@/components/public/booking/TrackPage"
 
 import { GuestOnly, OldCourtsLink, RequireCompany, RequireUser } from "./guards"
 
 // Each area is its own download, so a customer opening /b/{slug} on a phone never loads the
 // dashboard or company code.
-const auth = () => import("@/features/auth/pages")
-const company = () => import("@/features/company")
-const dashboard = () => import("@/features/dashboard")
-const pub = () => import("@/features/public")
+const auth = () => import("@/pages/auth")
+const company = () => import("@/pages/company")
+const dashboard = () => import("@/pages/dashboard")
+const pub = () => import("@/pages/public")
 
 type DashboardPage = keyof Awaited<ReturnType<typeof dashboard>>
 type CompanyPage = keyof Awaited<ReturnType<typeof company>>
@@ -52,7 +52,7 @@ export const router = createBrowserRouter([
       {
         index: true,
         lazy: async () => ({
-          Component: (await import("@/features/places/Home")).Home,
+          Component: (await import("@/components/public/home/Home")).Home,
         }),
       },
       {
@@ -145,37 +145,40 @@ export const router = createBrowserRouter([
           {
             path: "account",
             lazy: async () => ({
-              Component: (await import("@/features/account/AccountShell"))
+              Component: (await import("@/components/layout/AccountShell"))
                 .AccountLayout,
             }),
             children: [
               {
                 index: true,
                 lazy: async () => ({
-                  Component: (await import("@/features/account/AccountPage"))
-                    .AccountPage,
+                  Component: (
+                    await import("@/components/protected/account/AccountPage")
+                  ).AccountPage,
                 }),
               },
               {
                 path: "bookings/:id",
                 lazy: async () => ({
                   Component: (
-                    await import("@/features/account/AccountBookingPage")
+                    await import("@/components/protected/account/AccountBookingPage")
                   ).AccountBookingPage,
                 }),
               },
               {
                 path: "packages",
                 lazy: async () => ({
-                  Component: (await import("@/features/account/MyPackagesPage"))
-                    .MyPackagesPage,
+                  Component: (
+                    await import("@/components/protected/account/MyPackagesPage")
+                  ).MyPackagesPage,
                 }),
               },
               {
                 path: "profile",
                 lazy: async () => ({
-                  Component: (await import("@/features/account/ProfilePage"))
-                    .ProfilePage,
+                  Component: (
+                    await import("@/components/protected/account/ProfilePage")
+                  ).ProfilePage,
                 }),
               },
             ],
@@ -277,7 +280,7 @@ export const router = createBrowserRouter([
                     // its own download: the chart library is only needed here
                     lazy: async () => ({
                       Component: (
-                        await import("@/features/dashboard/desk/ReportsPage")
+                        await import("@/components/protected/desk/ReportsPage")
                       ).ReportsPage,
                     }),
                   },

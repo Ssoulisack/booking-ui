@@ -20,19 +20,19 @@ import {
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 
-import { MobileNav } from "@/features/public/MobileNav"
+import { MobileNav } from "@/components/public/booking/MobileNav"
 
 import { AreaSwitch, AreaTag } from "./area"
 import { usePreviousArea, type Area } from "./area-state"
 import { ModeToggle } from "@/components/global/ModeToggle"
 import { usePublicCompany } from "@/hooks/use-place"
-import { CustomerTheme } from "@/features/public/CustomerTheme"
-import { ThemeToggle } from "@/features/public/ThemeToggle"
+import { CustomerTheme } from "@/components/public/booking/CustomerTheme"
+import { ThemeToggle } from "@/components/public/booking/ThemeToggle"
 import { dashMode, useHtmlMode } from "@/lib/color-mode"
 import { Breadcrumbs } from "./Breadcrumbs"
 import type { Crumb } from "./crumbs"
 import { UserMenu } from "./UserMenu"
-import { CustomerHeader } from "@/features/public/CustomerHeader"
+import { CustomerHeader } from "@/components/public/booking/CustomerHeader"
 import { LanguageToggle } from "@/components/global/LanguageToggle"
 
 export interface NavItem {

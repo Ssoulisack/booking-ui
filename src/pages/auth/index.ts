@@ -1,0 +1,5 @@
+export { AcceptInvitePage } from "@/components/public/auth/AcceptInvitePage"
+export { ForgotPasswordPage } from "@/components/public/auth/ForgotPasswordPage"
+export { LoginPage } from "@/components/public/auth/LoginPage"
+export { RegisterPage } from "@/components/public/auth/RegisterPage"
+export { ResetPasswordPage } from "@/components/public/auth/ResetPasswordPage"

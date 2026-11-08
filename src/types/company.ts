@@ -10,7 +10,7 @@ export interface CompanyInput {
   brand_color: string
   /** up to 4 colours for the rings; empty = made from the brand colour */
   ring_colors: string[]
-  /** keys of FONTS (features/public/look.ts); "" = the default */
+  /** keys of FONTS (components/public/booking/look.ts); "" = the default */
   heading_font: string
   body_font: string
   description: string

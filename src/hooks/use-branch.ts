@@ -5,7 +5,7 @@ import {
   type QueryKey,
 } from "@tanstack/react-query"
 
-import { useDashboard } from "@/features/dashboard/context"
+import { useDashboard } from "@/components/provider/dashboard-context"
 import { branchService } from "@/services/branch.api"
 import type { SettingsInput } from "@/types/settings"
 

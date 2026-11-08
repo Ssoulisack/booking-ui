@@ -158,7 +158,7 @@
 }
 
 /*
- * Customer pages (html.pub, see features/public/theme.tsx): a light day or a navy night with a
+ * Customer pages (html.pub, see components/public/booking/theme.ts): a light day or a navy night with a
  * faint dot grid, and fixed bright "candy" accents for section labels and badges. The dashboard
  * never carries .pub.
  */
