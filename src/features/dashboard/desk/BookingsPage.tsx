@@ -28,6 +28,7 @@ import { PageHeader } from "../ui"
 import { useBookingList, usePendingBookings, type BookingFilters } from "./api"
 import { BookingSheet } from "./BookingSheet"
 import { NewBookingDialog } from "./NewBookingDialog"
+import { ReservationDialog } from "./ReservationDialog"
 import { PaymentBadge } from "./PaymentBadge"
 
 const STATUSES = [
@@ -107,14 +108,12 @@ export function BookingsPage() {
       <PageHeader
         title={t("nav.bookings")}
         lead={params.get("q") ? t("desk.searchAll") : undefined}
-        // a restaurant has no desk reservation form (the court form does not fit a table): walk-ins are on the Calendar
+        // a restaurant: the team books tables for a customer who phoned (a court's form does not fit a table)
         actions={
-          restaurant ? undefined : (
-            <Button className="h-11 lg:h-9" onClick={() => setAdding(true)}>
-              <PlusIcon />
-              {t("desk.newBooking")}
-            </Button>
-          )
+          <Button className="h-11 lg:h-9" onClick={() => setAdding(true)}>
+            <PlusIcon />
+            {restaurant ? t("desk.reserve.button") : t("desk.newBooking")}
+          </Button>
         }
       />
       <Tabs
@@ -330,7 +329,16 @@ export function BookingsPage() {
         onLimit={(n) => set({ limit: String(n), page: "1" })}
       />
       <BookingSheet id={open} onClose={() => setOpen(null)} />
-      {adding && (
+      {adding && restaurant && (
+        <ReservationDialog
+          onClose={() => setAdding(false)}
+          onCreated={(b) => {
+            setAdding(false)
+            setOpen(b.id)
+          }}
+        />
+      )}
+      {adding && !restaurant && (
         <NewBookingDialog
           start={{ date: today }}
           onClose={() => setAdding(false)}

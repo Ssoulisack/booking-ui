@@ -108,6 +108,7 @@ export function FormDialog({
   pending,
   error,
   onSubmit,
+  submitDisabled = false,
   children,
 }: {
   open: boolean
@@ -118,6 +119,8 @@ export function FormDialog({
   pending: boolean
   error: unknown
   onSubmit: (e: React.FormEvent) => void
+  /** the form is not complete yet: the submit button waits */
+  submitDisabled?: boolean
   children: ReactNode
 }) {
   const { t } = useTranslation()
@@ -159,7 +162,11 @@ export function FormDialog({
             >
               {t("dash.cancel")}
             </Button>
-            <Button type="submit" className="h-11 lg:h-9" disabled={pending}>
+            <Button
+              type="submit"
+              className="h-11 lg:h-9"
+              disabled={pending || submitDisabled}
+            >
               {pending && <Spinner />}
               {submitLabel}
             </Button>

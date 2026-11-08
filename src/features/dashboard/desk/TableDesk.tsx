@@ -56,7 +56,7 @@ function tableState(
  * picked; several tables can be joined for a big group. The counts and the search stay in view; the list scrolls.
  * Typing a name (11, A1) highlights that table and scrolls to it; Enter picks it.
  */
-function TablePicker({
+export function TablePicker({
   value,
   onChange,
   guests,
@@ -64,6 +64,7 @@ function TablePicker({
   listClass = "max-h-[34dvh]",
   date,
   window,
+  allowed,
 }: {
   value: number[]
   onChange: (ids: number[]) => void
@@ -76,6 +77,8 @@ function TablePicker({
   date?: string
   /** the time of the booking being moved, when it is not now: the tables free then */
   window?: { start: string; end: string }
+  /** the tables the server says are free for the chosen time: every other table is not offered */
+  allowed?: Set<number>
 }) {
   const { t } = useTranslation()
   const tz = useSettings().data?.in_force.timezone ?? "Asia/Vientiane"
@@ -87,7 +90,12 @@ function TablePicker({
     (l) => l.owner_type === "resource" && l.seats > 0,
   )
   const state = new Map(
-    tables.map((l) => [l.owner_id, tableState(l, now, exclude, window)]),
+    tables.map((l) => [
+      l.owner_id,
+      allowed
+        ? { busy: !allowed.has(l.owner_id), next: undefined }
+        : tableState(l, now, exclude, window),
+    ]),
   )
 
   // the tables the typed name points at: the exact name, else names that start with it, else names that hold it
@@ -218,9 +226,11 @@ function TablePicker({
                       )}
                     >
                       {busy
-                        ? window
-                          ? t("desk.tableBookedThen")
-                          : t("desk.tableTaken")
+                        ? allowed
+                          ? t("desk.tableNotFree")
+                          : window
+                            ? t("desk.tableBookedThen")
+                            : t("desk.tableTaken")
                         : next
                           ? t("desk.tableNext", { time: timeIn(next, tz) })
                           : t("desk.tableFree")}
@@ -246,7 +256,7 @@ function TablePicker({
   )
 }
 
-function GuestsStepper({
+export function GuestsStepper({
   value,
   onChange,
 }: {

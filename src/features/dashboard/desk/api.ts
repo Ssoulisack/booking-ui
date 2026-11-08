@@ -24,6 +24,7 @@ import type {
   Utilisation,
   EventReport,
   TableReport,
+  TableAvailability,
 } from "@/lib/api/types"
 
 import { useBiz } from "../api"
@@ -348,4 +349,35 @@ export function useEventReport(f: BookingRowsFilter, enabled = true) {
     placeholderData: keepPreviousData,
     refetchInterval: REPORT_REFRESH_MS,
   })
+}
+
+// ---------- restaurants: the team books tables for a customer who phoned ----------
+
+/** The free times and tables of a day for a group, as the team sees them (kept tables included) */
+export function useDeskTableAvailability(date: string, guests: number) {
+  const { base, key } = useBiz()
+  return useQuery({
+    queryKey: key("table-availability", date, guests),
+    queryFn: () =>
+      api<TableAvailability>(`${base}/table-availability`, {
+        query: { date, guests },
+      }),
+    enabled: !!date && guests > 0,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export interface ReserveTablesInput {
+  table_ids: number[]
+  guests: number
+  starts_at: string
+  guest: { name: string; phone: string }
+  notes?: string
+}
+
+/** Book tables for a customer who phoned: confirmed at once */
+export function useReserveTables() {
+  return useDeskChange((base, body: ReserveTablesInput) =>
+    api<Booking>(`${base}/bookings`, { method: "POST", body }),
+  )
 }
