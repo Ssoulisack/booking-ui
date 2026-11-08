@@ -1,4 +1,5 @@
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
+import { useDeletePackage, useSavePackage } from "@/hooks/use-package"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
@@ -16,7 +17,7 @@ import { coversLabel, optionLabel } from "@/lib/packages"
 import { money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { useBiz, useChange, useDelete } from "@/hooks/use-branch"
+import { useBiz } from "@/hooks/use-branch"
 import { useTimetables } from "@/hooks/use-class"
 import { useResourcesList } from "@/hooks/use-space"
 import { useSportsList } from "@/hooks/use-sport"
@@ -27,7 +28,7 @@ import {
   FormDialog,
   PageHeader,
 } from "../ui"
-import { packageApi, usePackages } from "./api"
+import { usePackages } from "@/hooks/use-package"
 
 const input = "h-11 text-base lg:h-9 lg:text-sm"
 const selectClass =
@@ -219,8 +220,8 @@ function PackageDialog({
   )
   const spaces = useResourcesList().data ?? []
   const timetables = useTimetables().data ?? []
-  const save = useChange(packageApi.save, ["packages"])
-  const remove = useDelete(packageApi.remove, onClose)
+  const save = useSavePackage()
+  const remove = useDeletePackage(onClose)
   const [name, setName] = useState(item?.name ?? "")
   const [description, setDescription] = useState(item?.description ?? "")
   const [sportId, setSportId] = useState<number>(

@@ -1,5 +1,3 @@
-import { useQuery } from "@tanstack/react-query"
-
 import { api, apiMessage } from "@/lib/api/client"
 import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import type {
@@ -9,61 +7,27 @@ import type {
   PackageVisit,
 } from "@/types/package"
 
-import { useBiz } from "@/hooks/use-branch"
-
-// ---------- reads ----------
-
-/** The packages the branch sells (the team sees inactive ones too) */
-export function usePackages() {
-  const { id: branchId, key } = useBiz()
-  return useQuery({
-    queryKey: key("packages"),
-    queryFn: () => api<PackageItem[]>(API_ENDPOINTS.BRANCH.PACKAGES(branchId)),
-  })
-}
-
-/** What customers bought here; filter by one customer and/or a status ("" = any) */
-export function useSoldPackages(
-  f: { customerId?: number; status?: string; q?: string },
-  enabled = true,
-) {
-  const { id: branchId, key } = useBiz()
-  return useQuery({
-    queryKey: key(
-      "sold-packages",
-      f.customerId ?? 0,
-      f.status ?? "",
-      f.q ?? "",
+export const packageService = {
+  /** The packages the branch sells (the team sees inactive ones too) */
+  list: (branchId: number) =>
+    api<PackageItem[]>(API_ENDPOINTS.BRANCH.PACKAGES(branchId)),
+  /** What customers bought here; filter by one customer and/or a status ("" = any) */
+  sold: (
+    branchId: number,
+    f: { customerId?: number; status?: string; q?: string },
+  ) =>
+    api<CustomerPackage[]>(API_ENDPOINTS.BRANCH.CUSTOMER_PACKAGES(branchId), {
+      query: {
+        ...(f.customerId ? { customer_id: f.customerId } : {}),
+        ...(f.status ? { status: f.status } : {}),
+        ...(f.q ? { q: f.q } : {}),
+      },
+    }),
+  /** A package's log: every use, give-back and adjustment */
+  visits: (branchId: number, id: number) =>
+    api<PackageVisit[]>(
+      API_ENDPOINTS.BRANCH.CUSTOMER_PACKAGE_VISITS(branchId, id),
     ),
-    queryFn: () =>
-      api<CustomerPackage[]>(API_ENDPOINTS.BRANCH.CUSTOMER_PACKAGES(branchId), {
-        query: {
-          ...(f.customerId ? { customer_id: f.customerId } : {}),
-          ...(f.status ? { status: f.status } : {}),
-          ...(f.q ? { q: f.q } : {}),
-        },
-      }),
-    refetchInterval: 30_000,
-    enabled,
-  })
-}
-
-/** A package's log: every use, give-back and adjustment */
-export function usePackageVisits(id: number | null) {
-  const { id: branchId, key } = useBiz()
-  return useQuery({
-    queryKey: key("sold-packages", "visits", id),
-    queryFn: () =>
-      api<PackageVisit[]>(
-        API_ENDPOINTS.BRANCH.CUSTOMER_PACKAGE_VISITS(branchId, id as number),
-      ),
-    enabled: id !== null,
-  })
-}
-
-// ---------- changes (used with useChange) ----------
-
-export const packageApi = {
   save: (branchId: number, p: { id?: number } & PackageInput) =>
     p.id
       ? api<PackageItem>(API_ENDPOINTS.BRANCH.PACKAGE(branchId, p.id), {

@@ -1,4 +1,5 @@
 import { HistoryIcon, SlidersHorizontalIcon } from "lucide-react"
+import { useCancelPackage } from "@/hooks/use-package"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -7,9 +8,7 @@ import { Button } from "@/components/ui/button"
 import type { CustomerPackage } from "@/types/package"
 import { roleAtLeast } from "@/lib/roles"
 
-import { useChange } from "@/hooks/use-branch"
 import { useDashboard } from "../context"
-import { packageApi } from "./api"
 import {
   AdjustDialog,
   CancelPackage,
@@ -28,7 +27,7 @@ export function PackageActions({ pkg: p }: { pkg: CustomerPackage }) {
   const [paying, setPaying] = useState(false)
   const [adjusting, setAdjusting] = useState(false)
   const [log, setLog] = useState(false)
-  const cancel = useChange(packageApi.cancel, ["sold-packages"])
+  const cancel = useCancelPackage()
   const paid = p.payment_status === "paid"
 
   return (

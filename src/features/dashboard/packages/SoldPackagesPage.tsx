@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query"
+import { useSellPackage } from "@/hooks/use-package"
 import { PlusIcon, SearchIcon, SendIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -20,10 +21,10 @@ import { displayPhone } from "@/lib/phone"
 import {} from "@/lib/roles"
 import { cn } from "@/lib/utils"
 
-import { useChange, useSettings } from "@/hooks/use-branch"
+import { useSettings } from "@/hooks/use-branch"
 import { useFindCustomer } from "../desk/api"
 import { PageHeader, FormDialog } from "../ui"
-import { packageApi, usePackages, useSoldPackages } from "./api"
+import { usePackages, useSoldPackages } from "@/hooks/use-package"
 import { PackageActions } from "./PackageActions"
 import { searchable } from "./PackageFinder"
 import { MethodPicker, statusTone } from "./PackageDialogs"
@@ -248,7 +249,7 @@ function SellDialog({ onClose }: { onClose: () => void }) {
   const [notes, setNotes] = useState("")
   const [missing, setMissing] = useState(false)
   const queryClient = useQueryClient()
-  const sell = useChange(packageApi.sell, ["sold-packages"])
+  const sell = useSellPackage()
 
   const pkg: PackageItem | undefined =
     packages.find((p) => p.id === packageId) ?? packages[0]

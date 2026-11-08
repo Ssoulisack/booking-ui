@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils"
 
 import { useSettings } from "@/hooks/use-branch"
 import { Panel } from "../ui"
-import { useSoldPackages } from "./api"
+import { useSoldPackages } from "@/hooks/use-package"
 import { PackageActions } from "./PackageActions"
 import { statusTone } from "./PackageDialogs"
 

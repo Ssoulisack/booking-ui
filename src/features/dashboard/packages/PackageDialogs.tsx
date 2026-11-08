@@ -1,4 +1,5 @@
 import {} from "@tanstack/react-query"
+import { useAdjustPackage, useMarkPackagePaid } from "@/hooks/use-package"
 import { MinusIcon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -20,11 +21,11 @@ import {} from "@/lib/phone"
 import {} from "@/lib/roles"
 import {} from "@/lib/utils"
 
-import { useChange, useSettings } from "@/hooks/use-branch"
+import { useSettings } from "@/hooks/use-branch"
 import {} from "../context"
 import {} from "../desk/api"
 import { FormDialog } from "../ui"
-import { packageApi, usePackageVisits } from "./api"
+import { usePackageVisits } from "@/hooks/use-package"
 
 const METHODS = ["cash", "transfer", "qr", "other"] as const
 const input = "h-11 text-base lg:h-9 lg:text-sm"
@@ -131,7 +132,7 @@ export function MarkPaidDialog({
   const [method, setMethod] = useState<string>(
     pkg.slip_sent_at ? "transfer" : "cash",
   )
-  const mark = useChange(packageApi.markPaid, ["sold-packages"])
+  const mark = useMarkPackagePaid()
   return (
     <FormDialog
       open
@@ -174,7 +175,7 @@ export function AdjustDialog({
   const [days, setDays] = useState(0)
   const [note, setNote] = useState("")
   const [missing, setMissing] = useState(false)
-  const adjust = useChange(packageApi.adjust, ["sold-packages"])
+  const adjust = useAdjustPackage()
   const canExtend = pkg.kind === "months" ? !!pkg.ends_on : !!pkg.expires_on
   const lastDay = pkg.kind === "months" ? pkg.ends_on : pkg.expires_on
   const v = visits
