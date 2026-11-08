@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useDeleteSport, useSaveSport } from "@/hooks/use-sport"
 import { PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
@@ -28,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { ManagedSport } from "@/types/sport"
 import { SPORT_TYPES, type SportType } from "@/lib/places"
 
-import { manage, useChange, useSportsList, useDelete } from "../api"
+import { useSportsList } from "@/hooks/use-sport"
 import {
   ActiveSwitch,
   DeleteButton,
@@ -115,7 +116,7 @@ function SportRow({
   const { t } = useTranslation()
   const invalidate = useInvalidate(["sports"])
   const [open, setOpen] = useState(false)
-  const remove = useDelete(manage.deleteSport, () => {
+  const remove = useDeleteSport(() => {
     setOpen(false)
     invalidate()
   })
@@ -167,7 +168,7 @@ function SportDialog({
 }) {
   const { t } = useTranslation()
   const [imageUrl, setImageUrl] = useState(sport?.image_url ?? "")
-  const save = useChange(manage.saveSport, ["sports"])
+  const save = useSaveSport()
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {

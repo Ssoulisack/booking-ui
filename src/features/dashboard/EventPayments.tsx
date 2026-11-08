@@ -7,7 +7,7 @@ import { bookingTitle } from "@/features/public/booking-utils"
 import type { Booking } from "@/types/booking"
 import { dayIn, money, timeIn } from "@/lib/format"
 
-import { useSettings } from "./api"
+import { useSettings } from "@/hooks/use-branch"
 import { BookingSheet } from "./desk/BookingSheet"
 import { useBookingList } from "./desk/api"
 import { Panel } from "./ui"

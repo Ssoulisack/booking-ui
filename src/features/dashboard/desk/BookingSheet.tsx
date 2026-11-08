@@ -26,7 +26,7 @@ import { dayIn, duration, money, timeIn } from "@/lib/format"
 import { displayPhone, telHref } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
-import { useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
 import {
   useBooking,
   useChangeStatus,

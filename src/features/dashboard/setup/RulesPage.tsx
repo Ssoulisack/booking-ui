@@ -3,7 +3,9 @@ import { Link } from "react-router"
 
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { useResourcesList, useRules, useSportsList } from "../api"
+import { useRules } from "@/hooks/use-schedule"
+import { useResourcesList } from "@/hooks/use-space"
+import { useSportsList } from "@/hooks/use-sport"
 import { useDashboard } from "../context"
 import { PageHeader, Panel } from "../ui"
 import { RuleEditor } from "./RuleEditor"

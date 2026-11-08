@@ -10,7 +10,7 @@ import type { Booking } from "@/types/booking"
 import { dayIn, nextDays, timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
 import { FormDialog } from "../ui"
 import { useDeskTableAvailability, useReserveTables } from "./api"
 import { GuestsStepper, TablePicker } from "./TableDesk"

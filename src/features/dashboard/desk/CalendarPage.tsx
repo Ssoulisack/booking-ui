@@ -26,7 +26,7 @@ import type { CalendarEntry, CalendarLane } from "@/types/calendar"
 import { dayIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import { useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
 import { useDashboard } from "../context"
 import { useCalendar } from "./api"
 import { BookingSheet } from "./BookingSheet"

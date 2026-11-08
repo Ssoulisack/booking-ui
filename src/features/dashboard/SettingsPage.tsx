@@ -1,4 +1,5 @@
 import { LockIcon } from "lucide-react"
+import { useSaveSettings } from "@/hooks/use-branch"
 import { useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -38,7 +39,7 @@ import type { BranchSettings, SettingsInput } from "@/types/settings"
 import { PROVINCES, type Province } from "@/lib/places"
 
 import { useUnsaved } from "@/stores/unsaved"
-import { manage, useChange, useSettings } from "./api"
+import { useSettings } from "@/hooks/use-branch"
 import { ActiveSwitch, ImageField, PageHeader, Panel } from "./ui"
 
 /**
@@ -83,7 +84,7 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
   const [start] = useState(() => JSON.stringify(f))
   const dirty = JSON.stringify(f) !== start
   useUnsaved(dirty)
-  const save = useChange(manage.saveSettings, ["settings"])
+  const save = useSaveSettings()
   const slugLocked = !!settings.published_at
   // the other branches this person can see, for "Also at this place"
   const others = (useMyBranches().data ?? []).filter(

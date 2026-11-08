@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { roleAtLeast } from "@/lib/roles"
 
-import { useSettings } from "./api"
+import { useSettings } from "@/hooks/use-branch"
 import { useDashboard } from "./context"
 import { PublishButton } from "./DashboardHome"
 import { ShareBooking } from "./ShareBooking"

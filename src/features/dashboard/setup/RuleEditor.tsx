@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query"
+import { useRuleActions } from "@/hooks/use-schedule"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -14,12 +15,10 @@ import type { RuleFields, RuleScope } from "@/types/schedule"
 import { duration } from "@/lib/format"
 
 import {
-  manage,
-  useBiz,
   useCompanyRuleAtBranch,
   useEffectiveRule,
   useRules,
-} from "../api"
+} from "@/hooks/use-schedule"
 import { useUnsaved } from "@/stores/unsaved"
 import { useDashboard } from "../context"
 import { Panel } from "../ui"
@@ -110,7 +109,7 @@ export function RuleEditor({
   title: string
   lead?: string
 }) {
-  const { id: branchId } = useBiz()
+  const { saveRule, deleteRule } = useRuleActions()
   const tables = useDashboard().branch.type === "restaurant"
   const rules = useRules()
   const company = useCompanyRuleAtBranch()
@@ -136,13 +135,13 @@ export function RuleEditor({
       lead={lead}
       tables={tables}
       onSave={async (fields) => {
-        await manage.saveRule(branchId, { scope, id: scopeId, fields })
+        await saveRule({ scope, id: scopeId, fields })
         invalidate()
       }}
       onReset={
         own
           ? async () => {
-              await manage.deleteRule(branchId, { scope, id: scopeId })
+              await deleteRule({ scope, id: scopeId })
               invalidate()
             }
           : undefined
@@ -231,7 +230,7 @@ export function RuleForm({
                           [key]: e.target.value.replace(/[^\d]/g, ""),
                         })
                       }
-                      className="text-branchId h-11 w-28 lg:h-9 lg:text-sm"
+                      className="h-11 w-28 text-base lg:h-9 lg:text-sm"
                     />
                     {unit && (
                       <span className="text-sm text-muted-foreground">

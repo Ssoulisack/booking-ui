@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useSaveTableSettings } from "@/hooks/use-space"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -14,7 +15,7 @@ import type { BookingStyle } from "@/types/settings"
 import type { TableMode, TableSettings } from "@/types/space"
 import { useUnsaved } from "@/stores/unsaved"
 
-import { manage, useChange, useTableSettings } from "../api"
+import { useTableSettings } from "@/hooks/use-space"
 import { ActiveSwitch, PageHeader, Panel } from "../ui"
 
 const MODES: TableMode[] = ["one_at_a_time", "hold"]
@@ -38,7 +39,7 @@ function Form({ initial }: { initial: TableSettings }) {
   const set = (patch: Partial<TableSettings>) => setF({ ...f, ...patch })
   const dirty = JSON.stringify(f) !== JSON.stringify(initial)
   useUnsaved(dirty)
-  const save = useChange(manage.saveTableSettings, ["table-settings"])
+  const save = useSaveTableSettings()
 
   return (
     <form

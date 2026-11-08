@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
 
-import { useSettings } from "./api"
+import { useSettings } from "@/hooks/use-branch"
 import { BookingSheet } from "./desk/BookingSheet"
 import { usePaymentsAttention } from "./desk/api"
 import { PaymentRow } from "./desk/PaymentRows"

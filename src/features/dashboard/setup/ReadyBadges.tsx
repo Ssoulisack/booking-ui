@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import type { ScheduleOwner } from "@/types/schedule"
 import { money } from "@/lib/format"
 
-import { useReadiness } from "../api"
+import { useReadiness } from "@/hooks/use-schedule"
 
 export function ReadyBadges({
   owner,

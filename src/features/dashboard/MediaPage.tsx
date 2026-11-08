@@ -1,7 +1,7 @@
 import { MediaLibrary } from "@/features/media"
 
 import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
-import { useBiz } from "./api"
+import { useBiz } from "@/hooks/use-branch"
 
 /** /dashboard/:id/media — this branch's pictures only */
 export function MediaPage() {

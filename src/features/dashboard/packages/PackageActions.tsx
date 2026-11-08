@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import type { CustomerPackage } from "@/types/package"
 import { roleAtLeast } from "@/lib/roles"
 
-import { useChange } from "../api"
+import { useChange } from "@/hooks/use-branch"
 import { useDashboard } from "../context"
 import { packageApi } from "./api"
 import {

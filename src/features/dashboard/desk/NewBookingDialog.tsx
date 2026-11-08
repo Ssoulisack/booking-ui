@@ -23,13 +23,11 @@ import { coversClassOf, leftLabel, ymdLabel } from "@/lib/packages"
 import { displayPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
-import {
-  useClassList,
-  useCoachesList,
-  useResourcesList,
-  useSettings,
-  useSportsList,
-} from "../api"
+import { useSettings } from "@/hooks/use-branch"
+import { useClassList } from "@/hooks/use-class"
+import { useCoachesList } from "@/hooks/use-coach"
+import { useResourcesList } from "@/hooks/use-space"
+import { useSportsList } from "@/hooks/use-sport"
 import { useSoldPackages } from "../packages/api"
 import { FormDialog } from "../ui"
 import { lengthsOf } from "@/components/global/booking/lengths"

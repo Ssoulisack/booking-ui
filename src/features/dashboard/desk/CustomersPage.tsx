@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { dayIn } from "@/lib/format"
 import { displayPhone } from "@/lib/phone"
 
-import { useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
 import { PageHeader } from "../ui"
 import { Pager } from "@/components/global/Pager"
 

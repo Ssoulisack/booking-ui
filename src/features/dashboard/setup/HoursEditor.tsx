@@ -1,4 +1,5 @@
 import { CopyIcon, PlusIcon, XIcon } from "lucide-react"
+import { useSaveHours } from "@/hooks/use-schedule"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -12,7 +13,7 @@ import { Switch } from "@/components/ui/switch"
 import type { HoursOwner, OpeningHour } from "@/types/schedule"
 
 import { useUnsaved } from "@/stores/unsaved"
-import { manage, useChange, useOpeningHours } from "../api"
+import { useOpeningHours } from "@/hooks/use-schedule"
 import { Panel } from "../ui"
 import { WEEK } from "./shared"
 
@@ -49,7 +50,7 @@ function WeekForm({
   const [week, setWeek] = useState<Week>(initial)
   const [dirty, setDirty] = useState(false)
   useUnsaved(dirty)
-  const save = useChange(manage.saveHours, ["hours"])
+  const save = useSaveHours()
 
   const update = (fn: (w: Week) => void) => {
     const next: Week = structuredClone(week)

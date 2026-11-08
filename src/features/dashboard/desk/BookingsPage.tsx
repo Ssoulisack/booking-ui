@@ -22,7 +22,7 @@ import { bookingTitle } from "@/features/public/booking-utils"
 import { floorName } from "@/lib/floor-plan"
 import { dayIn, nextDays, timeIn, todayIn } from "@/lib/format"
 
-import { useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
 import { useDashboard } from "../context"
 import { PageHeader } from "../ui"
 import { useBookingList, usePendingBookings, type BookingFilters } from "./api"

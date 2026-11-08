@@ -29,7 +29,7 @@ import type {
   TableReport,
 } from "@/types/report"
 
-import { useBiz } from "../api"
+import { useBiz } from "@/hooks/use-branch"
 
 export interface BookingFilters {
   page?: number

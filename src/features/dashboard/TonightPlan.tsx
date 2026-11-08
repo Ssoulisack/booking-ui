@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query"
+import { useSpaceActions } from "@/hooks/use-space"
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -31,13 +32,9 @@ import type { ManagedTable } from "@/types/space"
 import { dayIn, timeIn, todayIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import {
-  manage,
-  useAllFloorPlans,
-  useBiz,
-  useSettings,
-  useSportsList,
-} from "./api"
+import { useBiz, useSettings } from "@/hooks/use-branch"
+import { useAllFloorPlans } from "@/hooks/use-space"
+import { useSportsList } from "@/hooks/use-sport"
 import { useBookingList, useChangeStatus, useWalkIn } from "./desk/api"
 import { BookingSheet } from "./desk/BookingSheet"
 import { Panel } from "./ui"
@@ -359,7 +356,8 @@ function Swatch({
 
 /** Keep a table for walk-ins, or give it back to online booking (it stays so until switched: no day or time) */
 function useKeepForWalkIns() {
-  const { id: branchId, key } = useBiz()
+  const { key } = useBiz()
+  const { saveResource } = useSpaceActions()
   const queryClient = useQueryClient()
   const { t } = useTranslation()
   const [pending, setPending] = useState(false)
@@ -368,7 +366,7 @@ function useKeepForWalkIns() {
     setPending(true)
     setError(null)
     try {
-      await manage.saveResource(branchId, {
+      await saveResource({
         ...(table as ManagedTable),
         kind: "table",
         walk_in_only: keep,
@@ -468,7 +466,7 @@ function SeatDialog({
         {canSeat && <ErrorAlert error={walkIn.error} />}
         {canSeat && (
           <Button
-            className="text-branchId h-12 w-full bg-rose-600 text-white hover:bg-rose-700"
+            className="h-12 w-full bg-rose-600 text-base text-white hover:bg-rose-700"
             disabled={walkIn.isPending || keep.pending}
             onClick={() =>
               walkIn.mutate(
@@ -530,7 +528,7 @@ function FreeDialog({
         <ErrorAlert error={status.error} />
         <div className="grid gap-2">
           <Button
-            className="text-branchId h-12 w-full"
+            className="h-12 w-full text-base"
             disabled={status.isPending}
             onClick={() =>
               status.mutate(

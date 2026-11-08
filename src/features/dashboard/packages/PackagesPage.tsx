@@ -16,14 +16,10 @@ import { coversLabel, optionLabel } from "@/lib/packages"
 import { money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import {
-  useBiz,
-  useChange,
-  useDelete,
-  useResourcesList,
-  useSportsList,
-  useTimetables,
-} from "../api"
+import { useBiz, useChange, useDelete } from "@/hooks/use-branch"
+import { useTimetables } from "@/hooks/use-class"
+import { useResourcesList } from "@/hooks/use-space"
+import { useSportsList } from "@/hooks/use-sport"
 import {
   ActiveSwitch,
   DeleteButton,

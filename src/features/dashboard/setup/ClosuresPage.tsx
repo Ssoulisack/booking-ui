@@ -1,4 +1,5 @@
 import { addDays } from "date-fns"
+import { useDeleteClosure, useSaveClosure } from "@/hooks/use-schedule"
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz"
 import { PlusIcon } from "lucide-react"
 import { useState } from "react"
@@ -22,15 +23,10 @@ import { Switch } from "@/components/ui/switch"
 import type { Closure } from "@/types/schedule"
 import { dayIn, nextDays, timeIn } from "@/lib/format"
 
-import {
-  manage,
-  useChange,
-  useClosures,
-  useCoachesList,
-  useResourcesList,
-  useSettings,
-  useDelete,
-} from "../api"
+import { useSettings } from "@/hooks/use-branch"
+import { useCoachesList } from "@/hooks/use-coach"
+import { useClosures } from "@/hooks/use-schedule"
+import { useResourcesList } from "@/hooks/use-space"
 import { DeleteButton, EmptyState, FormDialog, PageHeader } from "../ui"
 import { useInvalidate } from "./shared"
 
@@ -83,7 +79,7 @@ function ClosureRow({ closure, tz }: { closure: Closure; tz: string }) {
   const coaches = useCoachesList().data ?? []
   const invalidate = useInvalidate(["closures"])
   const [open, setOpen] = useState(false)
-  const remove = useDelete(manage.deleteClosure, () => {
+  const remove = useDeleteClosure(() => {
     setOpen(false)
     invalidate()
   })
@@ -133,7 +129,7 @@ function ClosureDialog({ tz, onClose }: { tz: string; onClose: () => void }) {
   const [end, setEnd] = useState("12:00")
   const [reason, setReason] = useState("")
   // closing removes free weekly classes in that time, so the class list changes too
-  const save = useChange(manage.saveClosure, ["closures", "classes"])
+  const save = useSaveClosure(["closures", "classes"])
   const input = "h-11 text-base lg:h-9 lg:text-sm"
 
   const submit = (e: React.FormEvent) => {

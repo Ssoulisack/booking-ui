@@ -1,4 +1,10 @@
 import { CheckCircle2Icon, SendIcon, TriangleAlertIcon } from "lucide-react"
+import {
+  useDisconnectTelegram,
+  useFindTelegramGroups,
+  useSaveTelegram,
+  useTestTelegram,
+} from "@/hooks/use-telegram"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -26,7 +32,8 @@ import type {
 } from "@/types/telegram"
 import { stampIn } from "@/lib/format"
 
-import { manage, useChange, useSettings, useTelegram } from "./api"
+import { useSettings } from "@/hooks/use-branch"
+import { useTelegram } from "@/hooks/use-telegram"
 import { ActiveSwitch, PageHeader, Panel } from "./ui"
 
 /**
@@ -56,10 +63,10 @@ export function TelegramPage() {
 function Connection({ tg }: { tg: TelegramSettings }) {
   const { t } = useTranslation()
   const tz = useSettings().data?.in_force.timezone ?? "Asia/Vientiane"
-  const save = useChange(manage.saveTelegram, ["telegram"])
-  const find = useChange(manage.findTelegramGroups, [])
-  const test = useChange(manage.testTelegram, ["telegram"])
-  const drop = useChange(manage.disconnectTelegram, ["telegram"])
+  const save = useSaveTelegram()
+  const find = useFindTelegramGroups()
+  const test = useTestTelegram()
+  const drop = useDisconnectTelegram()
   const [token, setToken] = useState("")
   const [changing, setChanging] = useState(false)
   const [chat, setChat] = useState("")
@@ -342,7 +349,7 @@ function Connection({ tg }: { tg: TelegramSettings }) {
 /** What the group hears about: each switch saves at once */
 function Messages({ tg }: { tg: TelegramSettings }) {
   const { t } = useTranslation()
-  const save = useChange(manage.saveTelegram, ["telegram"])
+  const save = useSaveTelegram()
   const ready = tg.has_bot && tg.has_group
   const set = (patch: TelegramInput) => save.mutate(patch)
   const rows: Array<[keyof TelegramSettings & keyof TelegramInput, string]> = [

@@ -1,4 +1,5 @@
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query"
+import { useBranchActions } from "@/hooks/use-branch"
 import { CheckCircle2Icon, CircleIcon, ListChecksIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -23,15 +24,10 @@ import { roleAtLeast } from "@/lib/roles"
 import { cn } from "@/lib/utils"
 import { useSession } from "@/stores/session"
 
-import {
-  hoursQuery,
-  manage,
-  priceQuery,
-  useBiz,
-  useResourcesList,
-  useSettings,
-  useSportsList,
-} from "./api"
+import { useBiz, useSettings } from "@/hooks/use-branch"
+import { hoursQuery, priceQuery } from "@/hooks/use-schedule"
+import { useResourcesList } from "@/hooks/use-space"
+import { useSportsList } from "@/hooks/use-sport"
 import { PackageFinder } from "./packages/PackageFinder"
 import { useDashboard } from "./context"
 import { GoLiveGuide, type GuideStep } from "./GoLiveGuide"
@@ -344,13 +340,13 @@ export function PublishButton({
   disabled?: boolean
 }) {
   const { t } = useTranslation()
-  const { id: branchId, key } = useBiz()
+  const { key } = useBiz()
+  const { publish, unpublish } = useBranchActions()
   const { branch } = useDashboard()
   const queryClient = useQueryClient()
   const [confirming, setConfirming] = useState(false)
   const change = useMutation({
-    mutationFn: () =>
-      published ? manage.unpublish(branchId) : manage.publish(branchId),
+    mutationFn: () => (published ? unpublish() : publish()),
     onSuccess: () => {
       setConfirming(false)
       void queryClient.invalidateQueries({ queryKey: key("settings") })

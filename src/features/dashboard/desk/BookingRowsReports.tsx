@@ -24,7 +24,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import type { BookingReportRow, EventReportRow } from "@/types/report"
 import { dayIn, money, shortPhone, stampIn, todayIn } from "@/lib/format"
 
-import { useEvents, useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
+import { useEvents } from "@/hooks/use-event"
 import { Panel } from "../ui"
 import { useEventReport, useTableReport } from "./api"
 

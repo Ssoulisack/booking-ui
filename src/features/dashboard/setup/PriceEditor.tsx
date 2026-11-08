@@ -1,4 +1,5 @@
 import { AlertTriangleIcon } from "lucide-react"
+import { useSavePrice } from "@/hooks/use-schedule"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -13,7 +14,7 @@ import type { ScheduleOwner } from "@/types/schedule"
 import { duration, money } from "@/lib/format"
 
 import { useUnsaved } from "@/stores/unsaved"
-import { manage, useChange, useEffectiveRule, usePrice } from "../api"
+import { useEffectiveRule, usePrice } from "@/hooks/use-schedule"
 import { Panel } from "../ui"
 import { bookableLengths, priceFor } from "./shared"
 
@@ -70,7 +71,7 @@ function PriceForm({
   // until the rule is known (or if it cannot be read): just one hour
   const lengths = inForce.data ? bookableLengths(inForce.data) : [60]
   const [value, setValue] = useState(initial === null ? "" : String(initial))
-  const save = useChange(manage.savePrice, ["price"])
+  const save = useSavePrice()
   useUnsaved(value !== (initial === null ? "" : String(initial)))
   const amount = Number(value)
   const valid = value.trim() !== "" && Number.isInteger(amount) && amount >= 0

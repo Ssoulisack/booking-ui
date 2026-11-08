@@ -1,4 +1,5 @@
 import { RepeatIcon } from "lucide-react"
+import { useStopTimetable } from "@/hooks/use-class"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -10,14 +11,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 import type { Timetable } from "@/types/class"
 import { dayIn, middayOf, money } from "@/lib/format"
 
-import {
-  manage,
-  useCoachesList,
-  useDelete,
-  useResourcesList,
-  useSportsList,
-  useTimetables,
-} from "../api"
+import { useTimetables } from "@/hooks/use-class"
+import { useCoachesList } from "@/hooks/use-coach"
+import { useResourcesList } from "@/hooks/use-space"
+import { useSportsList } from "@/hooks/use-sport"
 import { DeleteButton, Panel } from "../ui"
 import { useInvalidate, weekdayText } from "./shared"
 
@@ -69,7 +66,7 @@ function TimetableRow({
   const spaces = useResourcesList().data ?? []
   const invalidate = useInvalidate(["timetables", "classes"])
   const [open, setOpen] = useState(false)
-  const stop = useDelete(manage.stopTimetable, () => undefined)
+  const stop = useStopTimetable(() => undefined)
   const day = (ymd: string) => dayIn(middayOf(ymd, tz), tz)
 
   const details = [

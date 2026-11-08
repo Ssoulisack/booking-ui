@@ -20,7 +20,7 @@ import { leftLabel, optionLabel, ymdLabel } from "@/lib/packages"
 import { displayPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
-import { useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
 import { Panel } from "../ui"
 import { useSoldPackages } from "./api"
 import { PackageActions } from "./PackageActions"

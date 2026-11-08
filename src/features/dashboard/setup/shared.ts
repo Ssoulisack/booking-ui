@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query"
 
-import { useBiz } from "../api"
+import { useBiz } from "@/hooks/use-branch"
 
 /** Refresh these parts of the business's data (plus plan usage and the public page) */
 export function useInvalidate(parts: string[]) {

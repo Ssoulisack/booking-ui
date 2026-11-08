@@ -32,7 +32,7 @@ import type { FinanceTotals, Money } from "@/types/report"
 import { dayIn, money, todayIn } from "@/lib/format"
 
 import { useDashboard } from "../context"
-import { useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
 import { PageHeader, Panel } from "../ui"
 import { useCsv, useReport, useUnpaidPage } from "./api"
 import { TransactionsView } from "./TransactionsReport"

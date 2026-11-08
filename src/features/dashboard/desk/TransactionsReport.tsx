@@ -14,7 +14,7 @@ import { dayIn, money, timeIn } from "@/lib/format"
 import { displayPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
-import { useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
 import { Pager } from "@/components/global/Pager"
 import { paginate } from "@/features/company/paging"
 import { useCsv, useReport } from "./api"

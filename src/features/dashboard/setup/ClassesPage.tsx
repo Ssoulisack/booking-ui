@@ -1,4 +1,9 @@
 import { useMemo, useState } from "react"
+import {
+  useDeleteClass,
+  useSaveClass,
+  useSaveTimetable,
+} from "@/hooks/use-class"
 import { useTranslation } from "react-i18next"
 import { CalendarPlusIcon, PlusIcon, RepeatIcon } from "lucide-react"
 import { fromZonedTime } from "date-fns-tz"
@@ -23,16 +28,11 @@ import type { ClassSession, Timetable } from "@/types/class"
 import type { BranchSettings } from "@/types/settings"
 import { dayIn, money, nextDays, timeIn } from "@/lib/format"
 
-import {
-  manage,
-  useChange,
-  useClassList,
-  useCoachesList,
-  useResourcesList,
-  useSettings,
-  useSportsList,
-  useDelete,
-} from "../api"
+import { useSettings } from "@/hooks/use-branch"
+import { useClassList } from "@/hooks/use-class"
+import { useCoachesList } from "@/hooks/use-coach"
+import { useResourcesList } from "@/hooks/use-space"
+import { useSportsList } from "@/hooks/use-sport"
 import { DeleteButton, EmptyState, FormDialog, PageHeader } from "../ui"
 import { useInvalidate, WEEK } from "./shared"
 import { TimetablePanel } from "./Timetables"
@@ -162,7 +162,7 @@ function ClassRow({
   const courts = useResourcesList().data ?? []
   const invalidate = useInvalidate(["classes"])
   const [open, setOpen] = useState(false)
-  const remove = useDelete(manage.deleteClass, () => {
+  const remove = useDeleteClass(() => {
     setOpen(false)
     invalidate()
   })
@@ -266,8 +266,8 @@ function ClassDialog({
   const set = (patch: Partial<FormState>) => setF({ ...f, ...patch })
   const [missing, setMissing] = useState(false)
 
-  const single = useChange(manage.saveClass, ["classes"])
-  const weekly = useChange(manage.saveTimetable, ["classes", "timetables"])
+  const single = useSaveClass()
+  const weekly = useSaveTimetable()
   const pending = single.isPending || weekly.isPending
   const sportId = Number(f.sport_id)
   const sportCoaches = coaches.filter((c) =>

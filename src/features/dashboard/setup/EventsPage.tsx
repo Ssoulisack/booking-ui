@@ -1,4 +1,10 @@
 import { CopyIcon, PencilIcon, PlusIcon, TagIcon } from "lucide-react"
+import {
+  useCopyEvent,
+  useDeleteEvent,
+  useSaveEvent,
+  useSaveEventPrices,
+} from "@/hooks/use-event"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -25,14 +31,8 @@ import type { ZoneColor } from "@/types/floor-plan"
 import { money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import {
-  manage,
-  useChange,
-  useDelete,
-  useEventPrices,
-  useEvents,
-  useSportsList,
-} from "../api"
+import { useEventPrices, useEvents } from "@/hooks/use-event"
+import { useSportsList } from "@/hooks/use-sport"
 import {
   ActiveSwitch,
   DeleteButton,
@@ -108,7 +108,7 @@ function EventRow({ event, onEdit }: { event: EventItem; onEdit: () => void }) {
   const [pricing, setPricing] = useState(false)
   const [copying, setCopying] = useState(false)
   const [open, setOpen] = useState(false)
-  const remove = useDelete(manage.deleteEvent, () => {
+  const remove = useDeleteEvent(() => {
     setOpen(false)
     invalidate()
   })
@@ -243,7 +243,7 @@ function EventDialog({
   const [areaIds, setAreaIds] = useState<number[]>(event?.area_ids ?? [])
   const [lineup, setLineup] = useState(event?.lineup ?? [])
   const areas = useSportsList().data ?? []
-  const save = useChange(manage.saveEvent, ["events"])
+  const save = useSaveEvent()
   // the days of a several-day event: a lineup line can belong to one of them
   const days = eachDay(startsOn, moreDays ? endsOn : startsOn)
 
@@ -476,7 +476,7 @@ function CopyDialog({
           (Date.parse(event.ends_on) - Date.parse(event.starts_on)) / 864e5,
         )
       : 0
-  const save = useChange(manage.copyEvent, ["events"])
+  const save = useCopyEvent()
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -597,7 +597,7 @@ function PricesForm({
       ]),
     ),
   )
-  const save = useChange(manage.saveEventPrices, ["events"])
+  const save = useSaveEventPrices()
   const filled = (v: string) => v.trim() !== "" && Number(v) >= 0
 
   const submit = () =>

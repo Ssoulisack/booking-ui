@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 
-import { useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
 import { useBookingPayments } from "./api"
 import { PaymentRow } from "./PaymentRows"
 

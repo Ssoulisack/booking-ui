@@ -1,4 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useSpaceActions } from "@/hooks/use-space"
+import { useDeleteSport, useSaveSport } from "@/hooks/use-sport"
+import { useDeleteResource, useSaveResource } from "@/hooks/use-space"
 import {
   AlertTriangleIcon,
   BoxSelectIcon,
@@ -82,14 +85,9 @@ import {
   type Snap,
 } from "./plan-edit"
 
-import {
-  manage,
-  useBiz,
-  useChange,
-  useDelete,
-  useFloorPlan,
-  useSportsList,
-} from "../api"
+import { useBiz } from "@/hooks/use-branch"
+import { useFloorPlan } from "@/hooks/use-space"
+import { useSportsList } from "@/hooks/use-sport"
 import {
   ActiveSwitch,
   DeleteButton,
@@ -255,9 +253,9 @@ function AreaDialog({
   const [width, setWidth] = useState(area?.plan_width || 20)
   const [height, setHeight] = useState(area?.plan_height || 12)
   const [active, setActive] = useState(area?.active ?? true)
-  const save = useChange(manage.saveSport, ["sports", "plan"])
+  const save = useSaveSport(["sports", "plan"])
   const [deleting, setDeleting] = useState(false)
-  const remove = useDelete(manage.deleteSport, onClose)
+  const remove = useDeleteSport(onClose)
 
   return (
     <FormDialog
@@ -299,7 +297,7 @@ function AreaDialog({
           value={name}
           placeholder={t("restaurant.area.namePlaceholder")}
           onChange={(e) => setName(e.target.value)}
-          className="text-branchId h-11 lg:h-9 lg:text-sm"
+          className="h-11 text-base lg:h-9 lg:text-sm"
         />
       </div>
       <div className="space-y-1.5">
@@ -309,7 +307,7 @@ function AreaDialog({
           id="area-floor"
           value={floor}
           onChange={(e) => setFloor(Number(e.target.value))}
-          className="text-branchId h-11 w-full rounded-lg border border-input bg-background px-2.5 lg:h-9 lg:text-sm"
+          className="h-11 w-full rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
         >
           {[...FLOORS].reverse().map((f) => (
             <option key={f} value={f}>
@@ -388,7 +386,7 @@ function NumberBox({
       min={1}
       value={Number.isFinite(value) ? value : ""}
       onChange={(e) => onChange(e.target.valueAsNumber)}
-      className="text-branchId h-11 w-20 lg:h-9 lg:text-sm"
+      className="h-11 w-20 text-base lg:h-9 lg:text-sm"
     />
   )
 }
@@ -444,7 +442,8 @@ function Editor({
   onEditArea: () => void
 }) {
   const { t } = useTranslation()
-  const { id: branchId, key } = useBiz()
+  const { key } = useBiz()
+  const { saveFloorPlan, saveResource } = useSpaceActions()
   const queryClient = useQueryClient()
   const [tables, setTables] = useState(initial)
   const [items, setItems] = useState(initialItems)
@@ -719,7 +718,7 @@ function Editor({
   // one Save: every table's place and every object (checked together), then the tables whose details changed
   const save = useMutation({
     mutationFn: async () => {
-      await manage.saveFloorPlan(branchId, {
+      await saveFloorPlan({
         areaId: area.id,
         plan_width: W,
         plan_height: H,
@@ -762,7 +761,7 @@ function Editor({
             was.active !== x.active ||
             !!was.walk_in_only !== !!x.walk_in_only)
         ) {
-          await manage.saveResource(branchId, { ...x, kind: "table" })
+          await saveResource({ ...x, kind: "table" })
         }
       }
     },
@@ -1121,7 +1120,7 @@ function ItemPanel({
             value={item.label}
             maxLength={40}
             onChange={(e) => onChange({ label: e.target.value })}
-            className="text-branchId h-11 lg:h-9 lg:text-sm"
+            className="h-11 text-base lg:h-9 lg:text-sm"
           />
         </div>
         {item.kind === "stairs" && (
@@ -1136,7 +1135,7 @@ function ItemPanel({
                     e.target.value === "" ? null : Number(e.target.value),
                 })
               }
-              className="text-branchId h-11 w-full rounded-lg border border-input bg-background px-2.5 lg:h-9 lg:text-sm"
+              className="h-11 w-full rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
             >
               <option value="">{t("restaurant.floors.notSet")}</option>
               {[...FLOORS]
@@ -2107,7 +2106,7 @@ function TablePanel({
 }) {
   const { t } = useTranslation()
   const [deleting, setDeleting] = useState(false)
-  const remove = useDelete(manage.deleteResource, () => {
+  const remove = useDeleteResource(() => {
     setDeleting(false)
     onDeleted()
   })
@@ -2146,7 +2145,7 @@ function TablePanel({
             id="t-name"
             value={table.name}
             onChange={(e) => onChange({ name: e.target.value })}
-            className="text-branchId h-11 lg:h-9 lg:text-sm"
+            className="h-11 text-base lg:h-9 lg:text-sm"
           />
         </div>
         <Stepper
@@ -2312,7 +2311,7 @@ function AddTableDialog({
     t("restaurant.table.defaultName", { n: count + 1 }),
   )
   const [seats, setSeats] = useState(4)
-  const add = useChange(manage.saveResource, ["plan", "resources"])
+  const add = useSaveResource(["plan", "resources"])
   return (
     <FormDialog
       open
@@ -2348,7 +2347,7 @@ function AddTableDialog({
           id="new-table-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="text-branchId h-11 lg:h-9 lg:text-sm"
+          className="h-11 text-base lg:h-9 lg:text-sm"
         />
       </div>
       <Stepper

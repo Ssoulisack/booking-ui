@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useDeleteResource, useSaveResource } from "@/hooks/use-space"
 import { ArrowLeftIcon, ChevronRightIcon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm, type UseFormReturn } from "react-hook-form"
@@ -28,14 +29,9 @@ import { Spinner } from "@/components/ui/spinner"
 import type { ManagedResource, ResourceKind } from "@/types/space"
 import type { ManagedSport } from "@/types/sport"
 
-import {
-  manage,
-  useChange,
-  useResourcesList,
-  useSettings,
-  useSportsList,
-  useDelete,
-} from "../api"
+import { useSettings } from "@/hooks/use-branch"
+import { useResourcesList } from "@/hooks/use-space"
+import { useSportsList } from "@/hooks/use-sport"
 import { useUnsaved } from "@/stores/unsaved"
 import { useDashboard } from "../context"
 import {
@@ -148,7 +144,7 @@ function CourtRow({ court }: { court: ManagedResource }) {
   const { t } = useTranslation()
   const invalidate = useInvalidate(["resources"])
   const [open, setOpen] = useState(false)
-  const remove = useDelete(manage.deleteResource, () => {
+  const remove = useDeleteResource(() => {
     setOpen(false)
     invalidate()
   })
@@ -192,7 +188,7 @@ function CourtRow({ court }: { court: ManagedResource }) {
 function CourtDialog({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
   const sports = useSportsList().data ?? []
-  const save = useChange(manage.saveResource, ["resources"])
+  const save = useSaveResource()
   const form = useCourtForm()
 
   return (
@@ -230,7 +226,7 @@ function useCourtForm(court?: ManagedResource) {
 function CourtDetails({ court }: { court: ManagedResource }) {
   const { t } = useTranslation()
   const sports = useSportsList().data ?? []
-  const save = useChange(manage.saveResource, ["resources"])
+  const save = useSaveResource()
   const form = useCourtForm(court)
   useUnsaved(form.formState.isDirty)
 

@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { dayIn, money, timeIn, todayIn } from "@/lib/format"
 
-import { useSettings } from "../api"
+import { useSettings } from "@/hooks/use-branch"
 import { PageHeader, Panel } from "../ui"
 import { useCashUp, useCsv } from "./api"
 

@@ -11,7 +11,7 @@ import { bookingTitle } from "@/features/public/booking-utils"
 import type { Booking } from "@/types/booking"
 import { dayIn, nextDays, timeIn, todayIn } from "@/lib/format"
 
-import { useSettings } from "./api"
+import { useSettings } from "@/hooks/use-branch"
 import { useDashboard } from "./context"
 import { useBookingList } from "./desk/api"
 import { Panel } from "./ui"

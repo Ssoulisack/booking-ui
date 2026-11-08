@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useDeleteCoach, useSaveCoach } from "@/hooks/use-coach"
 import { ArrowLeftIcon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm, type UseFormReturn } from "react-hook-form"
@@ -25,14 +26,9 @@ import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import type { ManagedCoach } from "@/types/coach"
 
-import {
-  manage,
-  useChange,
-  useCoachesList,
-  useSettings,
-  useSportsList,
-  useDelete,
-} from "../api"
+import { useSettings } from "@/hooks/use-branch"
+import { useCoachesList } from "@/hooks/use-coach"
+import { useSportsList } from "@/hooks/use-sport"
 import {
   ActiveSwitch,
   DeleteButton,
@@ -108,7 +104,7 @@ function CoachRow({ coach }: { coach: ManagedCoach }) {
   const { t } = useTranslation()
   const invalidate = useInvalidate(["coaches"])
   const [open, setOpen] = useState(false)
-  const remove = useDelete(manage.deleteCoach, () => {
+  const remove = useDeleteCoach(() => {
     setOpen(false)
     invalidate()
   })
@@ -153,7 +149,7 @@ function CoachRow({ coach }: { coach: ManagedCoach }) {
 /** Add a coach: a dialog. Changing one later happens on the coach's own page (CoachDetails). */
 function CoachDialog({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
-  const save = useChange(manage.saveCoach, ["coaches"])
+  const save = useSaveCoach()
   const form = useCoachForm()
   const [imageUrl, setImageUrl] = useState("")
 
@@ -195,7 +191,7 @@ function useCoachForm(coach?: ManagedCoach) {
 /** The details of a coach (name, sports, phone, bio, photo, bookable): on the coach's page, saved with one button */
 function CoachDetails({ coach }: { coach: ManagedCoach }) {
   const { t } = useTranslation()
-  const save = useChange(manage.saveCoach, ["coaches"])
+  const save = useSaveCoach()
   const form = useCoachForm(coach)
   useUnsaved(form.formState.isDirty)
   const [imageUrl, setImageUrl] = useState(coach.image_url ?? "")

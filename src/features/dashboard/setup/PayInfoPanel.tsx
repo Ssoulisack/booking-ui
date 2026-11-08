@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useSavePayInfo, useSavePaymentSettings } from "@/hooks/use-payment"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 import { toast } from "sonner"
@@ -13,13 +14,8 @@ import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import type { PayInfo, PaymentSettings } from "@/types/payment"
 
-import {
-  manage,
-  useBiz,
-  useChange,
-  usePayInfo,
-  usePaymentSettings,
-} from "../api"
+import { useBiz } from "@/hooks/use-branch"
+import { usePayInfo, usePaymentSettings } from "@/hooks/use-payment"
 import { useDashboard } from "../context"
 import { ActiveSwitch, ImageField, Panel } from "../ui"
 
@@ -100,10 +96,8 @@ function PayInfoForm({
         packagesOnline !==
           (settings.online_enabled && settings.online_packages))) ||
     minutes !== settings.charge_minutes
-  const savePay = useChange(manage.savePayInfo, ["event-pay"])
-  const saveSettings = useChange(manage.savePaymentSettings, [
-    "payment-settings",
-  ])
+  const savePay = useSavePayInfo()
+  const saveSettings = useSavePaymentSettings()
   const pending = savePay.isPending || saveSettings.isPending
   const noWay = !transfer && !(online && settings.gateway_available)
 
