@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
+import { useCancelGuestBooking } from "@/hooks/use-public"
 import { useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router"
@@ -8,7 +9,7 @@ import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { bookingApi, publicKeys, useGuestBooking } from "./api"
+import { publicKeys, useGuestBooking } from "@/hooks/use-public"
 import { BookingDetailView } from "./BookingDetailView"
 import { CancelledNotice } from "./CancelledNotice"
 import { usePublic } from "./context"
@@ -28,8 +29,7 @@ export function GuestBookingPage() {
   )
     wasOpen.current = true
 
-  const cancel = useMutation({
-    mutationFn: (reason: string) => bookingApi.cancelGuest(slug, token, reason),
+  const cancel = useCancelGuestBooking(slug, token, {
     onSuccess: (updated) => {
       queryClient.setQueryData(publicKeys.guestBooking(slug, token), updated)
       void queryClient.invalidateQueries({ queryKey: ["public", slug] })

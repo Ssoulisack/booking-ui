@@ -1,7 +1,7 @@
 import { Link, Outlet } from "react-router"
 import { useTranslation } from "react-i18next"
 
-import { usePublicBranch } from "@/features/public/api"
+import { usePublicBranch } from "@/hooks/use-public"
 import { BranchSwitcher } from "@/features/public/BranchSwitcher"
 import { useCustomerMenu } from "@/features/public/CustomerHeader"
 import { readOriginSlug } from "@/features/public/origin"

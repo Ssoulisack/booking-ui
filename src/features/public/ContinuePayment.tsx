@@ -5,7 +5,7 @@ import { Link } from "react-router"
 import { Button } from "@/components/ui/button"
 import type { Booking } from "@/types/booking"
 
-import { usePaymentOptions } from "./api"
+import { usePaymentOptions } from "@/hooks/use-public"
 import { zoneOf } from "./booking-utils"
 import { HoldClock } from "./EventPay"
 import { payableOnline } from "./PayOnline"

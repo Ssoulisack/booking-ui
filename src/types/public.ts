@@ -97,3 +97,10 @@ export interface Availability {
   currency?: string
   prices: Array<{ duration_min: number; price: number }>
 }
+
+export interface AvailabilityQuery {
+  date: string
+  resource_id?: number
+  coach_id?: number
+  sport_id?: number
+}

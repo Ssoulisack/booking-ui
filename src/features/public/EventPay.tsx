@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
+import { useSendBookingSlip } from "@/hooks/use-checkout"
 import { useEffect, useState } from "react"
 import { CheckCircle2Icon, ClockIcon, DownloadIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -12,11 +13,9 @@ import { cn } from "@/lib/utils"
 
 import {
   publicKeys,
-  slipApi,
   usePaymentOptions,
   usePublicPayInfo,
-  type SlipInput,
-} from "./api"
+} from "@/hooks/use-public"
 import { eventStartOverUrl } from "./booking-utils"
 import { PayOnline } from "./PayOnline"
 import { CopyButton } from "@/components/global/CopyButton"
@@ -79,24 +78,23 @@ export function EventPayPanel({
   // every hook stays above the early returns below: the panel turns into "Paid" while it is on screen, and a
   // hook that is skipped on the next render crashes the page
   const remote = usePublicPayInfo(slug)
-  const slip = useMutation({
-    mutationFn: (input: SlipInput) =>
-      guestToken
-        ? slipApi.guest(slug, guestToken, input)
-        : slipApi.mine(booking.id, input),
-    onSuccess: (updated) => {
-      if (guestToken)
-        queryClient.setQueryData(
-          publicKeys.guestBooking(slug, guestToken),
-          updated,
-        )
-      void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
-      void queryClient.invalidateQueries({
-        queryKey: ["public", slug, "live-booking"],
-      })
-      toast.success(t("public.events.pay.slipDone"))
+  const slip = useSendBookingSlip(
+    guestToken ? { slug, token: guestToken } : { bookingId: booking.id },
+    {
+      onSuccess: (updated) => {
+        if (guestToken)
+          queryClient.setQueryData(
+            publicKeys.guestBooking(slug, guestToken),
+            updated,
+          )
+        void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
+        void queryClient.invalidateQueries({
+          queryKey: ["public", slug, "live-booking"],
+        })
+        toast.success(t("public.events.pay.slipDone"))
+      },
     },
-  })
+  )
 
   if (booking.status === "cancelled")
     return (

@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
+import { useClaimBooking } from "@/hooks/use-account"
 import { PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -18,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
-import { bookingApi, publicKeys } from "@/features/public/api"
+import { publicKeys } from "@/hooks/use-public"
 
 /**
  * "Add a booking": a booking made as a guest joins this account. The server only accepts it when the booking was
@@ -29,8 +30,7 @@ export function AddBookingDialog() {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [code, setCode] = useState("")
-  const claim = useMutation({
-    mutationFn: (c: string) => bookingApi.claim(c),
+  const claim = useClaimBooking({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
       toast.success(t("account.addDone"))

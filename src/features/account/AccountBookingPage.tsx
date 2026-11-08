@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
+import { useCancelMyBooking } from "@/hooks/use-account"
 import { ArrowLeftIcon } from "lucide-react"
 import { useRef } from "react"
 import { useTranslation } from "react-i18next"
@@ -8,7 +9,8 @@ import { toast } from "sonner"
 import { PageError } from "@/components/global/page-state"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { bookingApi, publicKeys, useMyBooking } from "@/features/public/api"
+import { useMyBooking } from "@/hooks/use-account"
+import { publicKeys } from "@/hooks/use-public"
 import { zoneOf } from "@/features/public/booking-utils"
 import { BookingDetailView } from "@/features/public/BookingDetailView"
 import { CancelledNotice } from "@/features/public/CancelledNotice"
@@ -28,8 +30,7 @@ export function AccountBookingPage() {
   if (b && (b.status === "pending" || b.status === "confirmed"))
     wasOpen.current = true
 
-  const cancel = useMutation({
-    mutationFn: (reason: string) => bookingApi.cancelMine(id, reason),
+  const cancel = useCancelMyBooking(id, {
     onSuccess: (updated) => {
       queryClient.setQueryData(["me", "bookings", "one", id], updated)
       void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })

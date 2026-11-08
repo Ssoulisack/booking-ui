@@ -9,7 +9,7 @@ import { applyBusinessLanguage } from "@/i18n"
 import { ApiError } from "@/lib/api/client"
 import type { PublicBranch } from "@/types/public"
 
-import { usePublicBranch } from "./api"
+import { usePublicBranch } from "@/hooks/use-public"
 import { brandStyle, DEFAULT_BRAND } from "./brand"
 import { BranchSwitcher } from "./BranchSwitcher"
 import { rememberBranchName } from "./origin"

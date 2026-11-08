@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
+import { useSendPackageSlip } from "@/hooks/use-checkout"
 import { CheckCircle2Icon, DownloadIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -8,13 +9,8 @@ import { Button } from "@/components/ui/button"
 import type { CustomerPackage } from "@/types/package"
 import { money } from "@/lib/format"
 
-import {
-  packageKeys,
-  slipApi,
-  usePaymentOptions,
-  usePublicPayInfo,
-  type SlipInput,
-} from "./api"
+import { packageKeys } from "@/hooks/use-account"
+import { usePaymentOptions, usePublicPayInfo } from "@/hooks/use-public"
 import { AccountRow } from "./EventPay"
 import { PayOnline } from "./PayOnline"
 import { saveImage } from "./save-image"
@@ -36,8 +32,7 @@ export function PackagePay({
   const [method, setMethod] = useState<"online" | "manual">("online")
   const hasOnline = !!usePaymentOptions(slug, true).data?.length
   const remote = usePublicPayInfo(slug)
-  const slip = useMutation({
-    mutationFn: (input: SlipInput) => slipApi.package(pkg.id, input),
+  const slip = useSendPackageSlip(pkg.id, {
     onSuccess: (updated) => {
       void queryClient.invalidateQueries({ queryKey: packageKeys.mine })
       if (updated.slip_sent_at) toast.success(t("slip.sentToast"))

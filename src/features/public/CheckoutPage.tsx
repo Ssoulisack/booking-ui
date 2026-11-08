@@ -31,6 +31,7 @@ import { dayIn, duration, money, timeIn, todayIn } from "@/lib/format"
 import { coversClassOf, leftLabel, ymdLabel } from "@/lib/packages"
 import { useSession } from "@/stores/session"
 
+import { useMyPackages } from "@/hooks/use-account"
 import {
   publicKeys,
   useAvailability,
@@ -38,10 +39,9 @@ import {
   useCoaches,
   useCreateBooking,
   useFloorPlans,
-  useMyPackages,
   useResources,
   useTableAvailability,
-} from "./api"
+} from "@/hooks/use-public"
 import { usePublic } from "./context"
 import { dayBrandStyle } from "./day-colors"
 import { readSelection, selectionQuery, tableIdsOf } from "./selection"

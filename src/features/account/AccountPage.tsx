@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
+import { useCancelMyBooking, useMyBookings } from "@/hooks/use-account"
 import { SearchIcon, XIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { bookingApi, publicKeys } from "@/features/public/api"
+import { publicKeys } from "@/hooks/use-public"
 import { BookingCard } from "@/features/public/BookingCard"
 import { canCancel, zoneOf } from "@/features/public/booking-utils"
 import { CancelDialog } from "@/features/public/CancelDialog"
@@ -33,13 +34,7 @@ export function AccountPage() {
   const [code, setCode] = useState("")
   const [day, setDay] = useState("")
   const searching = code.trim() !== "" || day !== ""
-  const bookings = useQuery({
-    queryKey: publicKeys.myBookings,
-    queryFn: () => bookingApi.myBookings(),
-    // approvals, payments and cancellations by the team show up without a reload
-    refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
-  })
+  const bookings = useMyBookings()
 
   // the moment the page opened splits upcoming from past
   const [now] = useState(() => Date.now())
@@ -197,8 +192,7 @@ export function AccountPage() {
 function MyBooking({ booking }: { booking: Booking }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const cancel = useMutation({
-    mutationFn: (reason: string) => bookingApi.cancelMine(booking.id, reason),
+  const cancel = useCancelMyBooking(booking.id, {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
       void queryClient.invalidateQueries({

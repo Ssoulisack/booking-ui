@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
+import { useCancelFoundBooking, useFindBooking } from "@/hooks/use-public"
 import { ArrowLeftIcon, SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -13,7 +14,6 @@ import { Spinner } from "@/components/ui/spinner"
 import type { Booking } from "@/types/booking"
 import { dayIn, timeIn } from "@/lib/format"
 
-import { bookingApi } from "./api"
 import { BookingCard } from "./BookingCard"
 import { canCancel } from "./booking-utils"
 import { CancelDialog } from "./CancelDialog"
@@ -29,13 +29,8 @@ export function FindBookingPage() {
   const [booking, setBooking] = useState<Booking | null>(null)
   const tz = business.timezone
 
-  const find = useMutation({
-    mutationFn: () => bookingApi.find(slug, code.trim(), phone.trim()),
-    onSuccess: setBooking,
-  })
-  const cancel = useMutation({
-    mutationFn: (reason: string) =>
-      bookingApi.cancelFound(slug, code.trim(), phone.trim(), reason),
+  const find = useFindBooking(slug, { onSuccess: setBooking })
+  const cancel = useCancelFoundBooking(slug, {
     onSuccess: (updated) => {
       setBooking(updated)
       void queryClient.invalidateQueries({ queryKey: ["public", slug] })
@@ -62,7 +57,7 @@ export function FindBookingPage() {
         onSubmit={(e) => {
           e.preventDefault()
           setBooking(null)
-          find.mutate()
+          find.mutate({ code: code.trim(), phone: phone.trim() })
         }}
       >
         <div className="space-y-1.5">
@@ -118,7 +113,13 @@ export function FindBookingPage() {
                   visitReturns={!!booking.package}
                   pending={cancel.isPending}
                   error={cancel.error}
-                  onConfirm={(reason) => cancel.mutate(reason)}
+                  onConfirm={(reason) =>
+                    cancel.mutate({
+                      code: code.trim(),
+                      phone: phone.trim(),
+                      reason,
+                    })
+                  }
                 />
               </div>
             ) : (

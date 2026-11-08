@@ -13,7 +13,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { shrinkImage } from "@/lib/shrink-image"
 import type { SlipWay } from "@/types/package"
 
-import type { SlipInput } from "./api"
+import type { SlipInput } from "@/types/package"
 
 /**
  * "I paid by transfer, here is the slip". The branch decides the ways: the picture is uploaded here (the team gets

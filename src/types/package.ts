@@ -103,3 +103,9 @@ export interface PackageVisit {
   by_name?: string
   created_at: string
 }
+
+/** What a customer sends with "I paid": on WhatsApp (nothing to upload) or the slip picture (goes to the team's Telegram group) */
+export interface SlipInput {
+  via: SlipWay
+  file?: Blob
+}

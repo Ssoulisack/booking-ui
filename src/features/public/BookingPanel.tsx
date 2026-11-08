@@ -40,7 +40,7 @@ import {
   useSports,
   useUpcomingClasses,
   useUpcomingClassPages,
-} from "./api"
+} from "@/hooks/use-public"
 import { BookingBar } from "./BookingBar"
 import { brandStyle } from "./brand"
 import { kindOf } from "./booking-utils"

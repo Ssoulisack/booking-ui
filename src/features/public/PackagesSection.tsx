@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
+import { useBuyPackage } from "@/hooks/use-public"
 import { TicketIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -20,7 +21,8 @@ import { money } from "@/lib/format"
 import { coversLabel, optionLabel } from "@/lib/packages"
 import { useSession } from "@/stores/session"
 
-import { myPackageApi, packageKeys, usePublicPackages } from "./api"
+import { packageKeys } from "@/hooks/use-account"
+import { usePublicPackages } from "@/hooks/use-public"
 import { usePublic } from "./context"
 
 /**
@@ -40,9 +42,7 @@ export function PackagesSection() {
     pkg: PackageItem
     option: PackageOption
   } | null>(null)
-  const buy = useMutation({
-    mutationFn: (c: { pkg: PackageItem; option: PackageOption }) =>
-      myPackageApi.buy(slug, c.pkg.id, c.option.id),
+  const buy = useBuyPackage(slug, {
     onSuccess: (bought) => {
       void queryClient.invalidateQueries({ queryKey: packageKeys.mine })
       setChoice(null)
@@ -155,7 +155,13 @@ export function PackagesSection() {
             <Button
               className="h-11"
               disabled={buy.isPending}
-              onClick={() => choice && buy.mutate(choice)}
+              onClick={() =>
+                choice &&
+                buy.mutate({
+                  packageId: choice.pkg.id,
+                  optionId: choice.option.id,
+                })
+              }
             >
               {buy.isPending && <Spinner />}
               {t("packages.public.continue")}

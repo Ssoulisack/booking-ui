@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import type { PublicEvent } from "@/types/event"
 import { money } from "@/lib/format"
 
-import { useEvents } from "./api"
+import { useEvents } from "@/hooks/use-public"
 import { usePublic } from "./context"
 import { EventDetailsDialog } from "./EventDetailsDialog"
 import { eventDays, eventTimes } from "./event-program"

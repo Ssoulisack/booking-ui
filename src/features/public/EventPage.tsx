@@ -29,7 +29,7 @@ import {
   useFloorPlans,
   usePaymentOptions,
   usePublicPayInfo,
-} from "./api"
+} from "@/hooks/use-public"
 import { usePublic } from "./context"
 import { EventLineup, EventWhen } from "./EventProgram"
 import { eventDays } from "./event-program"

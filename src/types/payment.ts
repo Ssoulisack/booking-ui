@@ -83,3 +83,7 @@ export interface PublicPayInfo {
   slip_whatsapp: boolean
   slip_telegram: boolean
 }
+
+/** Who pays online: a guest by the booking's private link, a logged-in customer for a booking or a package */
+export type PayWho =
+  { token: string } | { bookingId: number } | { packageId: number }

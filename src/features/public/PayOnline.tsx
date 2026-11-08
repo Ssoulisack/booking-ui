@@ -1,4 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
+import type { PayWho } from "@/types/payment"
+import { useStartOver, useStartPayment } from "@/hooks/use-checkout"
+import { useCheckPayment, useOpenPayment } from "@/hooks/use-checkout"
 import {
   BanknoteIcon,
   CheckCircle2Icon,
@@ -29,18 +32,12 @@ import type { OnlinePayment, PaymentOption } from "@/types/payment"
 import { money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-import {
-  bookingApi,
-  myPackageApi,
-  packageKeys,
-  payApi,
-  publicKeys,
-  usePaymentOptions,
-} from "./api"
+import { packageKeys } from "@/hooks/use-account"
+import { publicKeys, usePaymentOptions } from "@/hooks/use-public"
 import { saveImage } from "./save-image"
 import { StartOverDialog } from "./StartOverDialog"
 
-type Who = { token: string } | { bookingId: number } | { packageId: number }
+type Who = PayWho
 
 /** Whether a booking can be paid online now: something to pay, not paid, not cancelled */
 export function payableOnline(b: Booking) {
@@ -119,41 +116,18 @@ export function PayOnline({
   const [pick, setPick] = useState<{ provider: string; method: string } | null>(
     null,
   )
-  const resume = useQuery({
-    queryKey: [
-      "public",
-      slug,
-      "open-payment",
-      pkg ? `package-${pkg.id}` : (guestToken ?? booking!.id),
-    ],
-    queryFn: () => payApi.open(slug, who),
-    enabled: subject.payable,
-    staleTime: 0,
-    refetchOnWindowFocus: false,
-  })
+  const resume = useOpenPayment(
+    slug,
+    who,
+    pkg ? `package-${pkg.id}` : (guestToken ?? booking!.id),
+    subject.payable,
+  )
   const started = payment ?? (released ? null : (resume.data ?? null))
 
-  const start = useMutation({
-    mutationFn: (p: { provider: string; method: string }) =>
-      payApi.start(slug, who, p),
-    onSuccess: setPayment,
-  })
+  const start = useStartPayment(slug, who, { onSuccess: setPayment })
 
   const navigate = useNavigate()
-  const startOver = useMutation<unknown, Error, void>({
-    mutationFn: () =>
-      "packageId" in who
-        ? myPackageApi.cancel(who.packageId)
-        : "token" in who
-          ? bookingApi.cancelGuest(
-              slug,
-              who.token,
-              "Customer started over (wrong bank)",
-            )
-          : bookingApi.cancelMine(
-              who.bookingId,
-              "Customer started over (wrong bank)",
-            ),
+  const startOver = useStartOver(slug, who, {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["public", slug] })
       void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
@@ -162,12 +136,12 @@ export function PayOnline({
   })
 
   // the page does not wait for the webhook: it asks every few seconds while the payment is open
-  const check = useQuery({
-    queryKey: ["public", slug, "payment", started?.id],
-    queryFn: () => payApi.check(slug, who, started!.id),
-    enabled: !!started && started.status === "pending",
-    refetchInterval: 3000,
-  })
+  const check = useCheckPayment(
+    slug,
+    who,
+    started?.id,
+    !!started && started.status === "pending",
+  )
   const current = check.data ?? started
   const paid = current?.status === "paid"
 

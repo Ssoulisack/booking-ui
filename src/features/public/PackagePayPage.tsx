@@ -10,7 +10,7 @@ import { money } from "@/lib/format"
 import { leftLabel, optionLabel, ymdLabel, coversLabel } from "@/lib/packages"
 import { useSession } from "@/stores/session"
 
-import { useMyPackages } from "./api"
+import { useMyPackages } from "@/hooks/use-account"
 import { usePublic } from "./context"
 import { PackagePay } from "./PackagePay"
 

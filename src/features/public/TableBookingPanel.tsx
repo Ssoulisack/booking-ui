@@ -22,7 +22,7 @@ import { dayIn, nextDays, timeIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { releaseTables, useUnsaved } from "@/stores/unsaved"
 
-import { useFloorPlans, useTableAvailability } from "./api"
+import { useFloorPlans, useTableAvailability } from "@/hooks/use-public"
 import { DateStrip, Step } from "./BookingPanel"
 import { usePublic } from "./context"
 import { dayBrandStyle } from "./day-colors"
