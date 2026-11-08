@@ -55,31 +55,36 @@ colord · React Bits (BlurText, CountUp, ClickSpark; public pages only, in `src/
 
 ```
 src/
+  types/          request / response types, one file per domain (booking, event, package, ...)
+  services/       <feature>.api.ts: plain async functions over the API client (no React)
+  hooks/          use-<feature>.ts: React Query hooks over the services (cache keys, refresh)
   lib/api/        API client: {success, message, data, meta} envelope, ApiError(code),
                   automatic token refresh (one at a time), forced logout on disabled / revoked
+  lib/constants/  api-endpoints (every URL), nav (menus), breadcrumb (trail names), roles
+                  (ranks + the lowest role per dashboard page), setup-tabs
   lib/errors.ts   API error code → readable sentence (i18n "errors" namespace)
   stores/         Zustand: session (tokens + user, saved), current branch (saved)
   i18n/           i18next set-up; locales/{en,lo,th}/{common,errors}.json
   routes/         router (each area loads on demand), guards (login, company area, start page)
-  layouts/        AuthLayout (login pages), AppShell (top bar, side menu / sheet), UserMenu
-  features/
-    auth/         login, register, forgot / reset password, accept invite; landing rules
-    company/      owner and admins: overview, branches, team (invite, roles, branches), customers,
-                  company report, accounts (set a password), booking rule, company settings
-    dashboard/    one branch: switcher, role-based menu, RequireRole; Overview (publish checklist, QR),
-                  setup/ (sports, courts, coaches, hours, prices, classes, closed days, rules),
-                  branch Settings (own details + company overrides); api.ts holds every branch call;
-                  desk/ (calendar, bookings, booking panel, walk-ins, customers, cash-up,
-                  reports with charts)
-    settings/     form pieces shared by the company and branch settings
-    places/       the public home: live branches
-    account/      My bookings: every branch, upcoming / past, cancel; My account
-    public/       /b/{slug}: brand colours, booking panel, checkout, confirmation, guest link
-  components/     form helpers, page states; ui/ = shadcn/ui (generated, edit sparingly)
+  pages/<area>/   one entry file per area (public, auth, account, dashboard, company): re-exports
+                  the route components so each area is its own download
+  components/
+    ui/           shadcn/ui (generated, edit sparingly)
+    global/       form helpers, page states, pickers, floor-plan, booking widgets
+    layout/       shells: AppShell, Dashboard / Company / Public / Account / Setup / Auth layouts
+    provider/     app-wide providers and the dashboard context
+    protected/    logged-in UI: branch (overview, settings, Telegram, share), desk (calendar,
+                  bookings, reports, cash-up), package, setup (sports, courts, coaches, classes,
+                  events, closures, rules, payments), company, account, settings, media
+    public/       customer UI: booking (/b/{slug}, checkout, confirmation, pay), home, auth, legal
+    reactbits/    copied React Bits components (public pages only)
 test/
   unit/           Vitest
   e2e/            Playwright
 ```
+
+New feature: add its types, then the service, then the hook, then the UI. The rules (and why) are in
+`CLAUDE.md`.
 
 ## Conventions
 
