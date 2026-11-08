@@ -1,7 +1,7 @@
 import { Navigate } from "react-router"
 
 import { PageLoader } from "@/components/global/page-state"
-import { usableBranches, useMyBranches } from "@/features/auth/api"
+import { usableBranches, useMyBranches } from "@/hooks/use-auth"
 import { runsCompany, useSession } from "@/stores/session"
 
 import { BrandHome } from "./BrandHome"

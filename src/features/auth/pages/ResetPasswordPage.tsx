@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router"
@@ -10,7 +9,7 @@ import { FieldGroup } from "@/components/ui/field"
 import { AuthHeading } from "@/components/layout/AuthLayout"
 import { useSession } from "@/stores/session"
 
-import { authApi } from "../api"
+import { useResetPassword } from "@/hooks/use-auth"
 import { resetSchema, type ResetValues } from "../schemas"
 
 /** Opened from the reset email: /reset-password/{token} */
@@ -18,8 +17,7 @@ export function ResetPasswordPage() {
   const { t } = useTranslation()
   const { token = "" } = useParams()
   const navigate = useNavigate()
-  const reset = useMutation({
-    mutationFn: (password: string) => authApi.resetPassword(token, password),
+  const reset = useResetPassword(token, {
     onSuccess: (message) => {
       // the new password revokes every existing login, including this browser's
       useSession.getState().signOut()

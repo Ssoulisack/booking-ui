@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { Navigate, Outlet, useLocation } from "react-router"
 
-import { useMe } from "@/features/auth/api"
+import { useMe } from "@/hooks/use-auth"
 import { PageLoader } from "@/components/global/page-state"
 import { runsCompany, useSession } from "@/stores/session"
 

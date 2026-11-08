@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
-import { authApi, authKeys } from "@/features/auth/api"
+import { useUpdateProfile } from "@/hooks/use-auth"
 import { isLaoPhone } from "@/lib/phone"
 import { useSession } from "@/stores/session"
 
@@ -19,21 +18,11 @@ import { useSession } from "@/stores/session"
 export function PhoneNeeded() {
   const { t } = useTranslation()
   const user = useSession((s) => s.user)
-  const queryClient = useQueryClient()
   const [phone, setPhone] = useState("")
   const [touched, setTouched] = useState(false)
   const valid = isLaoPhone(phone)
-  const save = useMutation({
-    mutationFn: () =>
-      authApi.updateMe({
-        name: user?.name ?? "",
-        phone: phone.trim(),
-        // a stand-in email is never sent back as if it were real
-        email: user && !user.email_generated ? user.email : "",
-      }),
-    onSuccess: (updated) => {
-      useSession.getState().setUser(updated)
-      queryClient.setQueryData(authKeys.me, updated)
+  const save = useUpdateProfile({
+    onSuccess: () => {
       toast.success(t("public.events.phoneSaved"))
     },
   })
@@ -44,7 +33,13 @@ export function PhoneNeeded() {
       onSubmit={(e) => {
         e.preventDefault()
         setTouched(true)
-        if (valid) save.mutate()
+        if (valid)
+          save.mutate({
+            name: user?.name ?? "",
+            phone: phone.trim(),
+            // a stand-in email is never sent back as if it were real
+            email: user && !user.email_generated ? user.email : "",
+          })
       }}
       className="space-y-3 rounded-xl bg-card p-4 ring-1 ring-border"
     >

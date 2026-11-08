@@ -7,7 +7,7 @@ import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { FieldGroup } from "@/components/ui/field"
 import { AuthHeading } from "@/components/layout/AuthLayout"
 
-import { useRegister } from "../api"
+import { useRegister } from "@/hooks/use-auth"
 import { IdentityFields } from "../IdentityFields"
 import { safeNext } from "../landing"
 import { SocialButtons } from "../SocialButtons"

@@ -17,7 +17,7 @@ import {
   DEFAULT_HEADING_FONT,
   FONTS,
 } from "@/features/public/look"
-import { useMyBranches } from "@/features/auth/api"
+import { useMyBranches } from "@/hooks/use-auth"
 import {
   Area,
   BranchTypePicker,

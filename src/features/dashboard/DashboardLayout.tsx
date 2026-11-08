@@ -17,7 +17,7 @@ import { useTranslation } from "react-i18next"
 import { Navigate, Outlet, useLocation, useParams } from "react-router"
 
 import { PageLoader, PageError } from "@/components/global/page-state"
-import { usableBranches, useMyBranches } from "@/features/auth/api"
+import { usableBranches, useMyBranches } from "@/hooks/use-auth"
 import type { BranchRole } from "@/types/auth"
 import { roleAtLeast } from "@/lib/roles"
 import { AppShell, type NavItem } from "@/components/layout/AppShell"

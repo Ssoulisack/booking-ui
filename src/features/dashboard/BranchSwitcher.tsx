@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { usableBranches, useMyBranches } from "@/features/auth/api"
+import { usableBranches, useMyBranches } from "@/hooks/use-auth"
 import type { MyBranch } from "@/types/auth"
 
 /** The current branch; a menu to switch when the person works at several */

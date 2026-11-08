@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useSearchParams } from "react-router"
@@ -9,7 +8,7 @@ import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { PageTitle } from "@/components/global/page-state"
 import HoldButton from "@/components/reactbits/HoldButton"
 import { FieldGroup } from "@/components/ui/field"
-import { authApi, authKeys } from "@/features/auth/api"
+import { useUpdateProfile } from "@/hooks/use-auth"
 import { IdentityFields } from "@/features/auth/IdentityFields"
 import { safeNext } from "@/features/auth/landing"
 import { profileSchema, type ProfileValues } from "@/features/auth/schemas"
@@ -74,7 +73,6 @@ function ProfileForm({
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const form = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -84,11 +82,8 @@ function ProfileForm({
       email: user.email_generated ? "" : user.email,
     },
   })
-  const save = useMutation({
-    mutationFn: authApi.updateMe,
-    onSuccess: (updated) => {
-      useSession.getState().setUser(updated)
-      queryClient.setQueryData(authKeys.me, updated)
+  const save = useUpdateProfile({
+    onSuccess: () => {
       toast.success(t("identity.saved"))
       if (completing) navigate(next ?? "/", { replace: true })
     },

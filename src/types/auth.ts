@@ -51,3 +51,27 @@ export interface InvitationInfo {
   branches: string[] // empty for an admin (every branch)
   account_exists: boolean
 }
+
+export interface LoginInput {
+  login: string // email or phone number
+  password: string
+}
+
+export interface RegisterInput {
+  name: string
+  password: string
+  phone: string
+  email?: string
+}
+
+export interface ProfileInput {
+  name: string
+  phone: string
+  email: string
+}
+
+export interface AcceptInput {
+  name?: string
+  password?: string
+  phone?: string
+}

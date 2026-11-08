@@ -1,10 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type UseMutationResult,
-} from "@tanstack/react-query"
+import { type UseMutationResult } from "@tanstack/react-query"
 import { MailOpenIcon } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { Trans, useTranslation } from "react-i18next"
@@ -20,7 +15,8 @@ import { AuthHeading } from "@/components/layout/AuthLayout"
 import { useCurrentBranch } from "@/stores/branch"
 import { useSession } from "@/stores/session"
 
-import { authApi, authKeys, type AcceptInput } from "../api"
+import { useAcceptInvitation, useInvitation } from "@/hooks/use-auth"
+import { type AcceptInput } from "@/types/auth"
 import { homePath } from "../landing"
 import { acceptNewSchema, type AcceptNewValues } from "../schemas"
 
@@ -28,11 +24,7 @@ import { acceptNewSchema, type AcceptNewValues } from "../schemas"
 export function AcceptInvitePage() {
   const { t } = useTranslation()
   const { token = "" } = useParams()
-  const info = useQuery({
-    queryKey: authKeys.invitation(token),
-    queryFn: () => authApi.invitation(token),
-    retry: false,
-  })
+  const info = useInvitation(token)
 
   if (info.isPending) {
     return (
@@ -92,19 +84,12 @@ function InviteAction({
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const user = useSession((s) => s.user)
   const signOut = useSession((s) => s.signOut)
 
-  const accept = useMutation({
-    mutationFn: (body: AcceptInput) => authApi.acceptInvitation(token, body),
-    onSuccess: async (auth: AuthResponse) => {
-      useSession.getState().signIn(auth)
+  const accept = useAcceptInvitation(token, {
+    onSuccess: (auth, list) => {
       // open the company area (admin) or the first branch joined
-      const list = await queryClient.fetchQuery({
-        queryKey: authKeys.branches,
-        queryFn: authApi.myBranches,
-      })
       const joined = list.find((b) => info.branches.includes(b.name))
       useCurrentBranch.getState().setCurrentId(joined?.branch_id ?? null)
       toast.success(t("invite.accepted", { company: info.company_name }))

@@ -11,7 +11,7 @@ import { AuthHeading } from "@/components/layout/AuthLayout"
 import { codeMessage } from "@/lib/errors"
 import { useSession } from "@/stores/session"
 
-import { useLogin } from "../api"
+import { useLogin } from "@/hooks/use-auth"
 import { SocialButtons } from "../SocialButtons"
 import { safeNext } from "../landing"
 import { loginSchema, type LoginValues } from "../schemas"

@@ -1,6 +1,6 @@
 import type { MyBranch, User } from "@/types/auth"
 
-import { usableBranches } from "./api"
+import { usableBranches } from "@/hooks/use-auth"
 
 /** Only same-site paths are followed after login, never another website */
 export function safeNext(next: string | null | undefined): string | null {

@@ -6,7 +6,7 @@ import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 
-import { useSocialConfig, useSocialLogin } from "./api"
+import { useSocialConfig, useSocialLogin } from "@/hooks/use-auth"
 
 // the little of each provider's browser script that is used here
 interface GoogleId {

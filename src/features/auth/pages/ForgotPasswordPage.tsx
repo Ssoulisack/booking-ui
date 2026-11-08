@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation } from "@tanstack/react-query"
 import { MailCheckIcon } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -9,14 +8,12 @@ import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { FieldGroup } from "@/components/ui/field"
 import { AuthHeading } from "@/components/layout/AuthLayout"
 
-import { authApi } from "../api"
+import { useForgotPassword } from "@/hooks/use-auth"
 import { forgotSchema, type ForgotValues } from "../schemas"
 
 export function ForgotPasswordPage() {
   const { t } = useTranslation()
-  const send = useMutation({
-    mutationFn: (email: string) => authApi.forgotPassword(email),
-  })
+  const send = useForgotPassword()
   const form = useForm<ForgotValues>({
     resolver: zodResolver(forgotSchema),
     defaultValues: { email: "" },

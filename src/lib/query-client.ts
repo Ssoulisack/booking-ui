@@ -1,6 +1,6 @@
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query"
 
-import { authKeys } from "@/features/auth/api"
+import { authKeys } from "@/hooks/use-auth"
 import { ApiError } from "@/lib/api/client"
 
 // Answers that mean the user's access to a business changed: re-read the membership list

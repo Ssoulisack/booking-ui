@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { usableBranches, useMyBranches } from "@/features/auth/api"
+import { usableBranches, useMyBranches } from "@/hooks/use-auth"
 import { runsCompany, useSession } from "@/stores/session"
 
 const initials = (name: string) =>
