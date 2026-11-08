@@ -32,12 +32,8 @@ import type { User } from "@/types/auth"
 import { displayPhone } from "@/lib/phone"
 import { useSession } from "@/stores/session"
 
-import {
-  readablePassword,
-  useSetPassword,
-  useUserStatus,
-  useUsers,
-} from "./api"
+import { useSetPassword, useUserStatus, useUsers } from "@/hooks/use-team"
+import { readablePassword } from "@/lib/password"
 import { Pager } from "./ui"
 
 /** /company/users — every account; find by name, email, phone or member number (CNO / ENO) */

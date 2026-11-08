@@ -43,7 +43,7 @@ import {
   useCompanyRule,
   useSetCompanyRule,
   useUpdateCompany,
-} from "./api"
+} from "@/hooks/use-company"
 
 /** /company/settings — the brand and the settings every branch starts from */
 export function CompanySettingsPage() {

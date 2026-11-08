@@ -12,13 +12,13 @@ import { Spinner } from "@/components/ui/spinner"
 import { DeleteButton, PageHeader, Panel } from "@/features/dashboard/ui"
 import type { BranchSummary } from "@/types/company"
 
+import { useBranches } from "@/hooks/use-company"
 import {
-  useBranches,
   useCancelInvitation,
   useInvitations,
   useInvite,
   useResendInvitation,
-} from "./api"
+} from "@/hooks/use-team"
 import { BranchPicker, RolePicker, type Role } from "./team-ui"
 
 /** /company/team/invite — invite employees by email, and the invitations not used yet */

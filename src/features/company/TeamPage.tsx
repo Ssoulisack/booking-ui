@@ -35,14 +35,14 @@ import type { TeamMember } from "@/types/team"
 import { displayPhone } from "@/lib/phone"
 import { useSession } from "@/stores/session"
 
+import { useBranches } from "@/hooks/use-company"
 import {
-  useBranches,
   useInvitations,
   useRemoveTeamMember,
   useTeam,
   useTransferOwnership,
   useUpdateTeamMember,
-} from "./api"
+} from "@/hooks/use-team"
 import { matchesMember } from "./team-filter"
 import { paginate } from "./paging"
 import { Pager } from "./ui"

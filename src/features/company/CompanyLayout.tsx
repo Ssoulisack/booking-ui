@@ -23,7 +23,7 @@ import { money } from "@/lib/format"
 import { AppShell } from "@/components/layout/AppShell"
 import { crumbsFor } from "@/components/layout/crumbs"
 
-import { useBranches, useCompany, useCompanyReport } from "./api"
+import { useBranches, useCompany, useCompanyReport } from "@/hooks/use-company"
 import { thisMonth } from "./period"
 import { paginate } from "./paging"
 import { Pager, StatusBadge } from "./ui"

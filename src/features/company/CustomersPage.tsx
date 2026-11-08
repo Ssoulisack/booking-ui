@@ -9,7 +9,8 @@ import { EmptyState, PageHeader } from "@/features/dashboard/ui"
 import { dayIn } from "@/lib/format"
 import { displayPhone } from "@/lib/phone"
 
-import { useCompany, useCompanyCustomers } from "./api"
+import { useCompany } from "@/hooks/use-company"
+import { useCompanyCustomers } from "@/hooks/use-customer"
 import { Pager } from "./ui"
 
 /** /company/customers — everyone with an account who booked at any branch */

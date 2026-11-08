@@ -1,4 +1,4 @@
-import { slugify } from "./api"
+import { slugify } from "@/lib/slug"
 
 /**
  * The name a copy of a branch starts with: NONGBONE → NONGBONE-COPY; if that is taken (or the

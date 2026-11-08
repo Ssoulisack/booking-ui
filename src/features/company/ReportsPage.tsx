@@ -9,7 +9,7 @@ import { PageHeader, Panel } from "@/features/dashboard/ui"
 import type { FinanceTotals } from "@/types/report"
 import { money } from "@/lib/format"
 
-import { useCompany, useCompanyReport } from "./api"
+import { useCompany, useCompanyReport } from "@/hooks/use-company"
 import { thisMonth } from "./period"
 import { paginate } from "./paging"
 import { Pager, StatusBadge } from "./ui"

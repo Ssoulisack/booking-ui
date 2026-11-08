@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { ShareBooking } from "@/features/dashboard/ShareBooking"
 import { PageHeader, Panel } from "@/features/dashboard/ui"
 
-import { useCompany } from "./api"
+import { useCompany } from "@/hooks/use-company"
 
 /** /company/share — the home page's link and QR code, a poster, chat buttons */
 export function CompanySharePage() {
