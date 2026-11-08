@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 
-import { usePublicCompany } from "@/features/places/api"
+import { usePublicCompany } from "@/hooks/use-place"
 import { cn } from "@/lib/utils"
 
 import { brandStyle, DEFAULT_BRAND } from "./brand"

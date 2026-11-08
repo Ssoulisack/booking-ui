@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils"
 import { UserMenu } from "@/components/layout/UserMenu"
 import { useSession } from "@/stores/session"
 
-import { useLiveBranches, usePublicCompany } from "./api"
+import { useLiveBranches, usePublicCompany } from "@/hooks/use-place"
 import { BrandRings } from "@/features/public/BrandRings"
 import { LanguageToggle } from "@/components/global/LanguageToggle"
 

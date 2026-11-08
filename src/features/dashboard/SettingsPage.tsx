@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
-import { usePublicCompany } from "@/features/places/api"
+import { usePublicCompany } from "@/hooks/use-place"
 import {
   DEFAULT_BODY_FONT,
   DEFAULT_HEADING_FONT,

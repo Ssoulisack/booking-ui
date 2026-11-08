@@ -18,7 +18,7 @@ import BlurText from "@/components/reactbits/BlurText"
 import { money } from "@/lib/format"
 import { placeTypes } from "@/lib/places"
 import { webUrl } from "@/lib/url"
-import { useLiveBranches } from "@/features/places/api"
+import { useLiveBranches } from "@/hooks/use-place"
 
 import { cn } from "@/lib/utils"
 

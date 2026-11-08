@@ -23,7 +23,6 @@ import type {
   EventPricesInput,
 } from "@/types/event"
 import type { FloorItem, FloorPlan } from "@/types/floor-plan"
-import type { Media } from "@/types/media"
 import type { PayInfo, PaymentSettings } from "@/types/payment"
 import type { EffectiveRule } from "@/types/public"
 import type {
@@ -337,16 +336,6 @@ export const manage = {
     api<BranchSettings>(API_ENDPOINTS.BRANCH.UNPUBLISH(branchId), {
       method: "POST",
     }),
-
-  upload: (scope: string, folder: string, file: File) => {
-    const form = new FormData()
-    form.append("file", file)
-    return api<Media>(API_ENDPOINTS.MEDIA.UPLOADS(scope), {
-      method: "POST",
-      form,
-      query: { folder },
-    })
-  },
 
   saveSport: (
     branchId: number,

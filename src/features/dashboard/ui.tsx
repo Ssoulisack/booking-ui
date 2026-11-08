@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import { ImagePlusIcon, ImagesIcon, Trash2Icon, XIcon } from "lucide-react"
 import { useEffect, useRef, useState, type ReactNode } from "react"
@@ -27,12 +26,11 @@ import {
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
-import { refreshMedia } from "@/features/media/api"
+import { useUploadMedia } from "@/hooks/use-media"
 import { MediaPicker } from "@/features/media/Picker"
 
 import { useOutletContext } from "react-router"
 
-import { manage } from "./api"
 import type { DashboardContext } from "./context"
 
 export function PageHeader({
@@ -301,18 +299,11 @@ export function ImageField({
   const input = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState(url)
   const [picking, setPicking] = useState(false)
-  const queryClient = useQueryClient()
   const choose = (media: { key: string; url: string }) => {
     setPreview(media.url)
     onChange(media.key, media.url)
   }
-  const upload = useMutation({
-    mutationFn: (file: File) => manage.upload(base, folder, file),
-    onSuccess: (media) => {
-      choose(media)
-      void refreshMedia(queryClient, base) // the new file shows in the Media page and the picker
-    },
-  })
+  const upload = useUploadMedia(base, folder, { onSuccess: choose })
 
   return (
     <div className="min-w-0 space-y-2">

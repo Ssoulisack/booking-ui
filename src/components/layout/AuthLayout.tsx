@@ -2,7 +2,7 @@ import { CalendarCheckIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link, Outlet } from "react-router"
 
-import { usePublicCompany } from "@/features/places/api"
+import { usePublicCompany } from "@/hooks/use-place"
 import { BrandMark } from "@/features/public/BrandMark"
 import { CustomerTheme } from "@/features/public/CustomerTheme"
 import { ThemeToggle } from "@/features/public/ThemeToggle"

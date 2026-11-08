@@ -17,7 +17,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import type { PublicBranch } from "@/types/public"
-import { useLiveBranches } from "@/features/places/api"
+import { useLiveBranches } from "@/hooks/use-place"
 
 import { brandStyle } from "./brand"
 import { usePubMode } from "./theme"

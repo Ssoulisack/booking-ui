@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { DeleteButton, EmptyState, PageHeader } from "@/features/dashboard/ui"
 
-import { useDeleteMedia, useMedia, useUploadMedia } from "./api"
+import { useDeleteMedia, useMedia, useUploadMedia } from "@/hooks/use-media"
 import { fileSize, usedByLabel } from "./use-label"
 
 /** Every picture of one scope: upload new ones, see where each is used, delete the ones nothing uses */

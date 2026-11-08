@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import type { Media } from "@/types/media"
 
-import { useMedia, useUploadMedia } from "./api"
+import { useMedia, useUploadMedia } from "@/hooks/use-media"
 
 /** Pick a picture from the media library (this branch's, or the company's), or upload a new one into it */
 export function MediaPicker({
