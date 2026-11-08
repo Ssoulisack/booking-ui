@@ -598,6 +598,61 @@ function PricesForm({
     ),
   )
   const save = useSaveEventPrices()
+  // only the areas the event is held in (none ticked = the whole branch); other areas keep their saved prices
+  const inEvent = (areaId: number) =>
+    event.area_ids.length === 0 || event.area_ids.includes(areaId)
+  const allAreas = useSportsList().data ?? []
+  const inAreas = [
+    ...initial.zones.map((z) => z.area_id),
+    ...initial.tables.map((x) => x.area_id),
+  ]
+  // the areas of this event that have something to price; with two or more, the team switches between them
+  const eventAreas = allAreas.filter(
+    (a) => inEvent(a.id) && inAreas.includes(a.id),
+  )
+  const [picked, setPicked] = useState<number | null>(null)
+  const area =
+    eventAreas.length > 1
+      ? (eventAreas.find((a) => a.id === picked) ?? eventAreas[0]).id
+      : null
+  const showArea = (areaId: number) =>
+    area === null ? inEvent(areaId) : areaId === area
+  const shownZones = initial.zones.filter((z) => showArea(z.area_id))
+  const shownTables = initial.tables.filter((x) => showArea(x.area_id))
+  const [opened, setOpened] = useState<number[]>([])
+  const zoneIds = new Set(shownZones.map((z) => z.item_id))
+  const looseTables = shownTables.filter(
+    (x) => x.zone_id === null || !zoneIds.has(x.zone_id),
+  )
+  const groups = shownZones
+    .map((zone) => ({
+      zone,
+      tables: shownTables.filter((x) => x.zone_id === zone.item_id),
+    }))
+    .filter((g) => g.tables.length > 0)
+  const tableRow = (x: (typeof initial.tables)[number]) => (
+    <div key={x.table_id} className="flex items-center gap-3">
+      <Label htmlFor={`table-${x.table_id}`} className="min-w-0 flex-1">
+        <span className="font-medium">{x.name}</span>
+        <span className="block text-xs text-muted-foreground">
+          {t("events.seatsN", { count: x.seats })} ·{" "}
+          {x.price > 0
+            ? money(x.price, initial.currency)
+            : t("events.notForSale")}
+        </span>
+      </Label>
+      <Input
+        id={`table-${x.table_id}`}
+        type="number"
+        inputMode="numeric"
+        min={0}
+        placeholder={t("events.samePrice")}
+        value={tables[x.table_id] ?? ""}
+        onChange={(e) => setTables({ ...tables, [x.table_id]: e.target.value })}
+        className={`${input} w-36`}
+      />
+    </div>
+  )
   const filled = (v: string) => v.trim() !== "" && Number(v) >= 0
 
   const submit = () =>
@@ -645,13 +700,31 @@ function PricesForm({
         </p>
       </div>
 
-      {initial.zones.length > 0 && (
+      {area !== null && (
+        <div className="flex flex-wrap gap-2" role="tablist">
+          {eventAreas.map((a) => (
+            <Button
+              key={a.id}
+              type="button"
+              role="tab"
+              aria-selected={a.id === area}
+              variant={a.id === area ? "default" : "outline"}
+              className="h-11 lg:h-9"
+              onClick={() => setPicked(a.id)}
+            >
+              {a.name}
+            </Button>
+          ))}
+        </div>
+      )}
+
+      {shownZones.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium">{t("events.zones")}</legend>
           <p className="text-sm text-muted-foreground">
             {t("events.zonesHint")}
           </p>
-          {initial.zones.map((z) => (
+          {shownZones.map((z) => (
             <div key={z.item_id} className="flex items-center gap-3">
               <span
                 className={cn(
@@ -688,29 +761,43 @@ function PricesForm({
         <p className="text-sm text-muted-foreground">
           {t("events.tablesHint")}
         </p>
-        {initial.tables.map((x) => (
-          <div key={x.table_id} className="flex items-center gap-3">
-            <Label htmlFor={`table-${x.table_id}`} className="min-w-0 flex-1">
-              <span className="font-medium">{x.name}</span>
-              <span className="block text-xs text-muted-foreground">
-                {t("events.seatsN", { count: x.seats })} ·{" "}
-                {x.price > 0
-                  ? money(x.price, initial.currency)
-                  : t("events.notForSale")}
-              </span>
-            </Label>
-            <Input
-              id={`table-${x.table_id}`}
-              type="number"
-              inputMode="numeric"
-              min={0}
-              placeholder={t("events.samePrice")}
-              value={tables[x.table_id] ?? ""}
-              onChange={(e) =>
-                setTables({ ...tables, [x.table_id]: e.target.value })
+        {/* tables in no zone come first, in plan order; the tables of a zone wait behind its heading */}
+        {looseTables.map(tableRow)}
+        {groups.map((g) => (
+          <div key={g.zone.item_id} className="rounded-lg border">
+            <button
+              type="button"
+              aria-expanded={opened.includes(g.zone.item_id)}
+              className="flex min-h-11 w-full items-center gap-2 px-3 text-left text-sm font-medium"
+              onClick={() =>
+                setOpened(
+                  opened.includes(g.zone.item_id)
+                    ? opened.filter((id) => id !== g.zone.item_id)
+                    : [...opened, g.zone.item_id],
+                )
               }
-              className={`${input} w-36`}
-            />
+            >
+              <span
+                className={cn(
+                  "size-3 shrink-0 rounded-full border-2",
+                  ZONE_STYLES[(g.zone.color || "green") as ZoneColor],
+                )}
+                aria-hidden
+              />
+              <span className="min-w-0 flex-1 truncate">
+                {g.zone.label || t("events.zoneNoName")}
+              </span>
+              <span className="text-xs font-normal text-muted-foreground">
+                {opened.includes(g.zone.item_id)
+                  ? t("events.hideTables")
+                  : t("events.seeTables", { count: g.tables.length })}
+              </span>
+            </button>
+            {opened.includes(g.zone.item_id) && (
+              <div className="space-y-2 border-t p-3">
+                {g.tables.map(tableRow)}
+              </div>
+            )}
           </div>
         ))}
       </fieldset>

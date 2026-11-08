@@ -394,6 +394,7 @@ export function ConfirmDialog({
   confirmLabel,
   pending,
   error,
+  warning,
   onConfirm,
   onClose,
 }: {
@@ -402,6 +403,8 @@ export function ConfirmDialog({
   confirmLabel: string
   pending: boolean
   error?: unknown
+  /** a red warning for a risky action: it also turns the confirm button red */
+  warning?: string
   onConfirm: () => void
   onClose: () => void
 }) {
@@ -413,6 +416,14 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {warning && (
+          <p
+            role="alert"
+            className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm font-medium text-destructive"
+          >
+            {warning}
+          </p>
+        )}
         <ErrorAlert error={error} />
         <DialogFooter>
           <Button
@@ -424,17 +435,93 @@ export function ConfirmDialog({
           >
             {t("dash.cancel")}
           </Button>
-          <Button
-            type="button"
-            className="h-11 lg:h-9"
-            disabled={pending}
-            onClick={onConfirm}
-          >
-            {pending && <Spinner />}
-            {confirmLabel}
-          </Button>
+          {warning ? (
+            <HoldButton
+              pending={pending}
+              label={confirmLabel}
+              holdLabel={t("dash.holdToConfirm")}
+              onDone={onConfirm}
+            />
+          ) : (
+            <Button
+              type="button"
+              className="h-11 lg:h-9"
+              disabled={pending}
+              onClick={onConfirm}
+            >
+              {pending && <Spinner />}
+              {confirmLabel}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+const HOLD_MS = 1500
+
+/** A red button that works only when it is held down (mouse, finger or Space/Enter) for a moment: one tap cannot do it */
+function HoldButton({
+  label,
+  holdLabel,
+  pending,
+  onDone,
+}: {
+  label: string
+  holdLabel: string
+  pending: boolean
+  onDone: () => void
+}) {
+  const [holding, setHolding] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const stop = () => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = null
+    setHolding(false)
+  }
+  const start = () => {
+    if (pending || timer.current) return
+    setHolding(true)
+    timer.current = setTimeout(() => {
+      timer.current = null
+      setHolding(false)
+      onDone()
+    }, HOLD_MS)
+  }
+  useEffect(() => stop, [])
+  return (
+    <Button
+      type="button"
+      variant="destructive"
+      className="relative h-11 touch-none overflow-hidden select-none lg:h-9"
+      disabled={pending}
+      onPointerDown={start}
+      onPointerUp={stop}
+      onPointerLeave={stop}
+      onPointerCancel={stop}
+      onContextMenu={(e) => e.preventDefault()}
+      onKeyDown={(e) => {
+        if ((e.key === " " || e.key === "Enter") && !e.repeat) {
+          e.preventDefault()
+          start()
+        }
+      }}
+      onKeyUp={stop}
+      onBlur={stop}
+    >
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-0 bg-black/30"
+        style={{
+          width: holding ? "100%" : "0%",
+          transition: holding ? `width ${HOLD_MS}ms linear` : "none",
+        }}
+      />
+      <span className="relative flex items-center gap-2">
+        {pending && <Spinner />}
+        {holding || pending ? label : holdLabel}
+      </span>
+    </Button>
   )
 }

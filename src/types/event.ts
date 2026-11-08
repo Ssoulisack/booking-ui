@@ -64,6 +64,8 @@ export interface TablePrice {
   seats: number
   own: number | null
   price: number
+  /** the zone that holds the table; null: it sits in no zone */
+  zone_id: number | null
 }
 
 /** An event's prices: the default, a price per zone, a price on one table; `price` is what each table is sold at */

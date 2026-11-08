@@ -399,6 +399,12 @@ function Details({ booking: b }: { booking: Booking }) {
                   ? t("desk.confirmUnpaidYes")
                   : t("desk.confirmPaidYes")
               }
+              // an event table the customer never sent a slip for: the team must be sure the money is really there
+              warning={
+                confirming !== "unpaid" && waitingForMoney && !b.slip_sent_at
+                  ? t("desk.confirmPaidNoSlip")
+                  : undefined
+              }
               pending={payment.isPending}
               error={payment.error}
               onClose={() => setConfirming(null)}
@@ -633,8 +639,8 @@ function NoShowAction({
 }) {
   const { t } = useTranslation()
   const [asking, setAsking] = useState(false)
-  if (!asking)
-    return (
+  return (
+    <>
       <Button
         variant="outline"
         className="h-11 lg:h-9"
@@ -643,30 +649,19 @@ function NoShowAction({
       >
         {t("desk.noShow")}
       </Button>
-    )
-  return (
-    <div className="w-full space-y-2 rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm dark:bg-amber-950/40">
-      <p>{t("desk.noShowAsk")}</p>
-      <div className="flex gap-2">
-        <Button
-          className="h-11 lg:h-9"
-          disabled={busy}
-          loading={loading}
-          onClick={() => {
+      {asking && (
+        <ConfirmDialog
+          title={t("desk.noShow")}
+          description={t("desk.noShowAsk")}
+          confirmLabel={t("desk.yesNoShow")}
+          pending={loading}
+          onClose={() => setAsking(false)}
+          onConfirm={() => {
             setAsking(false)
             onConfirm()
           }}
-        >
-          {t("desk.yesNoShow")}
-        </Button>
-        <Button
-          variant="outline"
-          className="h-11 lg:h-9"
-          onClick={() => setAsking(false)}
-        >
-          {t("booking.keep")}
-        </Button>
-      </div>
-    </div>
+        />
+      )}
+    </>
   )
 }
