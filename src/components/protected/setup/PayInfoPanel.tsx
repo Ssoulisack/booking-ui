@@ -142,69 +142,76 @@ function PayInfoForm({
       <ErrorAlert error={savePay.error ?? saveSettings.error} />
 
       <div className="space-y-2">
-        {sport ? (
-          // one block: the "Pay online" title, then a switch for Booking and one for Package
-          <div className="space-y-2">
-            <div className="px-1">
-              <p className="text-sm font-medium">{t("events.pay.online")}</p>
-              <p className="text-sm text-muted-foreground">
-                {settings.gateway_available
-                  ? t("events.pay.onlineHint")
-                  : t("events.pay.noGateway")}
-              </p>
-            </div>
-            <div className="space-y-2 pl-3">
+        {/* the server has no payment gateway (payments.phajay.enabled: false): nothing about online payment shows */}
+        {settings.gateway_available && (
+          <>
+            {sport ? (
+              // one block: the "Pay online" title, then a switch for Booking and one for Package
+              <div className="space-y-2">
+                <div className="px-1">
+                  <p className="text-sm font-medium">
+                    {t("events.pay.online")}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {settings.gateway_available
+                      ? t("events.pay.onlineHint")
+                      : t("events.pay.noGateway")}
+                  </p>
+                </div>
+                <div className="space-y-2 pl-3">
+                  <ActiveSwitch
+                    id="pay-online-bookings"
+                    checked={bookingsOnline}
+                    onChange={setBookingsOnline}
+                    label={t("events.pay.switchBooking")}
+                    hint={t("events.pay.switchBookingHint")}
+                  />
+                  <ActiveSwitch
+                    id="pay-online-packages"
+                    checked={packagesOnline}
+                    onChange={setPackagesOnline}
+                    label={t("events.pay.switchPackage")}
+                    hint={t("events.pay.switchPackageHint")}
+                  />
+                </div>
+              </div>
+            ) : (
               <ActiveSwitch
-                id="pay-online-bookings"
-                checked={bookingsOnline}
-                onChange={setBookingsOnline}
-                label={t("events.pay.switchBooking")}
-                hint={t("events.pay.switchBookingHint")}
+                id="pay-online"
+                checked={onlineSwitch}
+                onChange={setOnline}
+                label={t("events.pay.online")}
+                hint={
+                  settings.gateway_available
+                    ? t("events.pay.onlineHint")
+                    : t("events.pay.noGateway")
+                }
               />
-              <ActiveSwitch
-                id="pay-online-packages"
-                checked={packagesOnline}
-                onChange={setPackagesOnline}
-                label={t("events.pay.switchPackage")}
-                hint={t("events.pay.switchPackageHint")}
-              />
-            </div>
-          </div>
-        ) : (
-          <ActiveSwitch
-            id="pay-online"
-            checked={onlineSwitch}
-            onChange={setOnline}
-            label={t("events.pay.online")}
-            hint={
-              settings.gateway_available
-                ? t("events.pay.onlineHint")
-                : t("events.pay.noGateway")
-            }
-          />
-        )}
-        {online && settings.gateway_available && (
-          <div className="space-y-1.5 rounded-lg border px-3 py-3">
-            <Label htmlFor="pay-window">{t("events.pay.window")}</Label>
-            {/* a list, not a number box: the phone's own picker */}
-            <select
-              id="pay-window"
-              value={minutes}
-              onChange={(e) => setMinutes(Number(e.target.value))}
-              className="h-11 w-40 rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
-            >
-              {[...new Set([...WINDOWS, minutes])]
-                .sort((a, b) => a - b)
-                .map((n) => (
-                  <option key={n} value={n}>
-                    {t("events.pay.windowN", { count: n })}
-                  </option>
-                ))}
-            </select>
-            <p className="text-sm text-muted-foreground">
-              {t("events.pay.windowHint", { count: minutes })}
-            </p>
-          </div>
+            )}
+            {online && (
+              <div className="space-y-1.5 rounded-lg border px-3 py-3">
+                <Label htmlFor="pay-window">{t("events.pay.window")}</Label>
+                {/* a list, not a number box: the phone's own picker */}
+                <select
+                  id="pay-window"
+                  value={minutes}
+                  onChange={(e) => setMinutes(Number(e.target.value))}
+                  className="h-11 w-40 rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
+                >
+                  {[...new Set([...WINDOWS, minutes])]
+                    .sort((a, b) => a - b)
+                    .map((n) => (
+                      <option key={n} value={n}>
+                        {t("events.pay.windowN", { count: n })}
+                      </option>
+                    ))}
+                </select>
+                <p className="text-sm text-muted-foreground">
+                  {t("events.pay.windowHint", { count: minutes })}
+                </p>
+              </div>
+            )}
+          </>
         )}
         <ActiveSwitch
           id="pay-transfer"
