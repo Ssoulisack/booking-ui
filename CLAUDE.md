@@ -30,9 +30,11 @@ Gate for every change: `npx tsc -b`, `npm test`, and Playwright for UI-flow work
 All URL paths live in `src/lib/constants/api-endpoints.ts` (`API_ENDPOINTS`). Never write a path string in a service. Endpoints that take ids are functions: `API_ENDPOINTS.BRANCH.BOOKING(branchId, bookingId)`.
 
 ### Folders
-- `src/pages/{public,auth,account,dashboard,company}/` — thin route components: read params, call hooks, compose components. No business logic.
-- `src/components/ui/` — primitives (shadcn). `global/` — shared app pieces (forms, pickers, floor-plan, booking). `layout/` — shells, breadcrumbs, user menu. `provider/` — app-wide providers. `protected/<feature>/` — staff-side UI. `public/<feature>/` — customer-side UI.
-- `src/lib/constants/` — config-driven navigation, breadcrumbs, roles.
+- `src/pages/<area>/index.ts` — one entry per area (`public`, `auth`, `account`, `dashboard`, `company`). It only re-exports the route components, so the router can lazy-load each area as its own download. No code lives here.
+- `src/components/ui/` — primitives (shadcn). `global/` — shared pieces (forms, pickers, floor-plan, booking). `layout/` — shells (Dashboard, Company, Public, Account, Setup, Auth), breadcrumbs, user menu. `provider/` — app-wide providers and contexts.
+- `src/components/protected/<feature>/` — logged-in UI: `branch` (dashboard home, settings, Telegram, share), `desk` (bookings, calendar, reports, cash-up), `package`, `setup` (courts, sports, coaches, classes, events, closures, rules, payments), `company`, `account`, `settings`, `media`.
+- `src/components/public/<feature>/` — customer-facing UI: `booking` (branch page, checkout, pay, events), `home`, `auth`, `legal`.
+- `src/lib/constants/` — endpoints today; navigation, breadcrumbs, roles in phase 5.
 - `src/stores/` — zustand, client-only state (session, active branch, unsaved guard). Server data goes through React Query, never zustand.
 
 ### Errors
@@ -52,8 +54,8 @@ Add every user-visible string to all three locale files (en, lo, th); the parity
 | 1 | Baseline, `rearch` branch, this file | done |
 | 2 | Foundation: API_ENDPOINTS, split `lib/api/types.ts`, toast helper, provider/global folders | done |
 | 3 | Services + hooks per feature | done |
-| 4 | UI to `components/protected|public`, thin pages | next |
-| 5 | Nav / breadcrumb / roles config, router | — |
+| 4 | UI to `components/protected|public|layout`, route entries in `pages/` | done |
+| 5 | Nav / breadcrumb / roles config, router | next |
 | 6 | Cleanup, README, full tests | — |
 
-Services (`src/services/*.api.ts`) and hooks (`src/hooks/use-*.ts`) are in place; no component imports a service or the fetch client. UI still lives in `src/features/<area>/` until phase 4.
+Services (`src/services/*.api.ts`) and hooks (`src/hooks/use-*.ts`) are in place; no component imports a service or the fetch client. `src/features/` is gone.
