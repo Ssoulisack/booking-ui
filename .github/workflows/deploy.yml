@@ -61,7 +61,7 @@ jobs:
       - if: steps.promote.outputs.done != 'true'
         run: npm run lint --if-present
       - if: steps.promote.outputs.done != 'true'
-        run: npm test
+        run: npm test -- --passWithNoTests # the tests live in test/ which is git-ignored (local only), so CI may have none
       - if: steps.promote.outputs.done != 'true'
         run: npm run build # tsc -b && vite build → dist
         env:
