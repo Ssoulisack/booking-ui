@@ -20,7 +20,7 @@
 
 	handle /api/* {
 		reverse_proxy api:3000 {
-			# the visitor's real address: Cloudflare puts it in Cf-Connecting-Ip (with an edge Caddy instead, remove this line)
+			# the visitor's real address: Cloudflare puts it in Cf-Connecting-Ip
 			header_up X-Real-IP {header.Cf-Connecting-Ip}
 		}
 	}
@@ -28,7 +28,7 @@
 	# uploaded pictures (storage.driver: local)
 	handle /files/* {
 		reverse_proxy api:3000 {
-			# the visitor's real address: Cloudflare puts it in Cf-Connecting-Ip (with an edge Caddy instead, remove this line)
+			# the visitor's real address: Cloudflare puts it in Cf-Connecting-Ip
 			header_up X-Real-IP {header.Cf-Connecting-Ip}
 		}
 	}
