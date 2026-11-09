@@ -42,7 +42,8 @@ export interface RequestOptions {
 }
 
 function buildUrl(path: string, query?: RequestOptions["query"]) {
-  const url = new URL(API_URL + path)
+  // API_URL may be relative ("/api/v1", the deployed build, same domain): give it the page's address as the base
+  const url = new URL(API_URL + path, window.location.origin)
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value !== undefined && value !== null && value !== "") {
       url.searchParams.set(key, String(value))
