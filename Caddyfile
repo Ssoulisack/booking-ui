@@ -1,8 +1,8 @@
 {
-	# HTTPS is done by the edge Caddy in front of this one
+	# HTTPS is done in front of this one (Cloudflare Tunnel)
 	auto_https off
 	servers {
-		# the edge and other Docker-internal addresses are trusted, so X-Real-IP set by the edge is kept
+		# the edge and other Docker-internal addresses are trusted, so the visitor's address headers set in front are kept
 		trusted_proxies static private_ranges
 	}
 }
@@ -19,12 +19,18 @@
 	}
 
 	handle /api/* {
-		reverse_proxy api:3000
+		reverse_proxy api:3000 {
+			# the visitor's real address: Cloudflare puts it in Cf-Connecting-Ip (with an edge Caddy instead, remove this line)
+			header_up X-Real-IP {header.Cf-Connecting-Ip}
+		}
 	}
 
 	# uploaded pictures (storage.driver: local)
 	handle /files/* {
-		reverse_proxy api:3000
+		reverse_proxy api:3000 {
+			# the visitor's real address: Cloudflare puts it in Cf-Connecting-Ip (with an edge Caddy instead, remove this line)
+			header_up X-Real-IP {header.Cf-Connecting-Ip}
+		}
 	}
 
 	handle {
