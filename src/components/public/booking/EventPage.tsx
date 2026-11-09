@@ -5,6 +5,7 @@ import {
   MapPinIcon,
   UsersIcon,
 } from "lucide-react"
+import { isLaoPhone } from "@/lib/phone"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router"
@@ -196,7 +197,7 @@ export function EventPage() {
     toTop()
   }
 
-  const details = asCustomer || (name.trim() !== "" && phone.trim().length >= 6)
+  const details = asCustomer || (name.trim() !== "" && isLaoPhone(phone))
   // the team must be able to call the customer: an account buys event tables only with a phone number saved
   const needsPhone = asCustomer && !needsLogin && !user?.phone
   const canBuy =
@@ -551,7 +552,7 @@ export function EventPage() {
                       autoComplete="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      aria-invalid={touched && phone.trim().length < 6}
+                      aria-invalid={touched && !isLaoPhone(phone)}
                       className={input}
                     />
                   </div>

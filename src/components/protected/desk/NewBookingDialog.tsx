@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Booking, StaffBookingInput } from "@/types/booking"
 import { money, timeIn } from "@/lib/format"
 import { coversClassOf, leftLabel, ymdLabel } from "@/lib/packages"
-import { displayPhone } from "@/lib/phone"
+import { displayPhone, isLaoPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
 import { useSettings } from "@/hooks/use-branch"
@@ -160,7 +160,7 @@ export function NewBookingDialog({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    const whoOk = who === "walkin" ? name.trim() && phone.trim() : account
+    const whoOk = who === "walkin" ? name.trim() && isLaoPhone(phone) : account
     const whatOk = what === "class" ? !!classId : !!(chosen && len)
     if (!whoOk || !whatOk) {
       setMissing(true)
@@ -233,7 +233,7 @@ export function NewBookingDialog({
                 type="tel"
                 inputMode="tel"
                 value={phone}
-                aria-invalid={(missing && !phone.trim()) || undefined}
+                aria-invalid={(missing && !isLaoPhone(phone)) || undefined}
                 onChange={(e) => setPhone(e.target.value)}
                 className={input}
               />

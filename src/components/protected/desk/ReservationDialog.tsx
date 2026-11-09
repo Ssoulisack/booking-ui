@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { isLaoPhone } from "@/lib/phone"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -42,9 +43,8 @@ export function ReservationDialog({
   // a bar books the evening (one time, nothing to pick); otherwise the first time is picked until the team picks another
   const time = times.find((x) => x.starts_at === startsAt) ?? times[0]
   const event = avail.data?.event
-  const digits = phone.replace(/\D/g, "").length
   const complete =
-    !!time && tables.length > 0 && name.trim() !== "" && digits >= 6
+    !!time && tables.length > 0 && name.trim() !== "" && isLaoPhone(phone)
 
   return (
     <FormDialog

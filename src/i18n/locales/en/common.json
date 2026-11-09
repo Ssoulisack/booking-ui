@@ -24,7 +24,7 @@
     "email": "Enter a valid email address.",
     "passwordMin": "At least 8 characters.",
     "passwordsMatch": "The passwords do not match.",
-    "phone": "Enter a phone number we can reach you on.",
+    "phone": "Write a Lao number as 20xxxxxxxx (20 and 8 digits), e.g. 2055551234.",
     "tooLong": "This is too long."
   },
   "messages": {

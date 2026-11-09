@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { isLaoPhone } from "@/lib/phone"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { ArrowLeftIcon, MapPinIcon } from "lucide-react"
@@ -49,7 +50,7 @@ import { StepBar } from "./TableBookingPanel"
 
 const guestSchema = z.object({
   name: z.string().trim().min(1, "validation.required"),
-  phone: z.string().trim().min(6, "validation.phone"),
+  phone: z.string().trim().refine(isLaoPhone, "validation.phone"),
   email: z
     .string()
     .trim()
