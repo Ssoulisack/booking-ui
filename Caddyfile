@@ -1,0 +1,39 @@
+{
+	# HTTPS is done by the edge Caddy in front of this one
+	auto_https off
+	servers {
+		# the edge and other Docker-internal addresses are trusted, so X-Real-IP set by the edge is kept
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
+	encode zstd gzip
+
+	header {
+		# test sets ROBOTS_TAG="noindex, nofollow"; production "index, follow"
+		X-Robots-Tag "{$ROBOTS_TAG:noindex, nofollow}"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	# uploaded pictures (storage.driver: local)
+	handle /files/* {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		root * /srv
+		# files named with a hash never change: cache them for a year
+		@assets path /assets/* /fonts/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		# every other path is a page of the single-page app
+		try_files {path} /index.html
+		file_server
+	}
+}
