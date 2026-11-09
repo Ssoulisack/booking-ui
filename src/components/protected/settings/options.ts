@@ -13,20 +13,8 @@ export const TIMEZONES = [
   "Asia/Manila",
   "Asia/Jakarta",
 ]
-export const CURRENCIES = [
-  "LAK",
-  "THB",
-  "USD",
-  "VND",
-  "KHR",
-  "MMK",
-  "SGD",
-  "MYR",
-  "PHP",
-  "IDR",
-  "CNY",
-  "EUR",
-]
+// the choices in the company settings. A company that already has another currency keeps it (see withCurrent).
+export const CURRENCIES = ["LAK", "THB", "USD"]
 export const LANGUAGES = ["en", "lo", "th"] as const
 export const SOCIAL = [
   "facebook",

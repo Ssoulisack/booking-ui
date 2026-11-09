@@ -166,7 +166,7 @@ export function CalendarPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="mr-auto text-2xl font-semibold tracking-tight">
+        <h1 className="mr-auto text-2xl font-semibold tracking-tight text-heading">
           {t("nav.calendar")}
         </h1>
         <RefreshButton

@@ -45,7 +45,9 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-heading">
+          {title}
+        </h1>
         {lead && <p className="max-w-prose text-muted-foreground">{lead}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -70,7 +72,7 @@ export function Panel({
       {(title || actions) && (
         <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
           <div>
-            {title && <h2 className="font-semibold">{title}</h2>}
+            {title && <h2 className="font-semibold text-heading">{title}</h2>}
             {lead && <p className="text-sm text-muted-foreground">{lead}</p>}
           </div>
           {actions}

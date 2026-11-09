@@ -588,7 +588,11 @@
     "timeTitle": "Leave this step?",
     "timeLead": "The time you picked will be cleared.",
     "timeStay": "Stay",
-    "timeLeave": "Leave"
+    "timeLeave": "Leave",
+    "tabTitle": "This tab has changes that are not saved",
+    "tabLead": "If you open another tab now, they will be lost.",
+    "tabKeep": "Keep editing",
+    "tabLeave": "Leave"
   },
   "media": {
     "lead": "Every picture uploaded here. Upload new ones, see where each is used, and delete the ones nothing uses.",
@@ -887,6 +891,7 @@
     "policy": "Booking policy",
     "policyHint": "Shown before people confirm, e.g. arrival, cancellation and payment.",
     "save": "Save settings",
+    "discard": "Discard",
     "saved": "Settings saved.",
     "province": "Province",
     "provinceChoose": "Choose a province",
