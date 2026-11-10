@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/global/form"
 import { PageError } from "@/components/global/page-state"
+import { RefreshButton } from "@/components/global/RefreshButton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -65,10 +66,17 @@ export function SoldPackagesPage() {
         title={t("packages.soldTitle")}
         lead={t("packages.soldLead")}
         actions={
-          <Button className="h-11 lg:h-9" onClick={() => setSelling(true)}>
-            <PlusIcon />
-            {t("packages.sell")}
-          </Button>
+          <>
+            <RefreshButton
+              fetching={sold.isFetching}
+              updatedAt={sold.dataUpdatedAt}
+              onRefresh={() => void sold.refetch()}
+            />
+            <Button className="h-11 lg:h-9" onClick={() => setSelling(true)}>
+              <PlusIcon />
+              {t("packages.sell")}
+            </Button>
+          </>
         }
       />
       <div className="flex flex-wrap gap-2">

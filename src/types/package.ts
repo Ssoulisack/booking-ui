@@ -89,6 +89,8 @@ export interface CustomerPackage {
   paid_at: string | null
   slip_sent_at: string | null
   slip_via: SlipWay | ""
+  /** an unpaid online purchase is kept until this time, then it cancels itself */
+  pay_by?: string | null
   sold_by: "customer" | "staff"
   notes: string
   created_at: string

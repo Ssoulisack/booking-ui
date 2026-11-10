@@ -2398,6 +2398,8 @@
         "manual": "Transfer to the branch, then send the slip."
       },
       "noWay": "Online payment is off. Please pay at the place and tell the team your code.",
+      "cancelWarning": "If you do not pay by {{when}}, this purchase is cancelled automatically. You can buy it again.",
+      "releasing": "Time is up. This purchase is being cancelled.",
       "cancelledNote": "This package was cancelled.",
       "paidNote": "Paid. Your package is ready: choose it when you book.",
       "slipMessage": "Package {{code}} {{name}}, {{total}}. Here is my payment slip.",

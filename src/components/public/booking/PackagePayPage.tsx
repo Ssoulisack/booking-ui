@@ -1,4 +1,5 @@
 import { ArrowLeftIcon } from "lucide-react"
+import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, Navigate, useLocation, useParams } from "react-router"
 
@@ -12,6 +13,7 @@ import { useSession } from "@/stores/session"
 
 import { useMyPackages } from "@/hooks/use-account"
 import { usePublic } from "./context"
+import { HoldClock } from "./EventPay"
 import { PackagePay } from "./PackagePay"
 
 /** /b/:slug/package/:id — a package the customer bought: pay for it, or see that it is ready to use */
@@ -22,6 +24,19 @@ export function PackagePayPage() {
   const user = useSession((s) => s.user)
   const { pathname } = useLocation()
   const mine = useMyPackages(!!user)
+
+  const waitingBy =
+    mine.data?.find((p) => String(p.id) === id && p.branch_slug === slug)
+      ?.pay_by ?? null
+  const refetchMine = mine.refetch
+  // the server cancels the purchase a minute after the time is up: read it again then, so the page shows it
+  useEffect(() => {
+    if (!waitingBy) return
+    const ms = Date.parse(waitingBy) + 75_000 - Date.now()
+    if (ms <= 0) return
+    const id = setTimeout(() => void refetchMine(), ms)
+    return () => clearTimeout(id)
+  }, [waitingBy, refetchMine])
 
   if (!user)
     return (
@@ -75,6 +90,19 @@ export function PackagePayPage() {
               </p>
             )}
           </section>
+          {/* the time left to pay: when it runs out the purchase cancels itself */}
+          {pkg.status === "pending_payment" &&
+            pkg.payment_status === "unpaid" &&
+            pkg.pay_by && (
+              <HoldClock
+                until={pkg.pay_by}
+                tz={Intl.DateTimeFormat().resolvedOptions().timeZone}
+                slipSent={!!pkg.slip_sent_at}
+                slipSentAt={pkg.slip_sent_at ?? undefined}
+                big={false}
+                forPackage
+              />
+            )}
           <PackagePay slug={slug} pkg={pkg} />
           {pkg.status === "active" && (
             <Button asChild size="lg" className="h-12 w-full text-base">

@@ -359,6 +359,7 @@ export function HoldClock({
   slipSentAt,
   big,
   compact,
+  forPackage,
 }: {
   until: string
   tz: string
@@ -368,6 +369,8 @@ export function HoldClock({
   big: boolean
   /** smaller, for a booking card in the list */
   compact?: boolean
+  /** a package, not tables: the warning says the purchase is cancelled */
+  forPackage?: boolean
 }) {
   const { t } = useTranslation()
   const [now, setNow] = useState(() => Date.now())
@@ -416,8 +419,12 @@ export function HoldClock({
       </p>
       <p className="text-sm text-muted-foreground">
         {seconds > 0
-          ? t("public.events.pay.cancelWarning", { when })
-          : t("public.events.pay.releasing")}
+          ? forPackage
+            ? t("packages.my.cancelWarning", { when })
+            : t("public.events.pay.cancelWarning", { when })
+          : forPackage
+            ? t("packages.my.releasing")
+            : t("public.events.pay.releasing")}
         {big &&
           seconds > 0 &&
           ` ${t("public.events.pay.bigHold", { when: timeIn(until, tz) })}`}
