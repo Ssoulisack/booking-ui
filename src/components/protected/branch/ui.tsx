@@ -106,6 +106,7 @@ export function FormDialog({
   title,
   description,
   submitLabel,
+  dismissLabel,
   pending,
   error,
   onSubmit,
@@ -117,6 +118,8 @@ export function FormDialog({
   title: string
   description?: string
   submitLabel: string
+  /** the words on the button that closes without doing it (default: Cancel); change it when the submit button says Cancel too */
+  dismissLabel?: string
   pending: boolean
   error: unknown
   onSubmit: (e: React.FormEvent) => void
@@ -161,7 +164,7 @@ export function FormDialog({
               className="h-11 lg:h-9"
               onClick={() => onOpenChange(false)}
             >
-              {t("dash.cancel")}
+              {dismissLabel ?? t("dash.cancel")}
             </Button>
             <Button
               type="submit"

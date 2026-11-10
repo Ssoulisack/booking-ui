@@ -352,9 +352,15 @@ function Messages({ tg }: { tg: TelegramSettings }) {
   const save = useSaveTelegram()
   const ready = tg.has_bot && tg.has_group
   const set = (patch: TelegramInput) => save.mutate(patch)
+  // events are sold by restaurants only: a court or class branch has no such messages to switch (hidden until the type is known)
+  const type = useSettings().data?.type
   const rows: Array<[keyof TelegramSettings & keyof TelegramInput, string]> = [
     ["on_booking", "booking"],
-    ["on_event", "event"],
+    ...(type === "restaurant"
+      ? ([["on_event", "event"]] as Array<
+          [keyof TelegramSettings & keyof TelegramInput, string]
+        >)
+      : []),
     ["on_payment", "payment"],
     ["on_cancel", "cancel"],
     ["on_staff_cancel", "staffCancel"],
@@ -378,7 +384,8 @@ function Messages({ tg }: { tg: TelegramSettings }) {
             checked={Boolean(tg[field])}
             onChange={(v) => set({ [field]: v })}
             label={t(`telegram.${key}`)}
-            hint={t(`telegram.${key}Hint`)}
+            // the wording follows the branch type (…Hint_sport for courts and classes; restaurants use the plain one)
+            hint={t(`telegram.${key}Hint`, { context: type })}
           />
         ))}
       </div>

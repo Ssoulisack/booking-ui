@@ -67,7 +67,8 @@ export function CancelPackage({
             ? "packages.cancelPaidHint"
             : "packages.cancelHint",
         )}
-        submitLabel={t("packages.cancel")}
+        submitLabel={t("packages.cancelConfirm")}
+        dismissLabel={t("packages.cancelKeep")}
         pending={pending}
         error={null}
         onSubmit={(e) => {
