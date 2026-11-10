@@ -1,4 +1,10 @@
-import { useState, type ReactNode } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router"
 
@@ -61,6 +67,19 @@ export function SettingsTabs<K extends string>({
   const go = (next: K) => setParams({ tab: next }, { replace: true })
   // the tab the person asked for while this one has edits: waits for their answer in the popup
   const [target, setTarget] = useState<K | null>(null)
+  // the pinned bar's real height (it grows with an error message, a wrapped text, a phone's bottom edge): the tab content gets
+  // that much room under it on a phone, so the last field ends exactly above the bar, whatever the browser
+  const bar = useRef<HTMLDivElement>(null)
+  const [barHeight, setBarHeight] = useState(0)
+  useEffect(() => {
+    const el = bar.current
+    if (!el || typeof ResizeObserver === "undefined") return
+    const watch = new ResizeObserver(() =>
+      setBarHeight(Math.round(el.getBoundingClientRect().height)),
+    )
+    watch.observe(el)
+    return () => watch.disconnect()
+  }, [])
   const requestTab = (next: string) => {
     if (next === tab.key) return
     if (tab.changed) setTarget(next as K)
@@ -106,10 +125,15 @@ export function SettingsTabs<K extends string>({
             </TabsList>
           </div>
           {/* phone: a bar pinned to the bottom of the screen, Discard 30% and Save 70% of the row, minus half the 8px gap each (the error above them); from sm up both sit at the end of the tab row */}
-          <div className="fixed inset-x-0 bottom-0 z-30 flex flex-col gap-2 border-t bg-background p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:static sm:z-auto sm:shrink-0 sm:border-0 sm:bg-transparent sm:p-0">
-            <div className="sm:hidden">
-              <ErrorAlert error={error} />
-            </div>
+          <div
+            ref={bar}
+            className="fixed inset-x-0 bottom-0 z-30 flex flex-col gap-2 border-t bg-background p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:static sm:z-auto sm:shrink-0 sm:border-0 sm:bg-transparent sm:p-0"
+          >
+            {!!error && (
+              <div className="sm:hidden">
+                <ErrorAlert error={error} />
+              </div>
+            )}
             <div className="flex gap-2">
               {/* back to what was loaded; disabled (not hidden) while nothing is changed, so the two widths never jump */}
               <Button
@@ -136,14 +160,18 @@ export function SettingsTabs<K extends string>({
         <div className="hidden sm:block">
           <ErrorAlert error={error} />
         </div>
-        {tabs.map((x) => (
-          <TabsContent key={x.key} value={x.key} className="mt-4">
-            {x.content}
-          </TabsContent>
-        ))}
+        {/* phone: room under the content as tall as the pinned bar (a variable, because Tailwind cannot know it) */}
+        <div
+          className="max-sm:pb-(--bar-height)"
+          style={{ "--bar-height": `${barHeight}px` } as CSSProperties}
+        >
+          {tabs.map((x) => (
+            <TabsContent key={x.key} value={x.key} className="mt-4">
+              {x.content}
+            </TabsContent>
+          ))}
+        </div>
       </Tabs>
-      {/* phone: room for the pinned bar, so it never covers the last field (taller while an error is shown in the bar) */}
-      <div aria-hidden className={`sm:hidden ${error ? "h-44" : "h-24"}`} />
       {/* a tab with edits is being left for another: leave (the edits are lost) or keep editing */}
       <AlertDialog
         open={target !== null}
