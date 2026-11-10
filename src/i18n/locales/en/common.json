@@ -1515,6 +1515,8 @@
     "photoHint": "Shown on the home page and the booking page. Without one, the company cover is shown.",
     "overrides": "Company settings for this branch",
     "overridesLead": "Each one follows the company unless this branch sets its own.",
+    "tabSetting": "Settings",
+    "tabStyle": "Style",
     "companyValue": "Company setting: {{value}}",
     "ownValue": "Own setting",
     "yes": "yes",

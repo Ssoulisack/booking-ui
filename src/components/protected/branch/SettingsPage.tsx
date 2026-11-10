@@ -4,13 +4,10 @@ import { useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { ErrorAlert } from "@/components/global/form"
 import { PageError } from "@/components/global/page-state"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { usePublicCompany } from "@/hooks/use-place"
 import {
@@ -31,6 +28,7 @@ import {
   RingColorsField,
 } from "@/components/protected/settings/look-fields"
 import { LookPreview } from "@/components/protected/settings/LookPreview"
+import { SettingsTabs } from "@/components/protected/settings/SettingsTabs"
 import {
   filledLinks,
   SOCIAL,
@@ -59,6 +57,30 @@ export function SettingsPage() {
   return <SettingsForm key={settings.dataUpdatedAt} settings={settings.data} />
 }
 
+const TABS = ["branch", "setting", "style", "contact"] as const
+type Tab = (typeof TABS)[number]
+
+/** the fields each tab edits: a tab "has changes" when any of them differs from what was loaded */
+const TAB_FIELDS: Record<Tab, Array<keyof SettingsInput>> = {
+  branch: ["name", "slug", "type", "description", "cover_key"],
+  setting: ["timezone", "booking_mode", "booking_policy", "require_approval"],
+  style: ["ring_colors", "heading_font", "body_font"],
+  contact: [
+    "province",
+    "address",
+    "phone",
+    "sister_branch_id",
+    "map_url",
+    "social_links",
+  ],
+}
+
+/** a value as text, so two of them can be compared (empty social links do not count as a change) */
+const shown = (f: SettingsInput, key: keyof SettingsInput) =>
+  JSON.stringify(
+    key === "social_links" ? filledLinks(f.social_links ?? {}) : f[key],
+  )
+
 function SettingsForm({ settings }: { settings: BranchSettings }) {
   const { t } = useTranslation()
   const [f, setF] = useState<SettingsInput>(() => ({
@@ -84,9 +106,12 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
     body_font: settings.body_font ?? null,
   }))
   const set = (patch: Partial<SettingsInput>) => setF({ ...f, ...patch })
-  const [start] = useState(() => JSON.stringify(f))
-  const dirty = JSON.stringify(f) !== start
-  useUnsaved(dirty)
+  // what was loaded: a tab has changes when its fields differ from this
+  const [base] = useState(f)
+  const tabChanged = (k: Tab) =>
+    TAB_FIELDS[k].some((key) => shown(f, key) !== shown(base, key))
+  const dirty = TABS.some(tabChanged)
+  useUnsaved(dirty) // leaving the page asks first (see UnsavedGuard)
   const save = useSaveSettings()
   const slugLocked = !!settings.published_at
   // the other branches this person can see, for "Also at this place"
@@ -126,329 +151,381 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
         title={t("branchSettings.title")}
         lead={t("branchSettings.lead", { company: settings.company_name })}
       />
-      <Panel title={t("branchSettings.branch")}>
-        <div className="grid gap-4">
-          <Text
-            id="s-name"
-            label={t("branchSettings.name")}
-            value={f.name}
-            onChange={(v) => set({ name: v })}
-          />
-          <div className="space-y-1.5">
-            <Label htmlFor="s-slug">{t("settings.address")}</Label>
-            <div className="flex items-center gap-2">
-              <span className="shrink-0 text-sm text-muted-foreground">
-                {window.location.host}/b/
-              </span>
-              <Input
-                id="s-slug"
-                value={f.slug}
-                disabled={slugLocked}
-                onChange={(e) =>
-                  set({
-                    slug: e.target.value
-                      .toLowerCase()
-                      .replace(/[^a-z0-9-]/g, ""),
-                  })
-                }
-                className="h-11 min-w-0 text-base lg:h-9 lg:text-sm"
-              />
-            </div>
-            <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              {slugLocked && <LockIcon className="size-3.5" />}
-              {slugLocked ? t("settings.slugLocked") : t("settings.slugHint")}
-            </p>
-          </div>
-          <div className="space-y-1.5">
-            <BranchTypePicker
-              name="s-type"
-              value={f.type}
-              onChange={(v) => set({ type: v })}
-              disabled={slugLocked}
-            />
-            <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              {slugLocked && <LockIcon className="size-3.5" />}
-              {slugLocked ? t("branchType.locked") : t("branchType.hint")}
-            </p>
-          </div>
-          <Area
-            id="s-desc"
-            label={t("settings.description")}
-            value={f.description}
-            onChange={(v) => set({ description: v })}
-          />
-          <ImageField
-            label={t("branchSettings.photo")}
-            folder="branding"
-            url={settings.cover_key ? settings.cover_url : ""}
-            wide
-            onChange={savePhoto}
-          />
-          <p className="-mt-2 text-sm text-muted-foreground">
-            {t("branchSettings.photoHint")}
-          </p>
-        </div>
-      </Panel>
-
-      <Panel title={t("settings.contact")}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Choice
-            id="s-province"
-            label={t("settings.province")}
-            placeholder={t("settings.provinceChoose")}
-            hint={t("settings.provinceHint")}
-            value={f.province}
-            onChange={(v) => set({ province: v as Province })}
-            options={PROVINCES.map((p) => ({
-              value: p,
-              label: t(`provinces.${p}`),
-            }))}
-          />
-          <Text
-            id="s-address"
-            label={t("settings.streetAddress")}
-            value={f.address}
-            onChange={(v) => set({ address: v })}
-          />
-          <Text
-            id="s-phone"
-            label={t("settings.phone")}
-            type="tel"
-            value={f.phone}
-            onChange={(v) => set({ phone: v })}
-          />
-          <Choice
-            id="s-sister"
-            label={t("branchSettings.sister")}
-            hint={t("branchSettings.sisterHint")}
-            value={String(f.sister_branch_id ?? 0)}
-            onChange={(v) =>
-              set({ sister_branch_id: Number(v) ? Number(v) : null })
-            }
-            options={[
-              { value: "0", label: t("branchSettings.sisterNone") },
-              ...others.map((b) => ({
-                value: String(b.branch_id),
-                label: `${b.name} · ${t(`branchType.${b.type ?? "sport"}`)}`,
-              })),
-            ]}
-          />
-          <Text
-            id="s-map"
-            label={t("settings.mapLink")}
-            type="url"
-            placeholder="https://maps.google.com/…"
-            value={f.map_url}
-            onChange={(v) => set({ map_url: v })}
-          />
-          {SOCIAL.map((name) => (
-            <Text
-              key={name}
-              id={`s-${name}`}
-              label={t(`settings.social.${name}`)}
-              type="url"
-              placeholder="https://…"
-              value={links[name] ?? ""}
-              onChange={(v) => set({ social_links: { ...links, [name]: v } })}
-            />
-          ))}
-        </div>
-      </Panel>
-
-      <Panel
-        title={t("branchSettings.overrides")}
-        lead={t("branchSettings.overridesLead")}
-      >
-        <div className="divide-y">
-          <Override
-            id="o-tz"
-            label={t("settings.timezone")}
-            companyValue={(company.timezone ?? "").replace("_", " ")}
-            own={f.timezone !== null}
-            onOwn={(on) =>
-              set({ timezone: on ? (f.timezone ?? company.timezone) : null })
-            }
-          >
-            <Choice
-              id="s-tz"
-              label={t("settings.timezone")}
-              value={f.timezone ?? company.timezone}
-              onChange={(v) => set({ timezone: v })}
-              options={withCurrent(TIMEZONES, f.timezone ?? "").map((z) => ({
-                value: z,
-                label: z.replace("_", " "),
-              }))}
-            />
-          </Override>
-          <Override
-            id="o-mode"
-            label={t("settings.whoCanBook")}
-            companyValue={t(`settings.modes.${company.booking_mode}`)}
-            own={f.booking_mode !== null}
-            onOwn={(on) =>
-              set({
-                booking_mode: on
-                  ? (f.booking_mode ?? company.booking_mode)
-                  : null,
-              })
-            }
-          >
-            <ModePicker
-              name="booking_mode"
-              value={(f.booking_mode ?? company.booking_mode) as BookingMode}
-              onChange={(m) => set({ booking_mode: m })}
-              hideLegend
-            />
-          </Override>
-          <Override
-            id="o-approval"
-            label={t("settings.approval")}
-            companyValue={
-              company.require_approval
-                ? t("branchSettings.yes")
-                : t("branchSettings.no")
-            }
-            own={f.require_approval !== null}
-            onOwn={(on) =>
-              set({
-                require_approval: on
-                  ? (f.require_approval ?? company.require_approval)
-                  : null,
-              })
-            }
-          >
-            <ActiveSwitch
-              id="s-approval"
-              label={t("settings.approval")}
-              hint={t("settings.approvalHint")}
-              checked={f.require_approval ?? company.require_approval}
-              onChange={(v) => set({ require_approval: v })}
-            />
-          </Override>
-          <Override
-            id="o-policy"
-            label={t("settings.policy")}
-            companyValue={company.booking_policy || t("branchSettings.none")}
-            own={f.booking_policy !== null}
-            onOwn={(on) =>
-              set({
-                booking_policy: on
-                  ? (f.booking_policy ?? company.booking_policy)
-                  : null,
-              })
-            }
-          >
-            <Area
-              id="s-policy"
-              label={t("settings.policy")}
-              value={f.booking_policy ?? ""}
-              onChange={(v) => set({ booking_policy: v })}
-              hint={t("settings.policyHint")}
-              hideLabel
-            />
-          </Override>
-        </div>
-      </Panel>
-
-      <Panel title={t("look.appearance")} lead={t("look.branchAppearanceLead")}>
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-          <div className="divide-y">
-            <Override
-              id="o-rings"
-              label={t("look.rings")}
-              companyValue={
-                company.ring_colors.length > 0
-                  ? company.ring_colors.join(", ")
-                  : t("look.fromBrand")
-              }
-              own={f.ring_colors !== null}
-              onOwn={(on) =>
-                set({
-                  ring_colors: on
-                    ? (f.ring_colors ?? company.ring_colors)
-                    : null,
-                })
-              }
-            >
-              <RingColorsField
-                value={f.ring_colors ?? []}
-                onChange={(v) => set({ ring_colors: v })}
-                brand={brand.brand_color}
-              />
-            </Override>
-            <Override
-              id="o-heading-font"
-              label={t("look.headingFont")}
-              companyValue={fontLabel(
-                company.heading_font,
-                DEFAULT_HEADING_FONT,
-              )}
-              own={f.heading_font !== null}
-              onOwn={(on) =>
-                set({
-                  heading_font: on
-                    ? (f.heading_font ?? company.heading_font)
-                    : null,
-                })
-              }
-            >
-              <FontField
-                id="s-heading-font"
-                kind="heading"
-                label={t("look.headingFont")}
-                value={f.heading_font ?? ""}
-                onChange={(v) => set({ heading_font: v })}
-              />
-            </Override>
-            <Override
-              id="o-body-font"
-              label={t("look.bodyFont")}
-              companyValue={fontLabel(company.body_font, DEFAULT_BODY_FONT)}
-              own={f.body_font !== null}
-              onOwn={(on) =>
-                set({
-                  body_font: on ? (f.body_font ?? company.body_font) : null,
-                })
-              }
-            >
-              <FontField
-                id="s-body-font"
-                kind="body"
-                label={t("look.bodyFont")}
-                value={f.body_font ?? ""}
-                onChange={(v) => set({ body_font: v })}
-              />
-            </Override>
-          </div>
-          {/* follows the choices as they are made; above them on a phone */}
-          <div className="order-first space-y-2 lg:sticky lg:top-20 lg:order-none lg:self-start">
-            <LookPreview
-              name={f.name}
-              brand={brand.brand_color}
-              look={{
-                ring_colors: f.ring_colors ?? company.ring_colors,
-                heading_font: f.heading_font ?? company.heading_font,
-                body_font: f.body_font ?? company.body_font,
-              }}
-            />
-            <p className="text-sm text-muted-foreground">
-              {t("look.previewNote")}
-            </p>
-          </div>
-        </div>
-      </Panel>
-
-      <div className="space-y-3">
-        <ErrorAlert error={save.error} />
-        <Button
-          type="submit"
-          className="h-11 lg:h-9"
-          disabled={save.isPending || !dirty}
-        >
-          {save.isPending && <Spinner />}
-          {t("settings.save")}
-        </Button>
-      </div>
+      <SettingsTabs
+        tabs={[
+          {
+            key: "branch",
+            label: t("branchSettings.branch"),
+            changed: tabChanged("branch"),
+            content: (
+              <Panel title={t("branchSettings.branch")}>
+                <div className="grid gap-4">
+                  <Text
+                    id="s-name"
+                    label={t("branchSettings.name")}
+                    value={f.name}
+                    onChange={(v) => set({ name: v })}
+                  />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="s-slug">{t("settings.address")}</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="shrink-0 text-sm text-muted-foreground">
+                        {window.location.host}/b/
+                      </span>
+                      <Input
+                        id="s-slug"
+                        value={f.slug}
+                        disabled={slugLocked}
+                        onChange={(e) =>
+                          set({
+                            slug: e.target.value
+                              .toLowerCase()
+                              .replace(/[^a-z0-9-]/g, ""),
+                          })
+                        }
+                        className="h-11 min-w-0 text-base lg:h-9 lg:text-sm"
+                      />
+                    </div>
+                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      {slugLocked && <LockIcon className="size-3.5" />}
+                      {slugLocked
+                        ? t("settings.slugLocked")
+                        : t("settings.slugHint")}
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <BranchTypePicker
+                      name="s-type"
+                      value={f.type}
+                      onChange={(v) => set({ type: v })}
+                      disabled={slugLocked}
+                    />
+                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      {slugLocked && <LockIcon className="size-3.5" />}
+                      {slugLocked
+                        ? t("branchType.locked")
+                        : t("branchType.hint")}
+                    </p>
+                  </div>
+                  <Area
+                    id="s-desc"
+                    label={t("settings.description")}
+                    value={f.description}
+                    onChange={(v) => set({ description: v })}
+                  />
+                  <ImageField
+                    label={t("branchSettings.photo")}
+                    folder="branding"
+                    url={settings.cover_key ? settings.cover_url : ""}
+                    wide
+                    onChange={savePhoto}
+                  />
+                  <p className="-mt-2 text-sm text-muted-foreground">
+                    {t("branchSettings.photoHint")}
+                  </p>
+                </div>
+              </Panel>
+            ),
+          },
+          {
+            key: "setting",
+            label: t("branchSettings.tabSetting"),
+            changed: tabChanged("setting"),
+            content: (
+              <Panel
+                title={t("branchSettings.overrides")}
+                lead={t("branchSettings.overridesLead")}
+              >
+                <div className="divide-y">
+                  <Override
+                    id="o-tz"
+                    label={t("settings.timezone")}
+                    companyValue={(company.timezone ?? "").replace("_", " ")}
+                    own={f.timezone !== null}
+                    onOwn={(on) =>
+                      set({
+                        timezone: on ? (f.timezone ?? company.timezone) : null,
+                      })
+                    }
+                  >
+                    <Choice
+                      id="s-tz"
+                      label={t("settings.timezone")}
+                      value={f.timezone ?? company.timezone}
+                      onChange={(v) => set({ timezone: v })}
+                      options={withCurrent(TIMEZONES, f.timezone ?? "").map(
+                        (z) => ({
+                          value: z,
+                          label: z.replace("_", " "),
+                        }),
+                      )}
+                    />
+                  </Override>
+                  <Override
+                    id="o-mode"
+                    label={t("settings.whoCanBook")}
+                    companyValue={t(`settings.modes.${company.booking_mode}`)}
+                    own={f.booking_mode !== null}
+                    onOwn={(on) =>
+                      set({
+                        booking_mode: on
+                          ? (f.booking_mode ?? company.booking_mode)
+                          : null,
+                      })
+                    }
+                  >
+                    <ModePicker
+                      name="booking_mode"
+                      value={
+                        (f.booking_mode ?? company.booking_mode) as BookingMode
+                      }
+                      onChange={(m) => set({ booking_mode: m })}
+                      hideLegend
+                    />
+                  </Override>
+                  <Override
+                    id="o-approval"
+                    label={t("settings.approval")}
+                    companyValue={
+                      company.require_approval
+                        ? t("branchSettings.yes")
+                        : t("branchSettings.no")
+                    }
+                    own={f.require_approval !== null}
+                    onOwn={(on) =>
+                      set({
+                        require_approval: on
+                          ? (f.require_approval ?? company.require_approval)
+                          : null,
+                      })
+                    }
+                  >
+                    <ActiveSwitch
+                      id="s-approval"
+                      label={t("settings.approval")}
+                      hint={t("settings.approvalHint")}
+                      checked={f.require_approval ?? company.require_approval}
+                      onChange={(v) => set({ require_approval: v })}
+                    />
+                  </Override>
+                  <Override
+                    id="o-policy"
+                    label={t("settings.policy")}
+                    companyValue={
+                      company.booking_policy || t("branchSettings.none")
+                    }
+                    own={f.booking_policy !== null}
+                    onOwn={(on) =>
+                      set({
+                        booking_policy: on
+                          ? (f.booking_policy ?? company.booking_policy)
+                          : null,
+                      })
+                    }
+                  >
+                    <Area
+                      id="s-policy"
+                      label={t("settings.policy")}
+                      value={f.booking_policy ?? ""}
+                      onChange={(v) => set({ booking_policy: v })}
+                      hint={t("settings.policyHint")}
+                      hideLabel
+                    />
+                  </Override>
+                </div>
+              </Panel>
+            ),
+          },
+          {
+            key: "style",
+            label: t("branchSettings.tabStyle"),
+            changed: tabChanged("style"),
+            content: (
+              <Panel
+                title={t("look.appearance")}
+                lead={t("look.branchAppearanceLead")}
+              >
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+                  <div className="divide-y">
+                    <Override
+                      id="o-rings"
+                      label={t("look.rings")}
+                      companyValue={
+                        company.ring_colors.length > 0
+                          ? company.ring_colors.join(", ")
+                          : t("look.fromBrand")
+                      }
+                      own={f.ring_colors !== null}
+                      onOwn={(on) =>
+                        set({
+                          ring_colors: on
+                            ? (f.ring_colors ?? company.ring_colors)
+                            : null,
+                        })
+                      }
+                    >
+                      <RingColorsField
+                        value={f.ring_colors ?? []}
+                        onChange={(v) => set({ ring_colors: v })}
+                        brand={brand.brand_color}
+                      />
+                    </Override>
+                    <Override
+                      id="o-heading-font"
+                      label={t("look.headingFont")}
+                      companyValue={fontLabel(
+                        company.heading_font,
+                        DEFAULT_HEADING_FONT,
+                      )}
+                      own={f.heading_font !== null}
+                      onOwn={(on) =>
+                        set({
+                          heading_font: on
+                            ? (f.heading_font ?? company.heading_font)
+                            : null,
+                        })
+                      }
+                    >
+                      <FontField
+                        id="s-heading-font"
+                        kind="heading"
+                        label={t("look.headingFont")}
+                        value={f.heading_font ?? ""}
+                        onChange={(v) => set({ heading_font: v })}
+                      />
+                    </Override>
+                    <Override
+                      id="o-body-font"
+                      label={t("look.bodyFont")}
+                      companyValue={fontLabel(
+                        company.body_font,
+                        DEFAULT_BODY_FONT,
+                      )}
+                      own={f.body_font !== null}
+                      onOwn={(on) =>
+                        set({
+                          body_font: on
+                            ? (f.body_font ?? company.body_font)
+                            : null,
+                        })
+                      }
+                    >
+                      <FontField
+                        id="s-body-font"
+                        kind="body"
+                        label={t("look.bodyFont")}
+                        value={f.body_font ?? ""}
+                        onChange={(v) => set({ body_font: v })}
+                      />
+                    </Override>
+                  </div>
+                  {/* follows the choices as they are made; above them on a phone */}
+                  <div className="order-first space-y-2 lg:sticky lg:top-20 lg:order-none lg:self-start">
+                    <LookPreview
+                      name={f.name}
+                      brand={brand.brand_color}
+                      look={{
+                        ring_colors: f.ring_colors ?? company.ring_colors,
+                        heading_font: f.heading_font ?? company.heading_font,
+                        body_font: f.body_font ?? company.body_font,
+                      }}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      {t("look.previewNote")}
+                    </p>
+                  </div>
+                </div>
+              </Panel>
+            ),
+          },
+          {
+            key: "contact",
+            label: t("settings.contact"),
+            changed: tabChanged("contact"),
+            content: (
+              <Panel title={t("settings.contact")}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Choice
+                    id="s-province"
+                    label={t("settings.province")}
+                    placeholder={t("settings.provinceChoose")}
+                    hint={t("settings.provinceHint")}
+                    value={f.province}
+                    onChange={(v) => set({ province: v as Province })}
+                    options={PROVINCES.map((p) => ({
+                      value: p,
+                      label: t(`provinces.${p}`),
+                    }))}
+                  />
+                  <Text
+                    id="s-address"
+                    label={t("settings.streetAddress")}
+                    value={f.address}
+                    onChange={(v) => set({ address: v })}
+                  />
+                  <Text
+                    id="s-phone"
+                    label={t("settings.phone")}
+                    type="tel"
+                    value={f.phone}
+                    onChange={(v) => set({ phone: v })}
+                  />
+                  <Choice
+                    id="s-sister"
+                    label={t("branchSettings.sister")}
+                    hint={t("branchSettings.sisterHint")}
+                    value={String(f.sister_branch_id ?? 0)}
+                    onChange={(v) =>
+                      set({ sister_branch_id: Number(v) ? Number(v) : null })
+                    }
+                    options={[
+                      { value: "0", label: t("branchSettings.sisterNone") },
+                      ...others.map((b) => ({
+                        value: String(b.branch_id),
+                        label: `${b.name} · ${t(`branchType.${b.type ?? "sport"}`)}`,
+                      })),
+                    ]}
+                  />
+                  <Text
+                    id="s-map"
+                    label={t("settings.mapLink")}
+                    type="url"
+                    placeholder="https://maps.google.com/…"
+                    value={f.map_url}
+                    onChange={(v) => set({ map_url: v })}
+                  />
+                  {SOCIAL.map((name) => (
+                    <Text
+                      key={name}
+                      id={`s-${name}`}
+                      label={t(`settings.social.${name}`)}
+                      type="url"
+                      placeholder="https://…"
+                      value={links[name] ?? ""}
+                      onChange={(v) =>
+                        set({ social_links: { ...links, [name]: v } })
+                      }
+                    />
+                  ))}
+                </div>
+              </Panel>
+            ),
+          },
+        ]}
+        dirty={dirty}
+        saving={save.isPending}
+        error={save.error}
+        onLeaveTab={(k) => {
+          const back = Object.fromEntries(
+            TAB_FIELDS[k].map((key) => [key, base[key]]),
+          )
+          setF((cur) => ({ ...cur, ...back }))
+        }}
+        onDiscard={() => {
+          setF(base)
+          save.reset()
+        }}
+      />
     </form>
   )
 }
