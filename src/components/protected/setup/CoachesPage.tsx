@@ -4,6 +4,7 @@ import { ArrowLeftIcon, PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm, type UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { CoachAvatar } from "@/components/global/CoachAvatar"
 import { Link, useParams } from "react-router"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -110,17 +111,7 @@ function CoachRow({ coach }: { coach: ManagedCoach }) {
   })
   return (
     <li className="flex items-center gap-3 rounded-xl bg-background p-3 ring-1 ring-border">
-      {coach.image_url ? (
-        <img
-          src={coach.image_url}
-          alt=""
-          className="size-14 rounded-full object-cover"
-        />
-      ) : (
-        <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted text-xl font-semibold">
-          {coach.name.charAt(0)}
-        </span>
-      )}
+      <CoachAvatar src={coach.image_url} className="size-14" />
       <Link
         to={String(coach.id)}
         className="flex min-h-12 min-w-0 flex-1 flex-col justify-center gap-1"

@@ -2,6 +2,7 @@ import { CalendarClockIcon, SearchIcon, UsersIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
+import { CoachAvatar } from "@/components/global/CoachAvatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -159,9 +160,12 @@ function ScheduleDialog({
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{coach.name}</DialogTitle>
-          {coach.bio && <DialogDescription>{coach.bio}</DialogDescription>}
+        <DialogHeader className="flex-row items-center gap-3 text-left">
+          <CoachAvatar src={coach.image_url} className="size-14" />
+          <div className="min-w-0 space-y-1">
+            <DialogTitle>{coach.name}</DialogTitle>
+            {coach.bio && <DialogDescription>{coach.bio}</DialogDescription>}
+          </div>
         </DialogHeader>
         <h4 className="text-sm font-semibold">
           {t("public.coachDay.freeTimes")}
@@ -217,6 +221,7 @@ function CoachRows({
     <ul className="divide-y rounded-xl bg-card ring-1 ring-border">
       {rows.map(({ c, slots }) => (
         <li key={c.id} className="flex items-center gap-3 px-4 py-2.5">
+          <CoachAvatar src={c.image_url} className="size-10" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium">{c.name}</p>
             <p className="text-sm text-muted-foreground tabular-nums">

@@ -2,6 +2,7 @@ import { SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
+import { CoachAvatar } from "@/components/global/CoachAvatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useCoachesList } from "@/hooks/use-coach"
@@ -106,6 +107,7 @@ export function CoachPicker({
                   }
                   className="size-4 accent-primary"
                 />
+                <CoachAvatar src={c.image_url} className="size-7" />
                 {c.name}
               </label>
             ))

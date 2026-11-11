@@ -64,6 +64,7 @@ import {
   type Selection,
 } from "./selection"
 import { lengthsOf } from "@/components/global/booking/lengths"
+import { CoachAvatar } from "@/components/global/CoachAvatar"
 import { CoachDay } from "./CoachDay"
 import { PackageChoice } from "./PackageChoice"
 import { chosenPackage, fitAvailability, useFitPackages } from "./package-fit"
@@ -918,7 +919,15 @@ function TargetList({
                 : "border-border active:bg-[var(--brand-soft)]",
             )}
           >
-            <span className="display-tight text-xl">{item.name}</span>
+            <span className="flex min-w-0 items-center gap-3">
+              {/* a coach: their picture (or the default silhouette); a space has none */}
+              {"bookable" in item && (
+                <CoachAvatar src={item.image_url} className="size-10" />
+              )}
+              <span className="truncate display-tight text-xl">
+                {item.name}
+              </span>
+            </span>
             {included.includes(item.id) ? (
               <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-sm font-medium text-emerald-900 dark:bg-emerald-400/20 dark:text-emerald-200">
                 {t("public.coachIncluded")}
