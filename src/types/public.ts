@@ -60,6 +60,8 @@ export interface PublicResource {
   kind: string
   price_per_hour: number | null
   currency?: string
+  /** the coaches included free with this space (booked together, the coach costs nothing) */
+  coach_ids?: number[]
 }
 
 export interface PublicCoach {
@@ -72,6 +74,8 @@ export interface PublicCoach {
   currency?: string
   /** open at least one day a week: offered as a coach to book (false: closed every day) */
   bookable: boolean
+  /** the coach's weekly working hours (weekday 0 = Sunday) */
+  hours?: Array<{ weekday: number; open: string; close: string }>
 }
 
 export interface EffectiveRule {

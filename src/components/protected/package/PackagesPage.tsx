@@ -1,8 +1,9 @@
-import { PencilIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react"
+import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { useDeletePackage, useSavePackage } from "@/hooks/use-package"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { useCoachesList } from "@/hooks/use-coach"
+import { CoachPicker } from "@/components/protected/setup/CoachPicker"
+import { useSportCoachIds } from "@/hooks/use-coach"
 import { Link } from "react-router"
 import { toast } from "sonner"
 
@@ -252,7 +253,6 @@ function PackageDialog({
   const [withCoaches, setWithCoaches] = useState(
     (item?.coach_ids?.length ?? 0) > 0,
   )
-  const coaches = useCoachesList().data ?? []
   const [active, setActive] = useState(item?.active ?? true)
   const [rows, setRows] = useState<OptionRow[]>(
     item?.options.map(toRow) ?? [
@@ -279,26 +279,8 @@ function PackageDialog({
   // the weekly classes of the chosen sport that a group-class package can be limited to
   const sportClasses = timetables.filter((c) => c.sport_id === sid)
   const ticked = classIds.filter((id) => sportClasses.some((c) => c.id === id))
-  // the coaches of the chosen sport that a space package can include
-  const sportCoaches = coaches.filter(
-    (c) =>
-      (c.active || coachIds.includes(c.id)) &&
-      c.sports.some((s) => s.id === sid),
-  )
-  const coachTicked = coachIds.filter((id) =>
-    sportCoaches.some((c) => c.id === id),
-  )
-  // many coaches: a search box, 5 at a time ("See more" shows 5 more), the ticked ones first
-  const [coachSearch, setCoachSearch] = useState("")
-  const [coachShown, setCoachShown] = useState(5)
-  const coachFound = sportCoaches
-    .filter((c) =>
-      c.name.toLowerCase().includes(coachSearch.trim().toLowerCase()),
-    )
-    .sort(
-      (a, b) =>
-        Number(coachTicked.includes(b.id)) - Number(coachTicked.includes(a.id)),
-    )
+  // the coaches a space package includes (only those still teaching the sport are saved)
+  const coachTicked = useSportCoachIds(sid, coachIds)
 
   const setRow = (i: number, patch: Partial<OptionRow>) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)))
@@ -482,89 +464,15 @@ function PackageDialog({
             ))}
           {/* a space package may include coaches: booked with the space at no extra cost */}
           {covers === "space" && (
-            <div className="space-y-2 rounded-lg border p-3">
-              <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  checked={withCoaches}
-                  onChange={(e) => setWithCoaches(e.target.checked)}
-                  className="size-4 accent-primary"
-                />
-                {t("packages.includeCoaches")}
-              </label>
-              {withCoaches && (
-                <>
-                  {sportCoaches.length > 5 && (
-                    <div className="relative">
-                      <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        type="search"
-                        aria-label={t("packages.coachSearch")}
-                        placeholder={t("packages.coachSearch")}
-                        value={coachSearch}
-                        onChange={(e) => {
-                          setCoachSearch(e.target.value)
-                          setCoachShown(5)
-                        }}
-                        className={cn(input, "pl-9")}
-                      />
-                    </div>
-                  )}
-                  {coachTicked.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {t("packages.coachesTicked", {
-                        count: coachTicked.length,
-                      })}
-                    </p>
-                  )}
-                  {sportCoaches.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      {t("packages.noCoaches")}
-                    </p>
-                  ) : coachFound.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      {t("packages.noCoachFound")}
-                    </p>
-                  ) : (
-                    coachFound.slice(0, coachShown).map((c) => (
-                      <label
-                        key={c.id}
-                        className="flex min-h-11 cursor-pointer items-center gap-3 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={coachTicked.includes(c.id)}
-                          onChange={(e) =>
-                            setCoachIds(
-                              e.target.checked
-                                ? [...coachTicked, c.id]
-                                : coachTicked.filter((id) => id !== c.id),
-                            )
-                          }
-                          className="size-4 accent-primary"
-                        />
-                        {c.name}
-                      </label>
-                    ))
-                  )}
-                  {coachFound.length > coachShown && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="h-11 lg:h-9"
-                      onClick={() => setCoachShown((n) => n + 5)}
-                    >
-                      {t("packages.seeMore", {
-                        count: Math.min(5, coachFound.length - coachShown),
-                      })}
-                    </Button>
-                  )}
-                </>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {t("packages.coachesHint")}
-              </p>
-            </div>
+            <CoachPicker
+              sportId={sid}
+              on={withCoaches}
+              onToggle={setWithCoaches}
+              value={coachIds}
+              onChange={setCoachIds}
+              label={t("packages.includeCoaches")}
+              hint={t("packages.coachesHint")}
+            />
           )}
         </fieldset>
         <div className="space-y-1.5">

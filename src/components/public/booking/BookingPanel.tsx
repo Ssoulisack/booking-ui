@@ -64,6 +64,7 @@ import {
   type Selection,
 } from "./selection"
 import { lengthsOf } from "@/components/global/booking/lengths"
+import { CoachDay } from "./CoachDay"
 import { PackageChoice } from "./PackageChoice"
 import { chosenPackage, fitAvailability, useFitPackages } from "./package-fit"
 import AnimatedList from "@/components/reactbits/AnimatedList"
@@ -156,7 +157,11 @@ export function BookingPanel() {
   const availability = useAvailability(slug, query)
   // with a coach: every coach's free times with the space that day; the times offered are those at least one coach the
   // customer may book is free, and the coach step lists the coaches free at the time picked
-  const coachAvail = useCoachAvailability(slug, withCoach ? query : null)
+  // read as soon as the space has coaches: the day step lists the coaches free that day (with a schedule)
+  const coachAvail = useCoachAvailability(
+    slug,
+    what === "court" && bookableCoaches.length > 0 ? query : null,
+  )
   const coachSlots = (coachAvail.data ?? []).filter((c) =>
     bookableCoaches.some((b) => b.id === c.coach_id),
   )
@@ -353,6 +358,19 @@ export function BookingPanel() {
             </Step>
           )}
 
+          {/* the coaches free on the day picked (with this space), each with a Schedule popup */}
+          {what === "court" &&
+            bookableCoaches.length > 0 &&
+            coachAvail.data && (
+              <CoachDay
+                coaches={bookableCoaches}
+                free={coachAvail.data}
+                date={date}
+                tz={tz}
+                included={court?.coach_ids ?? []}
+              />
+            )}
+
           {what === "class" ? (
             <>
               <ClassList
@@ -455,6 +473,8 @@ export function BookingPanel() {
                     ? freeCoaches.map((c) => ({ ...c, price_per_hour: null }))
                     : freeCoaches
                 }
+                // coaches that come free with this space say so
+                included={court?.coach_ids ?? []}
                 value={coach?.id}
                 onChange={(id) => choose({ coach: id })}
               />
@@ -869,10 +889,13 @@ function TargetList({
   items,
   value,
   onChange,
+  included = [],
 }: {
   items: Array<PublicResource | PublicCoach>
   value?: number
   onChange: (id: number) => void
+  /** coaches that come free with the space: "Included" instead of their price */
+  included?: number[]
 }) {
   const { t } = useTranslation()
   return (
@@ -894,12 +917,19 @@ function TargetList({
             )}
           >
             <span className="display-tight text-xl">{item.name}</span>
-            {item.price_per_hour !== null && item.currency && (
-              <span className="shrink-0 text-sm text-muted-foreground">
-                {t("public.perHour", {
-                  price: money(item.price_per_hour, item.currency),
-                })}
+            {included.includes(item.id) ? (
+              <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-sm font-medium text-emerald-900 dark:bg-emerald-400/20 dark:text-emerald-200">
+                {t("public.coachIncluded")}
               </span>
+            ) : (
+              item.price_per_hour !== null &&
+              item.currency && (
+                <span className="shrink-0 text-sm text-muted-foreground">
+                  {t("public.perHour", {
+                    price: money(item.price_per_hour, item.currency),
+                  })}
+                </span>
+              )
             )}
           </button>
         )

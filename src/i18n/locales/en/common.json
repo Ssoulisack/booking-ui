@@ -303,6 +303,17 @@
       "leftNow": "now {{left}}"
     },
     "noCoachFree": "No coach is free for this whole time any more. Go back and pick another time.",
+    "coachIncluded": "Included",
+    "coachDay": {
+      "title": "Coaches free on {{day}}",
+      "none": "No coach is free on this day with this space.",
+      "schedule": "Schedule",
+      "scheduleOf": "Schedule of {{name}}",
+      "freeOn": "Free on {{day}} (with this space)",
+      "week": "Working hours each week",
+      "off": "Off",
+      "weekHint": "Times already booked are not free, even inside working hours."
+    },
     "classesTitle": "Coming up",
     "coachesTitle": "Coaches",
     "policyTitle": "Booking policy",
@@ -702,6 +713,10 @@
       "needSport": "Add a sport first, then its spaces.",
       "kind": "Type",
       "namePlaceholder": "Court 1, Ring A, Lane 3…",
+      "coachesTitle": "Coaches included free",
+      "coachesLead": "Booked together with this space, these coaches cost nothing (an internal class). Other coaches are paid at their hourly price.",
+      "includeCoaches": "Include coaches free with this space",
+      "coachesHint": "Only for this space: the same coach can still be paid with another space.",
       "afterAdd": "Next, open it to set opening hours and a price.",
       "hoursAndPrice": "Hours and price of {{name}}"
     },

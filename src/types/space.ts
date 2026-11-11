@@ -12,6 +12,8 @@ export interface ManagedResource extends Partial<TableFields> {
   active: boolean
   /** restaurant tables: kept for walk-ins (customers see it as taken, events do not sell it) */
   walk_in_only?: boolean
+  /** sport spaces: the coaches included free with this space (booked together, the coach costs nothing) */
+  coach_ids?: number[]
 }
 
 export type TableShape = "round" | "square" | "long"

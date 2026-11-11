@@ -31,6 +31,7 @@ import type { ManagedSport } from "@/types/sport"
 
 import { useSettings } from "@/hooks/use-branch"
 import { useResourcesList } from "@/hooks/use-space"
+import { useSportCoachIds } from "@/hooks/use-coach"
 import { useSportsList } from "@/hooks/use-sport"
 import { useUnsaved } from "@/stores/unsaved"
 import { useDashboard } from "@/components/provider/dashboard-context"
@@ -42,6 +43,7 @@ import {
   PageHeader,
   Panel,
 } from "@/components/protected/branch/ui"
+import { CoachPicker } from "./CoachPicker"
 import { HoursEditor } from "./HoursEditor"
 import { PriceEditor } from "./PriceEditor"
 import { ReadyBadges } from "./ReadyBadges"
@@ -380,6 +382,7 @@ export function CourtDetailPage() {
         />
       </div>
       <CourtDetails key={court.id} court={court} />
+      <SpaceCoaches key={`coaches-${court.id}`} court={court} />
       <div className="grid gap-6 xl:grid-cols-2">
         <HoursEditor owner="resource" id={court.id} />
         <div className="space-y-6">
@@ -402,5 +405,62 @@ export function CourtDetailPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * The coaches included free with this space (an internal class): booked together, the coach costs nothing; other
+ * coaches are paid at their hourly price. Saved on its own.
+ */
+function SpaceCoaches({ court }: { court: ManagedResource }) {
+  const { t } = useTranslation()
+  const save = useSaveResource()
+  const saved = court.coach_ids ?? []
+  const [ids, setIds] = useState<number[]>(saved)
+  const [on, setOn] = useState(saved.length > 0)
+  const kept = useSportCoachIds(court.sport_id, ids)
+  const next = on ? kept : []
+  const dirty =
+    next.length !== saved.length || next.some((id) => !saved.includes(id))
+  useUnsaved(dirty)
+  return (
+    <Panel title={t("setup.courts.coachesTitle")}>
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          {t("setup.courts.coachesLead")}
+        </p>
+        <ErrorAlert error={save.error} />
+        <CoachPicker
+          sportId={court.sport_id}
+          on={on}
+          onToggle={setOn}
+          value={ids}
+          onChange={setIds}
+          label={t("setup.courts.includeCoaches")}
+          hint={t("setup.courts.coachesHint")}
+        />
+        <Button
+          type="button"
+          className="h-11 lg:h-9"
+          disabled={save.isPending || !dirty}
+          onClick={() =>
+            save.mutate(
+              {
+                id: court.id,
+                sport_id: court.sport_id,
+                name: court.name,
+                kind: court.kind,
+                active: court.active,
+                coach_ids: next,
+              },
+              { onSuccess: () => toast.success(t("settings.saved")) },
+            )
+          }
+        >
+          {save.isPending && <Spinner />}
+          {t("dash.save")}
+        </Button>
+      </div>
+    </Panel>
   )
 }
