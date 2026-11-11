@@ -128,8 +128,8 @@ export function PackagesPage() {
                           {coversLabel(t, p)}
                           {p.coach_names?.length > 0 && (
                             <span className="block text-xs text-muted-foreground">
-                              {t("packages.withCoaches", {
-                                names: p.coach_names.join(", "),
+                              {t("packages.coachesTicked", {
+                                count: p.coach_names.length,
                               })}
                             </span>
                           )}

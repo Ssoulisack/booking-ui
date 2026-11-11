@@ -10,7 +10,7 @@ import { DASHBOARD_NAV } from "@/lib/constants/nav"
 import { roleAtLeast } from "@/lib/constants/roles"
 import { AppShell, type NavItem } from "@/components/layout/AppShell"
 import { crumbsFor } from "@/lib/breadcrumbs"
-import { EndSession } from "@/routes/guards"
+import { toast } from "sonner"
 import { useCurrentBranch } from "@/stores/branch"
 import { runsCompany, useSession } from "@/stores/session"
 
@@ -37,11 +37,12 @@ export function DashboardIndex() {
   const usable = usableBranches(branches.data)
   if (usable.length === 0) {
     if (runsCompany(user)) return <Navigate to="/company" replace />
-    // every place they worked was switched off or closed: back to login with the reason
+    // every place they worked was switched off or closed: they stay logged in and see the site as a customer, with a
+    // short note why the dashboard is gone
     if (branches.data.length > 0) {
       const closed = branches.data.every((b) => b.status === "closed")
       return (
-        <EndSession reason={closed ? "BRANCH_CLOSED" : "MEMBERSHIP_DISABLED"} />
+        <AsCustomer reason={closed ? "BRANCH_CLOSED" : "MEMBERSHIP_DISABLED"} />
       )
     }
     return <Navigate to="/" replace />
@@ -49,6 +50,15 @@ export function DashboardIndex() {
 
   const pick = usable.find((b) => b.branch_id === currentId) ?? usable[0]
   return <Navigate to={`/dashboard/${pick.branch_id}`} replace />
+}
+
+/** Off to the customer site, telling once why the dashboard is not available any more */
+function AsCustomer({ reason }: { reason: string }) {
+  const { t } = useTranslation()
+  useEffect(() => {
+    toast.info(t(`errors:${reason}`), { id: "dashboard-off" })
+  }, [reason, t])
+  return <Navigate to="/" replace />
 }
 
 /**

@@ -1,5 +1,4 @@
 import {
-  useQueries,
   keepPreviousData,
   useInfiniteQuery,
   useMutation,
@@ -7,6 +6,9 @@ import {
   type UseMutationOptions,
 } from "@tanstack/react-query"
 
+import { useEffect, useState } from "react"
+
+import { normalizePhone } from "@/lib/phone"
 import { publicService } from "@/services/public.api"
 import type {
   Booking,
@@ -136,23 +138,31 @@ export function useCoachAvailability(
   })
 }
 
-/** The coaches free with a space on several days at once (one answer per day, the same cache as above) */
-export function useCoachAvailabilityDays(
+/**
+ * Whether the phone a guest typed already has an account (they are asked to log in). Asked once the phone is a full Lao
+ * number and has stayed the same for a moment; null while unknown.
+ */
+export function usePhoneHasAccount(
   slug: string,
-  base: Omit<AvailabilityQuery, "date"> | null,
-  dates: string[],
+  phone: string,
+  enabled = true,
 ) {
-  return useQueries({
-    queries: dates.map((date) => {
-      const q = { ...base, date } as AvailabilityQuery
-      return {
-        queryKey: publicKeys.coachAvailability(slug, q),
-        queryFn: () => publicService.coachAvailability(slug, q),
-        enabled: !!base,
-        staleTime: 15_000,
-      }
-    }),
+  const lao = normalizePhone(phone)
+  const [settled, setSettled] = useState<string | null>(null)
+  useEffect(() => {
+    const id = setTimeout(() => setSettled(lao), 400)
+    return () => clearTimeout(id)
+  }, [lao])
+  const q = useQuery({
+    queryKey: ["public", slug, "phone-check", settled] as const,
+    queryFn: () => publicService.phoneCheck(slug, settled!),
+    enabled: enabled && !!settled && settled === lao,
+    staleTime: 60_000,
+    retry: false,
   })
+  return enabled && lao && settled === lao
+    ? (q.data?.has_account ?? null)
+    : null
 }
 
 export function useCreateBooking(slug: string) {

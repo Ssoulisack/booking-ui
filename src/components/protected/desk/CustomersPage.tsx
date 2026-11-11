@@ -1,6 +1,8 @@
 import { SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+
+import { EmailNotVerifiedBadge } from "@/components/global/EmailVerify"
 import { Link, useSearchParams } from "react-router"
 
 import { PageError } from "@/components/global/page-state"
@@ -115,9 +117,19 @@ export function CustomersPage() {
               className="flex flex-wrap items-center gap-3 px-4 py-3"
             >
               <div className="min-w-48 flex-1">
-                <p className="font-medium">{c.name}</p>
+                <p className="flex flex-wrap items-center gap-2 font-medium">
+                  {c.name}
+                  <EmailNotVerifiedBadge
+                    email={c.email}
+                    verified={c.email_verified}
+                  />
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  {[c.member_no, c.phone && displayPhone(c.phone), c.email]
+                  {[
+                    c.member_no,
+                    c.phone && displayPhone(c.phone),
+                    c.email || t("company.noEmail"),
+                  ]
                     .filter(Boolean)
                     .join(" · ")}
                 </p>

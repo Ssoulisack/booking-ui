@@ -7,6 +7,8 @@ import {
 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+
+import { EmailNotVerifiedBadge } from "@/components/global/EmailVerify"
 import { useSearchParams } from "react-router"
 import { toast } from "sonner"
 
@@ -121,6 +123,12 @@ function UserRow({ user: u, onReset }: { user: User; onReset: () => void }) {
           {u.name}
           {u.company_role !== "" && (
             <Badge variant="secondary">{t(`roles.${u.company_role}`)}</Badge>
+          )}
+          {!u.email_generated && (
+            <EmailNotVerifiedBadge
+              email={u.email}
+              verified={u.email_verified}
+            />
           )}
           {!u.status && (
             <Badge className="border-0 bg-rose-100 text-rose-900 dark:bg-rose-400/20 dark:text-rose-200">

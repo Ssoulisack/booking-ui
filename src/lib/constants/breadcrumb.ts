@@ -6,6 +6,7 @@ export const DASHBOARD_CRUMBS: Record<string, string> = {
   calendar: "nav.calendar",
   bookings: "nav.bookings",
   customers: "nav.customers",
+  employees: "nav.employees",
   packages: "nav.packages",
   "cash-up": "nav.cashUp",
   setup: "nav.setup",

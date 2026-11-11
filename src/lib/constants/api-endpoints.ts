@@ -6,6 +6,9 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: "/auth/forgot-password",
     LOGIN: "/auth/login",
     ME: "/auth/me",
+    CHANGE_PASSWORD: "/auth/me/password",
+    EMAIL_CODE: "/auth/me/email/code",
+    EMAIL_VERIFY: "/auth/me/email/verify",
     REGISTER: "/auth/register",
     RESET_PASSWORD: "/auth/reset-password",
     SOCIAL: (provider: string) => `/auth/social/${provider}`,
@@ -52,6 +55,7 @@ export const API_ENDPOINTS = {
     ROOT: "/company/",
     RULES: "/company/rules",
     TEAM: "/company/team",
+    TEAM_LOOKUP: "/company/team/lookup",
     TEAM_MEMBER: (teamId: number) => `/company/team/${teamId}`,
     TRANSFER_OWNERSHIP: "/company/transfer-ownership",
     UPLOADS: "/company/uploads",
@@ -61,6 +65,9 @@ export const API_ENDPOINTS = {
   },
   BRANCH: {
     ROOT: (branchId: number) => `/branches/${branchId}`,
+    TEAM: (branchId: number) => `/branches/${branchId}/team`,
+    TEAM_MEMBER: (branchId: number, userId: number) =>
+      `/branches/${branchId}/team/${userId}`,
     AVAILABILITY: (branchId: number) => `/branches/${branchId}/availability`,
     BOOKING: (branchId: number, bookingId: number) =>
       `/branches/${branchId}/bookings/${bookingId}`,
@@ -182,6 +189,8 @@ export const API_ENDPOINTS = {
       `/public/branches/${encodeURIComponent(slug)}/bookings`,
     BOOKINGS_FIND: (slug: string) =>
       `/public/branches/${encodeURIComponent(slug)}/bookings/find`,
+    PHONE_CHECK: (slug: string) =>
+      `/public/branches/${encodeURIComponent(slug)}/phone-check`,
     BOOKINGS_FIND_CANCEL: (slug: string) =>
       `/public/branches/${encodeURIComponent(slug)}/bookings/find/cancel`,
     BOOKING_CANCEL: (slug: string, token: string) =>

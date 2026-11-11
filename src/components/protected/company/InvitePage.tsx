@@ -1,4 +1,12 @@
-import { ArrowLeftIcon, MailIcon, SendIcon } from "lucide-react"
+import {
+  ArrowLeftIcon,
+  MailIcon,
+  PhoneIcon,
+  SearchIcon,
+  SendIcon,
+  UserPlusIcon,
+  UserRoundIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
@@ -9,6 +17,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { displayPhone } from "@/lib/phone"
 import {
   DeleteButton,
   PageHeader,
@@ -22,14 +32,20 @@ import {
   useInvitations,
   useInvite,
   useResendInvitation,
+  useAddTeamMember,
+  useTeamCandidate,
 } from "@/hooks/use-team"
 import { BranchPicker, RolePicker, type Role } from "./team-ui"
 
-/** /company/team/invite — invite employees by email, and the invitations not used yet */
+/**
+ * /company/team/invite — add employees: by email (an invitation), or by phone for someone without email (they register
+ * on the site first, then are found here and added straight away), and the invitations not used yet
+ */
 export function InvitePage() {
   const { t } = useTranslation()
   const branches = useBranches()
   const open = (branches.data ?? []).filter((b) => b.status !== "closed")
+  const [tab, setTab] = useState("email")
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <Button asChild variant="ghost" className="-ml-3 h-11 lg:h-9">
@@ -38,8 +54,28 @@ export function InvitePage() {
           {t("nav.team")}
         </Link>
       </Button>
-      <PageHeader title={t("company.invite")} lead={t("company.inviteLead")} />
-      <InvitePanel branches={open} />
+      <PageHeader
+        title={t("company.invite")}
+        lead={tab === "email" ? t("company.inviteLead") : undefined}
+      />
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="h-11 lg:h-9">
+          <TabsTrigger value="email" className="px-3">
+            <MailIcon />
+            {t("team.byEmail")}
+          </TabsTrigger>
+          <TabsTrigger value="phone" className="px-3">
+            <PhoneIcon />
+            {t("team.byPhone")}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="email" className="mt-4">
+          <InvitePanel branches={open} />
+        </TabsContent>
+        <TabsContent value="phone" className="mt-4">
+          <AddByPhonePanel branches={open} />
+        </TabsContent>
+      </Tabs>
       <PendingInvitations />
     </div>
   )
@@ -117,6 +153,131 @@ function InvitePanel({ branches }: { branches: BranchSummary[] }) {
           {t("team.send")}
         </Button>
       </form>
+    </Panel>
+  )
+}
+
+/** Someone without email: they register first (with their phone), then are found here and added with a role */
+function AddByPhonePanel({ branches }: { branches: BranchSummary[] }) {
+  const { t } = useTranslation()
+  const [text, setText] = useState("")
+  const [q, setQ] = useState("")
+  const found = useTeamCandidate(q)
+  const add = useAddTeamMember()
+  const [role, setRole] = useState<Role>("staff")
+  const [branchIds, setBranchIds] = useState<number[]>([])
+  const person = found.data
+
+  return (
+    <Panel>
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">{t("team.byPhoneLead")}</p>
+        <form
+          className="flex flex-wrap items-end gap-3"
+          onSubmit={(e) => {
+            e.preventDefault()
+            add.reset()
+            setQ(text.trim())
+          }}
+        >
+          <div className="min-w-56 flex-1 space-y-1.5">
+            <Label htmlFor="add-phone">{t("team.phoneOrNo")}</Label>
+            <Input
+              id="add-phone"
+              inputMode="tel"
+              placeholder="2055551234 / CNO000042"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="h-11 text-base lg:h-9 lg:text-sm"
+            />
+          </div>
+          <Button
+            type="submit"
+            variant="outline"
+            className="h-11 lg:h-9"
+            disabled={!text.trim() || found.isFetching}
+          >
+            {found.isFetching ? <Spinner /> : <SearchIcon />}
+            {t("team.find")}
+          </Button>
+        </form>
+        <ErrorAlert error={found.error} />
+        {person && (
+          <form
+            className="space-y-4 rounded-lg border p-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              add.mutate(
+                {
+                  user_id: person.user_id,
+                  role,
+                  branch_ids: role === "admin" ? [] : branchIds,
+                },
+                {
+                  onSuccess: () => {
+                    toast.success(t("team.added", { name: person.name }))
+                    setText("")
+                    setQ("")
+                    setBranchIds([])
+                  },
+                },
+              )
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <UserRoundIcon className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+              <div className="min-w-0">
+                <p className="font-medium">{person.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {[
+                    person.member_no,
+                    person.phone && displayPhone(person.phone),
+                    person.email || t("company.noEmail"),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </div>
+            </div>
+            {person.in_team ? (
+              <p className="text-sm text-muted-foreground">
+                {t("team.alreadyInTeam")}
+              </p>
+            ) : (
+              <>
+                <div className="w-40 space-y-1.5">
+                  <Label htmlFor="add-role">{t("team.role")}</Label>
+                  <RolePicker id="add-role" value={role} onChange={setRole} />
+                </div>
+                {role === "admin" ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t("company.adminHint")}
+                  </p>
+                ) : (
+                  <BranchPicker
+                    idPrefix="add-branch"
+                    branches={branches}
+                    value={branchIds}
+                    onChange={setBranchIds}
+                  />
+                )}
+                <ErrorAlert error={add.error} />
+                <Button
+                  type="submit"
+                  className="h-11 lg:h-9"
+                  disabled={
+                    add.isPending ||
+                    (role !== "admin" && branchIds.length === 0)
+                  }
+                >
+                  {add.isPending ? <Spinner /> : <UserPlusIcon />}
+                  {t("team.addToTeam")}
+                </Button>
+              </>
+            )}
+          </form>
+        )}
+      </div>
     </Panel>
   )
 }

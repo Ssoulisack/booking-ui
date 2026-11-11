@@ -2,10 +2,12 @@ import {
   ArrowLeftIcon,
   CalendarDaysIcon,
   MapPinIcon,
+  TriangleAlertIcon,
   UsersIcon,
 } from "lucide-react"
 import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
 import { useNavigate } from "react-router"
 
 import { ErrorAlert } from "@/components/global/form"
@@ -65,7 +67,7 @@ import {
 } from "./selection"
 import { lengthsOf } from "@/components/global/booking/lengths"
 import { CoachAvatar } from "@/components/global/CoachAvatar"
-import { CoachDay } from "./CoachDay"
+import { freeRanges } from "./coach-times"
 import { PackageChoice } from "./PackageChoice"
 import { chosenPackage, fitAvailability, useFitPackages } from "./package-fit"
 import AnimatedList from "@/components/reactbits/AnimatedList"
@@ -141,14 +143,14 @@ export function BookingPanel() {
     ? bookableCoaches.find((c) => c.id === sel.coach)
     : undefined
 
-  // courts go step by step: 1 date, coach or not and length, 2 the time, 3 the coach (only with a coach: the coaches
-  // free at that time), then confirm (checkout)
+  // courts go step by step: 1 date, coach or not and length, 2 the coach (only with a coach: the coaches free that
+  // day), 3 the time (with a coach: only that coach's free times), then confirm (checkout)
   const timeFlow = what === "court"
   const step =
-    timeFlow && withCoach && sel.step === "coach" && sel.start
-      ? "coach"
-      : timeFlow && (sel.step === "time" || sel.step === "coach")
-        ? "time"
+    timeFlow && sel.step === "time" && (!withCoach || coach)
+      ? "time"
+      : timeFlow && withCoach && (sel.step === "coach" || sel.step === "time")
+        ? "coach"
         : "when"
 
   const query =
@@ -156,19 +158,24 @@ export function BookingPanel() {
       ? { date, resource_id: court?.id, sport_id: sport.id }
       : null
   const availability = useAvailability(slug, query)
-  // with a coach: every coach's free times with the space that day; the times offered are those at least one coach the
-  // customer may book is free, and the coach step lists the coaches free at the time picked
-  // read as soon as the space has coaches: the day step lists the coaches free that day (with a schedule)
-  const coachAvail = useCoachAvailability(
-    slug,
-    what === "court" && bookableCoaches.length > 0 ? query : null,
-  )
+  // with a coach: every coach's free times with the space that day (the coach step lists those free that day, the time
+  // step offers the chosen coach's times)
+  const coachAvail = useCoachAvailability(slug, withCoach ? query : null)
   const coachSlots = (coachAvail.data ?? []).filter((c) =>
     bookableCoaches.some((b) => b.id === c.coach_id),
   )
+  // with a coach: before one is chosen, the times some coach is free (the lengths offered); once chosen, only that
+  // coach's times with the space
+  const coachTimes = coachSlots.find((c) => c.coach_id === coach?.id)
   const base = withCoach
     ? availability.data && coachAvail.data
-      ? anyCoachFree(availability.data, coachSlots)
+      ? coach
+        ? {
+            ...availability.data,
+            slots: coachTimes?.slots ?? [],
+            prices: coachTimes?.prices ?? [],
+          }
+        : anyCoachFree(availability.data, coachSlots)
       : undefined
     : availability.data
   // the lengths the chosen package pays: 60 minutes per visit offers 1 h, 2 h… only (1 h 30 is booked without package)
@@ -196,17 +203,14 @@ export function BookingPanel() {
     (s) => s.starts_at === sel.start && s.durations_min.includes(length),
   )
   // the price of the length: the space alone, or the space with the chosen coach
-  const coachPrices = coachSlots.find((c) => c.coach_id === coach?.id)
-  const price = (withCoach ? coachPrices : availability.data)?.prices.find(
+  const price = (withCoach ? coachTimes : availability.data)?.prices.find(
     (p) => p.duration_min === length,
   )?.price
-  // the coach step: the coaches free for the whole length from the time picked
+  // the coach step: the coaches free that day for the length chosen (some start allows it)
   const freeCoaches = bookableCoaches.filter((c) =>
     coachSlots
       .find((x) => x.coach_id === c.id)
-      ?.slots.some(
-        (s) => s.starts_at === sel.start && s.durations_min.includes(length),
-      ),
+      ?.slots.some((s) => s.durations_min.includes(length)),
   )
 
   // a change at one step clears the steps after it
@@ -224,12 +228,15 @@ export function BookingPanel() {
   }
 
   const next = () =>
-    setSel({ ...sel, step: "time", date, length }, { push: true })
-  // the coach step goes back to the time (the time stays picked); the time step back to the start
+    setSel(
+      { ...sel, step: withCoach ? "coach" : "time", date, length },
+      { push: true },
+    )
+  // back one step: the time step to the coach (with a coach), the coach step to the start; the time picked is dropped
   const back = () =>
     setSel(
-      step === "coach"
-        ? { ...sel, step: "time", coach: undefined }
+      step === "time" && withCoach
+        ? { ...sel, step: "coach", start: undefined }
         : { ...sel, step: undefined, start: undefined, coach: undefined },
     )
   const toCheckout = () => {
@@ -248,7 +255,7 @@ export function BookingPanel() {
     )
   }
   const target = [court?.name, coach?.name].filter(Boolean).join(" + ")
-  const at = step === "when" ? 1 : step === "time" ? 2 : 3
+  const at = step === "when" ? 1 : step === "coach" ? 2 : withCoach ? 3 : 2
 
   return (
     // once a day is picked, the panel takes its colour (Monday yellow, Tuesday pink, …)
@@ -348,31 +355,56 @@ export function BookingPanel() {
                   { id: 1, label: t("public.withCoach") },
                 ]}
                 value={withCoach ? 1 : 0}
-                onChange={(on) =>
+                onChange={(on) => {
+                  // with a coach only the coach's working times can be booked: say so once, when it is chosen
+                  if (on && !withCoach)
+                    toast.info(t("public.coachNotice.title"), {
+                      // the lead, and under it a bar that runs down while the notice stays (6 s)
+                      description: (
+                        <>
+                          {t("public.coachNotice.lead")}
+                          <span
+                            aria-hidden
+                            className="mt-2 block h-1 overflow-hidden rounded-full bg-[#FBB828]/25"
+                          >
+                            <span className="toast-countdown block h-full rounded-full bg-[#FBB828] [animation-duration:6000ms]" />
+                          </span>
+                        </>
+                      ),
+                      duration: 6000,
+                      // one at a time, however often it is switched on
+                      id: "coach-notice",
+                      // navy with the lead in #FBB828 (readable on navy, not on the light default)
+                      classNames: {
+                        toast: "!border-[#FBB828]/40 !bg-[#0D1330] !text-white",
+                        // larger than a usual notice: it is read before choosing
+                        title: "!text-base !font-semibold !text-white",
+                        description:
+                          "!text-[15px] !leading-relaxed !text-[#FBB828]",
+                        icon: "!text-[#FBB828]",
+                      },
+                    })
                   choose({
                     withCoach: on || undefined,
                     coach: on ? sel.coach : undefined,
                     start: undefined,
                   })
-                }
+                }}
               />
             </Step>
           )}
 
-          {/* the coaches free on the day picked (with this space), each with a Schedule popup */}
-          {what === "court" &&
-            bookableCoaches.length > 0 &&
-            coachAvail.data && (
-              <CoachDay
-                coaches={bookableCoaches}
-                free={coachAvail.data}
-                date={date}
-                days={days}
-                base={{ resource_id: court?.id, sport_id: sport.id }}
-                tz={tz}
-                included={court?.coach_ids ?? []}
-              />
-            )}
+          {/* with a coach: their schedule that day (the coaches free with this space and when) */}
+          {what === "court" && withCoach && (
+            <CoachSchedule
+              coaches={bookableCoaches}
+              free={coachSlots}
+              loading={coachAvail.isPending}
+              day={dayIn(`${date}T12:00:00`, tz)}
+              tz={tz}
+              included={court?.coach_ids ?? []}
+            />
+          )}
 
           {what === "class" ? (
             <>
@@ -446,7 +478,7 @@ export function BookingPanel() {
                 }
                 onClick={next}
               >
-                {t("public.nextTime")}
+                {withCoach ? t("public.nextCoach") : t("public.nextTime")}
               </Button>
             </section>
           )}
@@ -455,18 +487,14 @@ export function BookingPanel() {
 
       {step === "coach" && (
         <>
-          {/* the time is picked but not booked: leaving the page asks first */}
-          <KeepTime />
           <p className="rounded-xl bg-card p-4 font-semibold ring-1 ring-border">
-            {court?.name} · {dayIn(`${date}T12:00:00`, tz)}
-            {slot &&
-              ` · ${timeIn(slot.starts_at, tz)}–${timeIn(new Date(Date.parse(slot.starts_at) + length * 60_000).toISOString(), tz)}`}
+            {court?.name} · {dayIn(`${date}T12:00:00`, tz)} · {duration(length)}
           </p>
           <Step title={t("public.step.coach")}>
             {freeCoaches.length === 0 ? (
-              // nobody is free for the whole time picked any more: pick another time
+              // nobody is free that day for this length
               <p className="rounded-xl bg-card p-4 text-sm text-muted-foreground ring-1 ring-border">
-                {t("public.noCoachFree")}
+                {t("public.noCoachDay")}
               </p>
             ) : (
               <TargetList
@@ -476,13 +504,64 @@ export function BookingPanel() {
                     ? freeCoaches.map((c) => ({ ...c, price_per_hour: null }))
                     : freeCoaches
                 }
-                // coaches that come free with this space say so
-                included={court?.coach_ids ?? []}
+                // why a coach costs nothing: free with this space, or paid by the package chosen
+                badges={Object.fromEntries(
+                  freeCoaches
+                    .map((c): [number, string] | null =>
+                      (court?.coach_ids ?? []).includes(c.id)
+                        ? [c.id, t("public.coachIncluded")]
+                        : pkgChosen
+                          ? [c.id, t("public.coachInPackage")]
+                          : null,
+                    )
+                    .filter((x): x is [number, string] => !!x),
+                )}
+                // each coach's free hours that day
+                subs={Object.fromEntries(
+                  freeCoaches.map((c) => [
+                    c.id,
+                    freeRanges(
+                      coachSlots.find((x) => x.coach_id === c.id)?.slots ?? [],
+                    )
+                      .map(([a, b]) => `${timeIn(a, tz)}–${timeIn(b, tz)}`)
+                      .join(", "),
+                  ]),
+                )}
                 value={coach?.id}
-                onChange={(id) => choose({ coach: id })}
+                onChange={(id) => choose({ coach: id, start: undefined })}
               />
             )}
           </Step>
+          {/* a coach that is not free with this space (nor paid by the package chosen): the customer pays for them */}
+          {coach &&
+            !pkgChosen &&
+            !(court?.coach_ids ?? []).includes(coach.id) &&
+            coach.price_per_hour !== null &&
+            coach.currency && (
+              <p
+                role="status"
+                className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-950 ring-1 ring-amber-200 dark:bg-amber-400/15 dark:text-amber-100 dark:ring-amber-400/30"
+              >
+                <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  {t("public.coachPaid", {
+                    name: coach.name,
+                    price: money(
+                      Math.round((coach.price_per_hour * length) / 60),
+                      coach.currency,
+                    ),
+                    length: duration(length),
+                  })}
+                  {/* the customer has packages: one of them may pay this coach (they chose Without package) */}
+                  {fits.length > 0 &&
+                    ` ${
+                      fits.some((f) => f.coach_ids?.includes(coach.id))
+                        ? t("public.coachPaidPkgHas")
+                        : t("public.coachPaidPkg")
+                    }`}
+                </span>
+              </p>
+            )}
           <div className="sticky bottom-24 z-30 grid grid-cols-[auto_1fr] gap-2 rounded-xl bg-card p-4 shadow-lg ring-1 ring-border lg:bottom-4">
             <Button
               type="button"
@@ -498,9 +577,9 @@ export function BookingPanel() {
               size="lg"
               className="h-12 bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
               disabled={!coach || !freeCoaches.some((c) => c.id === coach.id)}
-              onClick={toCheckout}
+              onClick={() => setSel({ ...sel, step: "time" }, { push: true })}
             >
-              {t("public.continue")}
+              {t("public.nextTime")}
             </Button>
           </div>
         </>
@@ -520,8 +599,7 @@ export function BookingPanel() {
               {target} · {dayIn(`${date}T12:00:00`, tz)} · {duration(length)}
               {pkgChosen
                 ? ` · ${t("public.pkg.paidBy", { name: pkgChosen.name })}`
-                : !withCoach &&
-                  price !== undefined &&
+                : price !== undefined &&
                   availability.data.currency &&
                   ` · ${money(price, availability.data.currency)}`}
             </p>
@@ -547,20 +625,7 @@ export function BookingPanel() {
               minutes={length}
               tz={tz}
               onBack={back}
-              onContinue={() =>
-                withCoach
-                  ? setSel(
-                      {
-                        ...sel,
-                        step: "coach",
-                        start: slot!.starts_at,
-                        length,
-                        coach: undefined,
-                      },
-                      { push: true },
-                    )
-                  : toCheckout()
-              }
+              onContinue={toCheckout}
             />
           </>
         ))}
@@ -892,13 +957,16 @@ function TargetList({
   items,
   value,
   onChange,
-  included = [],
+  badges = {},
+  subs = {},
 }: {
   items: Array<PublicResource | PublicCoach>
   value?: number
   onChange: (id: number) => void
-  /** coaches that come free with the space: "Included" instead of their price */
-  included?: number[]
+  /** coaches that cost nothing here, with why ("Included", "In your package"), shown instead of their price */
+  badges?: Record<number, string>
+  /** a line under each name (a coach's free hours that day) */
+  subs?: Record<number, string>
 }) {
   const { t } = useTranslation()
   return (
@@ -924,13 +992,20 @@ function TargetList({
               {"bookable" in item && (
                 <CoachAvatar src={item.image_url} className="size-10" />
               )}
-              <span className="truncate display-tight text-xl">
-                {item.name}
+              <span className="min-w-0">
+                <span className="block truncate display-tight text-xl">
+                  {item.name}
+                </span>
+                {subs[item.id] && (
+                  <span className="block text-sm text-muted-foreground tabular-nums">
+                    {subs[item.id]}
+                  </span>
+                )}
               </span>
             </span>
-            {included.includes(item.id) ? (
+            {badges[item.id] ? (
               <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-sm font-medium text-emerald-900 dark:bg-emerald-400/20 dark:text-emerald-200">
-                {t("public.coachIncluded")}
+                {badges[item.id]}
               </span>
             ) : (
               item.price_per_hour !== null &&
@@ -1319,8 +1394,71 @@ function anyCoachFree(
   }
 }
 
-/** Marks a picked time as not booked yet while it is shown (leaving the page asks first; Continue releases it) */
-function KeepTime() {
-  useUnsaved(true, "booking")
-  return null
+/**
+ * With a coach, on the first step: the coaches' schedule on the day picked: who is free with this space and when
+ * (the first 5; the coach step lists them all), so the customer knows the times they can book
+ */
+function CoachSchedule({
+  coaches,
+  free,
+  loading,
+  day,
+  tz,
+  included,
+}: {
+  coaches: PublicCoach[]
+  free: CoachAvailability[]
+  loading: boolean
+  day: string
+  tz: string
+  included: number[]
+}) {
+  const { t } = useTranslation()
+  if (loading) return <Skeleton className="h-24 rounded-xl" />
+  const rows = coaches
+    .map((c) => ({
+      c,
+      ranges: freeRanges(free.find((f) => f.coach_id === c.id)?.slots ?? []),
+    }))
+    .filter((r) => r.ranges.length > 0)
+  return (
+    <section className="space-y-3">
+      <h3 className="text-base font-semibold">
+        {t("public.coachSchedule.title", { day })}
+      </h3>
+      {rows.length === 0 ? (
+        <p className="rounded-xl bg-card p-4 text-sm text-muted-foreground ring-1 ring-border">
+          {t("public.coachSchedule.none")}
+        </p>
+      ) : (
+        <>
+          <ul className="divide-y rounded-xl bg-card ring-1 ring-border">
+            {rows.slice(0, 5).map(({ c, ranges }) => (
+              <li key={c.id} className="flex items-center gap-3 px-4 py-2.5">
+                <CoachAvatar src={c.image_url} className="size-9" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{c.name}</span>
+                  <span className="block text-sm text-muted-foreground tabular-nums">
+                    {ranges
+                      .map(([a, b]) => `${timeIn(a, tz)}–${timeIn(b, tz)}`)
+                      .join(", ")}
+                  </span>
+                </span>
+                {included.includes(c.id) && (
+                  <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900 dark:bg-emerald-400/20 dark:text-emerald-200">
+                    {t("public.coachIncluded")}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+          {rows.length > 5 && (
+            <p className="text-sm text-muted-foreground">
+              {t("public.coachSchedule.more", { count: rows.length - 5 })}
+            </p>
+          )}
+        </>
+      )}
+    </section>
+  )
 }

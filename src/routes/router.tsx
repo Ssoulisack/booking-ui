@@ -1,3 +1,5 @@
+import { ChangePasswordPrompt } from "@/components/global/ChangePasswordPrompt"
+import { VerifyEmailReminder } from "@/components/global/VerifyEmailReminder"
 import { createBrowserRouter, Outlet, ScrollRestoration } from "react-router"
 
 import {
@@ -47,6 +49,9 @@ export const router = createBrowserRouter([
       <>
         <TrackPage />
         <Outlet />
+        {/* a password the team set: the person is asked to choose their own (and add an email) */}
+        <ChangePasswordPrompt />
+        <VerifyEmailReminder />
         <ScrollRestoration />
       </>
     ),
@@ -285,6 +290,7 @@ export const router = createBrowserRouter([
                     ],
                   },
                   page("media", "MediaPage"),
+                  page("employees", "EmployeesPage"),
                   {
                     path: "reports",
                     // its own download: the chart library is only needed here

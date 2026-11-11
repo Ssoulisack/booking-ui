@@ -57,6 +57,12 @@ export const publicService = {
     api<Availability>(API_ENDPOINTS.PUBLIC.AVAILABILITY(slug), {
       query: { ...q },
     }),
+  /** whether a phone already has an account (the guest form asks: true → log in instead) */
+  phoneCheck: (slug: string, phone: string) =>
+    api<{ has_account: boolean }>(API_ENDPOINTS.PUBLIC.PHONE_CHECK(slug), {
+      method: "POST",
+      body: { phone },
+    }),
   /** for a space on a day: the coaches free with it, each with their times */
   coachAvailability: (slug: string, q: AvailabilityQuery) =>
     api<CoachAvailability[]>(API_ENDPOINTS.PUBLIC.COACH_AVAILABILITY(slug), {

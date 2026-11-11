@@ -7,6 +7,8 @@ import {
   UserRoundIcon,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { AttentionDot } from "@/components/global/AttentionDot"
+import { needsEmail } from "@/lib/account-email"
 import { Link, useNavigate } from "react-router"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -57,10 +59,13 @@ export function UserMenu({ allBranches = false }: { allBranches?: boolean }) {
           className="rounded-full"
           aria-label={t("nav.account")}
         >
-          <Avatar>
-            {user.avatar && <AvatarImage src={user.avatar} alt="" />}
-            <AvatarFallback>{initials(user.name)}</AvatarFallback>
-          </Avatar>
+          <span className="relative">
+            <Avatar>
+              {user.avatar && <AvatarImage src={user.avatar} alt="" />}
+              <AvatarFallback>{initials(user.name)}</AvatarFallback>
+            </Avatar>
+            {needsEmail(user) && <AttentionDot className="top-0 right-0" />}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
@@ -109,6 +114,12 @@ export function UserMenu({ allBranches = false }: { allBranches?: boolean }) {
           <Link to="/account/profile">
             <UserRoundIcon />
             {t("nav.account")}
+            {needsEmail(user) && (
+              <span
+                aria-label={t("emailVerify.dotLabel")}
+                className="ml-auto size-2.5 rounded-full bg-red-500"
+              />
+            )}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

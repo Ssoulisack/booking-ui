@@ -18,7 +18,7 @@ import {
 import { Spinner } from "@/components/ui/spinner"
 import type { PackageItem, PackageOption } from "@/types/package"
 import { duration, money } from "@/lib/format"
-import { coversLabel, optionLabel } from "@/lib/packages"
+import { coversLabel, optionLabel, coachesShort } from "@/lib/packages"
 import { useSession } from "@/stores/session"
 
 import { packageKeys } from "@/hooks/use-account"
@@ -79,9 +79,7 @@ export function PackagesSection() {
               </p>
               {p.coach_names?.length > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  {t("packages.withCoaches", {
-                    names: p.coach_names.join(", "),
-                  })}
+                  {coachesShort(t, p.coach_names)}
                 </p>
               )}
               {p.description && (

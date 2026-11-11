@@ -101,3 +101,13 @@ export function afterBooking<
   if (need === null) return p
   return { ...p, times_left: Math.max(0, p.times_left - need) }
 }
+
+/** "Coach included: A, B" or, with more, "Coach included: A, B +8 more" (a long list does not fit on a card) */
+export function coachesShort(t: TFunction, names: string[]) {
+  return names.length <= 2
+    ? t("packages.withCoaches", { names: names.join(", ") })
+    : t("packages.withCoachesMore", {
+        names: names.slice(0, 2).join(", "),
+        count: names.length - 2,
+      })
+}

@@ -1,6 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { EmailVerify } from "@/components/global/EmailVerify"
+import { ChangePasswordCard } from "./ChangePasswordCard"
 import { useNavigate, useSearchParams } from "react-router"
 import { toast } from "sonner"
 
@@ -8,6 +10,7 @@ import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { PageTitle } from "@/components/global/page-state"
 import HoldButton from "@/components/reactbits/HoldButton"
 import { FieldGroup } from "@/components/ui/field"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUpdateProfile } from "@/hooks/use-auth"
 import { IdentityFields } from "@/components/public/auth/IdentityFields"
 import { safeNext } from "@/components/public/auth/landing"
@@ -29,8 +32,9 @@ const HOLD_MS = 1000
 export function ProfilePage() {
   const { t } = useTranslation()
   const user = useSession((s) => s.user)
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const completing = params.get("complete") === "1"
+  const tab = params.get("tab") === "password" ? "password" : "profile"
   if (!user) return null
   return (
     <>
@@ -54,12 +58,51 @@ export function ProfilePage() {
               : t("identity.tellStaffNoPhone")}
           </p>
         </div>
-        <ProfileForm
-          key={user.updated_at + user.id}
-          user={user}
-          next={safeNext(params.get("next"))}
-          completing={completing}
-        />
+        {completing ? (
+          <ProfileForm
+            key={user.updated_at + user.id}
+            user={user}
+            next={safeNext(params.get("next"))}
+            completing
+          />
+        ) : (
+          // two tabs, kept in the address (?tab=password) so a link can open the right one
+          <Tabs
+            value={tab}
+            onValueChange={(v) =>
+              setParams(
+                (p) => {
+                  const q = new URLSearchParams(p)
+                  if (v === "password") q.set("tab", "password")
+                  else q.delete("tab")
+                  return q
+                },
+                { replace: true },
+              )
+            }
+          >
+            <TabsList className="h-11 w-full lg:h-9">
+              <TabsTrigger value="profile" className="flex-1">
+                {t("myAccountTabs.profile")}
+              </TabsTrigger>
+              <TabsTrigger value="password" className="flex-1">
+                {t("myAccountTabs.password")}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="profile" className="mt-4 space-y-6">
+              <EmailVerify />
+              <ProfileForm
+                key={user.updated_at + user.id}
+                user={user}
+                next={safeNext(params.get("next"))}
+                completing={false}
+              />
+            </TabsContent>
+            <TabsContent value="password" className="mt-4">
+              <ChangePasswordCard user={user} />
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </>
   )

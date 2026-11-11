@@ -352,3 +352,31 @@ input[type="number"]::-webkit-inner-spin-button {
     animation: none;
   }
 }
+
+/* a notice's time left: a bar that runs down from full to empty (its length is set where it is used); it stops while
+   the mouse is over the notice, as the notice itself waits then */
+@keyframes toast-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.toast-countdown {
+  transform-origin: left;
+  animation-name: toast-countdown;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+[data-sonner-toast]:hover .toast-countdown {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-countdown {
+    animation: none;
+  }
+}

@@ -5,6 +5,8 @@ export interface Customer {
   member_no: string
   name: string
   email: string
+  /** the email was proven with a code (false when there is none) */
+  email_verified?: boolean
   phone: string
   bookings: number
   last_booking_at: string

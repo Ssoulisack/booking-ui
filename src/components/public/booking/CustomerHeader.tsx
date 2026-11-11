@@ -7,6 +7,8 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { AttentionDot } from "@/components/global/AttentionDot"
+import { needsEmail } from "@/lib/account-email"
 import { Link, useLocation } from "react-router"
 
 import { LanguageToggle } from "@/components/global/LanguageToggle"
@@ -101,6 +103,7 @@ export function CustomerHeader({
   const user = useSession((s) => s.user)
   const { pathname } = useLocation()
   const loginLink = `/login?next=${encodeURIComponent(pathname)}`
+  const attention = needsEmail(user)
   return (
     <header className="pub-rainbow sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4">
@@ -113,8 +116,15 @@ export function CustomerHeader({
               variant="ghost"
               className="h-11 w-full px-4 aria-[current=page]:bg-muted aria-[current=page]:font-semibold"
             >
-              <Link to={s.to} aria-current={s.here ? "page" : undefined}>
+              <Link
+                to={s.to}
+                aria-current={s.here ? "page" : undefined}
+                className="relative"
+              >
                 {s.label}
+                {s.id === "account" && attention && (
+                  <AttentionDot className="top-2 right-1.5" />
+                )}
               </Link>
             </Button>
           ))}

@@ -79,6 +79,12 @@ export const DASHBOARD_NAV: DashboardNavSpec[] = [
     min: PAGE_MIN_ROLE.cashUp,
     sportOnly: true,
   },
+  {
+    path: "employees",
+    key: "employees",
+    icon: UsersIcon,
+    min: PAGE_MIN_ROLE.employees,
+  },
   { path: "setup", key: "setup", icon: WrenchIcon, min: PAGE_MIN_ROLE.setup },
   {
     path: "reports",

@@ -1,8 +1,13 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
+import { useBiz, useChange } from "@/hooks/use-branch"
 import { companyKeys, useCompanyMutation } from "@/hooks/use-company"
 import { teamService } from "@/services/team.api"
-import type { InviteInput, TeamMemberInput } from "@/types/team"
+import type {
+  AddTeamMemberInput,
+  InviteInput,
+  TeamMemberInput,
+} from "@/types/team"
 
 export function useTeam() {
   return useQuery({
@@ -25,6 +30,35 @@ export function useUsers(q: { keyword: string; page: number }) {
     placeholderData: keepPreviousData,
   })
 }
+
+/** The account with this phone or member number (asked when Find is pressed; "" asks nothing) */
+export function useTeamCandidate(q: string) {
+  return useQuery({
+    queryKey: ["company", "team", "lookup", q],
+    queryFn: () => teamService.lookup(q),
+    enabled: q !== "",
+    retry: false,
+  })
+}
+
+export const useAddTeamMember = () =>
+  useCompanyMutation((body: AddTeamMemberInput) => teamService.add(body))
+
+/** Who works at this branch (the dashboard's Employees page) */
+export function useBranchTeam(role: string, q: string) {
+  const { id: branchId, key } = useBiz()
+  return useQuery({
+    queryKey: key("team", role, q),
+    queryFn: () => teamService.branchTeam(branchId, role, q),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export const useSetBranchAccess = () =>
+  useChange(teamService.setBranchAccess, ["team"])
+
+export const useRemoveFromBranch = () =>
+  useChange(teamService.removeFromBranch, ["team"])
 
 export const useUpdateTeamMember = () =>
   useCompanyMutation(({ id, ...body }: TeamMemberInput & { id: number }) =>

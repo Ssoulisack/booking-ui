@@ -1,4 +1,5 @@
 export { DashboardHome } from "@/components/protected/branch/DashboardHome"
+export { EmployeesPage } from "@/components/protected/branch/EmployeesPage"
 export {
   DashboardIndex,
   DashboardLayout,

@@ -3,7 +3,12 @@ import type { LucideIcon } from "lucide-react"
 import { colord } from "colord"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 
+import { useTranslation } from "react-i18next"
+
+import { AttentionDot } from "@/components/global/AttentionDot"
 import GooeyNav from "@/components/reactbits/GooeyNav"
+import { needsEmail } from "@/lib/account-email"
+import { useSession } from "@/stores/session"
 
 import { usePubMode } from "./theme"
 
@@ -62,6 +67,9 @@ export function MobileNav({
     // items is rebuilt on every render; the position is what matters
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wanted])
+  const { t } = useTranslation()
+  // My account gets a red dot while the email is missing or not verified
+  const attention = needsEmail(useSession((s) => s.user))
   const pubMode = usePubMode()
   const mode = themed ? pubMode : "light"
   const pill =
@@ -118,10 +126,20 @@ export function MobileNav({
                 icon: <span className="block h-5 w-8" aria-hidden />,
               }
             }
+            const dot = items[o].id === "account" && attention
             return {
               label: iconOnly ? "" : label,
-              ariaLabel: iconOnly ? label : undefined,
-              icon: Icon ? <Icon /> : undefined,
+              ariaLabel: iconOnly
+                ? dot
+                  ? `${label} (${t("emailVerify.dotLabel")})`
+                  : label
+                : undefined,
+              icon: Icon ? (
+                <span className="relative inline-flex">
+                  <Icon />
+                  {dot && <AttentionDot className="-top-1 -right-1.5" />}
+                </span>
+              ) : undefined,
             }
           })}
           activeIndex={shownSlot}

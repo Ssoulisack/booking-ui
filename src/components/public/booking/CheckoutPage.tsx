@@ -3,8 +3,9 @@ import { isLaoPhone } from "@/lib/phone"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { ArrowLeftIcon, MapPinIcon, TicketIcon } from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { LoginDialog } from "@/components/public/auth/LoginDialog"
 import { contactOf } from "@/lib/contact"
 import {
   Link,
@@ -47,6 +48,7 @@ import {
   useCoaches,
   useCreateBooking,
   useFloorPlans,
+  usePhoneHasAccount,
   useResources,
   useTableAvailability,
 } from "@/hooks/use-public"
@@ -121,18 +123,27 @@ export function CheckoutPage() {
     sel.pkg === 0 ? null : sel.pkg,
   )
   const here = encodeURIComponent(pathname + search)
+  // Log in opens a popup: after it the page goes on as the customer, with everything chosen kept
+  const [loggingIn, setLoggingIn] = useState(false)
 
   const form = useForm<GuestValues>({
     resolver: zodResolver(guestSchema),
     defaultValues: { name: "", phone: "", email: "", notes: "" },
   })
   const { errors } = form.formState
+  // a guest whose phone already has an account logs in instead (where customers can: guests and accounts both)
+  const guestPhone = useWatch({ control: form.control, name: "phone" })
+  const hasAccount = usePhoneHasAccount(
+    slug,
+    guestPhone,
+    !user && mode === "both",
+  )
 
   const back = isTable
     ? `/b/${slug}?${selectionQuery({ ...sel, step: "table" })}#book`
     : isClass
       ? `/b/${slug}?${selectionQuery({ ...sel, start: undefined, cls: undefined })}#book`
-      : `/b/${slug}?${selectionQuery({ ...sel, step: sel.coach ? "coach" : "time", withCoach: sel.coach ? 1 : undefined })}#book`
+      : `/b/${slug}?${selectionQuery({ ...sel, step: "time", withCoach: sel.coach ? 1 : undefined })}#book`
   const tableIds = tableIdsOf(sel)
   const complete = isTable
     ? !!(sel.start && sel.guests && tableIds.length)
@@ -198,6 +209,22 @@ export function CheckoutPage() {
             ? { amount: p.price, currency: availability.data.currency }
             : undefined
         })()
+
+  // with a coach: the price in parts (the server adds the space's and the coach's price for the length, each rounded
+  // like this); a coach included with the space costs nothing
+  const coachIncluded = !!coach && !!court?.coach_ids?.includes(coach.id)
+  const coachPart =
+    coach && price && !coachIncluded && coach.price_per_hour !== null
+      ? Math.floor((coach.price_per_hour * (sel.length ?? 0) + 30) / 60)
+      : 0
+  const parts =
+    coach && court && price
+      ? {
+          space: price.amount - coachPart,
+          coach: coachPart,
+          currency: price.currency,
+        }
+      : null
 
   // the customer's packages that fit this booking: this branch, active, a visit left, not out of time on the day,
   // covering this class (one seat) or this space (no coach)
@@ -303,7 +330,7 @@ export function CheckoutPage() {
         holdTime={HOLD_MS}
         // short: a refused answer (missing details, slot taken) lets them try again at once
         resetAfter={600}
-        disabled={create.isPending}
+        disabled={create.isPending || hasAccount === true}
         doneLabel={t("public.confirming")}
         hint={t("public.confirmHint", { seconds: HOLD_MS / 1000 })}
         onHold={onConfirm}
@@ -381,6 +408,36 @@ export function CheckoutPage() {
             )}
           </div>
         )}
+        {/* with a coach: what the space and the coach each cost, and the total */}
+        {!loading && parts && (
+          <dl className="mt-3 space-y-1.5 border-t pt-3 text-sm">
+            <div className="flex justify-between gap-3">
+              <dt className="truncate">{court!.name}</dt>
+              <dd className="shrink-0 tabular-nums">
+                {money(parts.space, parts.currency)}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="truncate">
+                {t("public.priceCoach", { name: coach!.name })}
+              </dt>
+              <dd className="shrink-0 tabular-nums">
+                {coachIncluded
+                  ? t("public.coachIncluded")
+                  : money(parts.coach, parts.currency)}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3 border-t pt-1.5 font-semibold">
+              <dt>{t("public.priceTotal")}</dt>
+              <dd className="shrink-0 tabular-nums">
+                {money(
+                  usePackage ? 0 : parts.space + parts.coach,
+                  parts.currency,
+                )}
+              </dd>
+            </div>
+          </dl>
+        )}
         {/* paying with a package: which one, what this booking takes from it and what is left after */}
         {!loading && usePackage && (
           <div className="mt-3 space-y-0.5 rounded-lg border border-[var(--brand)] p-3 text-sm">
@@ -420,8 +477,12 @@ export function CheckoutPage() {
         <section className="space-y-3 rounded-xl bg-card p-4">
           <p>{t("public.loginToBook")}</p>
           <div className="grid gap-2 sm:grid-cols-2">
-            <Button asChild size="lg" className="h-12">
-              <Link to={`/login?next=${here}`}>{t("actions.logIn")}</Link>
+            <Button
+              size="lg"
+              className="h-12"
+              onClick={() => setLoggingIn(true)}
+            >
+              {t("actions.logIn")}
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12">
               <Link to={`/register?next=${here}`}>{t("register.submit")}</Link>
@@ -509,12 +570,13 @@ export function CheckoutPage() {
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-lg font-semibold">{t("public.yourDetails")}</h2>
             {mode === "both" && (
-              <Link
-                to={`/login?next=${here}`}
+              <button
+                type="button"
+                onClick={() => setLoggingIn(true)}
                 className="inline-flex min-h-11 items-center text-sm font-semibold text-foreground underline underline-offset-4 hover:text-[var(--brand)]"
               >
                 {t("public.haveAccount")}
-              </Link>
+              </button>
             )}
           </div>
           <FieldGroup>
@@ -532,6 +594,23 @@ export function CheckoutPage() {
               registration={form.register("phone")}
               error={errors.phone}
             />
+            {/* this phone already has an account: book from it (the booking then shows in My bookings) */}
+            {hasAccount && (
+              <div
+                role="alert"
+                className="space-y-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-950 ring-1 ring-amber-200 dark:bg-amber-400/15 dark:text-amber-100 dark:ring-amber-400/30"
+              >
+                <p>{t("public.phoneHasAccount")}</p>
+                <Button
+                  type="button"
+                  size="lg"
+                  className="h-11 w-full"
+                  onClick={() => setLoggingIn(true)}
+                >
+                  {t("actions.logIn")}
+                </Button>
+              </div>
+            )}
             <div>
               <TextField
                 label={t("public.emailOptional")}
@@ -562,6 +641,11 @@ export function CheckoutPage() {
           {confirmButton(() => void form.handleSubmit(submit)())}
         </form>
       )}
+      <LoginDialog
+        open={loggingIn}
+        onClose={() => setLoggingIn(false)}
+        login={guestPhone ?? ""}
+      />
     </main>
   )
 }

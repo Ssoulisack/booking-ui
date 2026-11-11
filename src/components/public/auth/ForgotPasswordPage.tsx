@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { MailCheckIcon } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { ContactAdmin } from "./ContactAdmin"
 import { Link } from "react-router"
 
 import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
@@ -40,6 +41,12 @@ export function ForgotPasswordPage() {
             defaultValue: send.data,
           })}
         />
+        <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
+          {t("forgot.verifiedOnly")}
+        </p>
+        <div className="mt-3">
+          <ContactAdmin />
+        </div>
         {backLink}
       </>
     )
@@ -69,8 +76,11 @@ export function ForgotPasswordPage() {
         </SubmitButton>
       </form>
       <p className="mt-6 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
-        {t("forgot.phoneOnly")}
+        {t("forgot.verifiedOnly")} {t("forgot.phoneOnly")}
       </p>
+      <div className="mt-3">
+        <ContactAdmin />
+      </div>
       {backLink}
     </>
   )

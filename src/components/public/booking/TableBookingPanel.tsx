@@ -421,9 +421,9 @@ export function StepBar({
           ]
         : [
             t("public.tables.steps.whenLength"),
-            t("public.tables.steps.time"),
-            // with a coach: the time first, then the coaches free at that time
+            // with a coach: the coach (free that day) first, then their times
             ...(kind === "coachTime" ? [t("public.tables.steps.coach")] : []),
+            t("public.tables.steps.time"),
             t("public.tables.steps.confirm"),
           ]
   return (

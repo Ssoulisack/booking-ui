@@ -22,6 +22,7 @@ export const PAGE_MIN_ROLE = {
   calendar: "staff",
   bookings: "staff",
   customers: "staff",
+  employees: "manager",
   packages: "staff",
   cashUp: "staff",
   share: "staff",

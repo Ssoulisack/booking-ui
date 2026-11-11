@@ -27,11 +27,13 @@ export function RegisterPage() {
       phone: "",
       email: "",
       password: "",
+      confirm: "",
     },
   })
   const { errors } = form.formState
 
-  const onSubmit = form.handleSubmit((values) =>
+  // "confirm" is only checked here: the server gets the password once
+  const onSubmit = form.handleSubmit(({ confirm: _confirm, ...values }) =>
     register.mutate(
       {
         ...values,
@@ -70,6 +72,13 @@ export function RegisterPage() {
             autoComplete="new-password"
             registration={form.register("password")}
             error={errors.password}
+          />
+          <TextField
+            label={t("fields.confirmPassword")}
+            type="password"
+            autoComplete="new-password"
+            registration={form.register("confirm")}
+            error={errors.confirm}
           />
         </FieldGroup>
         <SubmitButton pending={register.isPending}>

@@ -37,6 +37,25 @@ export const authService = {
   me: () => api<User>(API_ENDPOINTS.AUTH.ME),
   updateMe: (body: ProfileInput) =>
     api<User>(API_ENDPOINTS.AUTH.ME, { method: "PUT", body }),
+  /** choose a new password (the current one is checked): answers new tokens, older logins end */
+  changePassword: (body: {
+    current_password: string
+    new_password: string
+    email?: string
+  }) =>
+    api<AuthResponse>(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+      method: "PUT",
+      body,
+    }),
+  /** email a 6-digit code to the account's email */
+  sendEmailCode: () =>
+    apiMessage(API_ENDPOINTS.AUTH.EMAIL_CODE, { method: "POST" }),
+  /** check the code: answers the person with the email marked verified */
+  verifyEmail: (code: string) =>
+    api<User>(API_ENDPOINTS.AUTH.EMAIL_VERIFY, {
+      method: "POST",
+      body: { code },
+    }),
   myBranches: () => api<MyBranch[]>(API_ENDPOINTS.ME.BRANCHES),
   invitation: (token: string) =>
     api<InvitationInfo>(API_ENDPOINTS.INVITATION.ROOT(token)),

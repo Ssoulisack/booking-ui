@@ -8,6 +8,12 @@ export interface User {
   company_role: CompanyRole // "owner" / "admin" run every branch; "" for everyone else
   nationality: string // ISO code ("LA"); empty until chosen
   email_generated: boolean // the email is a stand-in: no real address yet
+  /** the team set the password: the person is asked to choose their own */
+  must_change_password?: boolean
+  /** the person proved the email is theirs with a code (false for a stand-in email) */
+  email_verified?: boolean
+  /** false: made with Google / Facebook and no password set yet */
+  has_password?: boolean
   // the number this person tells staff; one is set, by role
   member_no: string // what this person tells staff: CNO000042 (customer) or ENO000007 (the team)
   status: boolean

@@ -8,7 +8,12 @@ import {
 import { useTranslation } from "react-i18next"
 
 import { duration, money, todayIn } from "@/lib/format"
-import { coversLabel, optionLabel, ymdLabel } from "@/lib/packages"
+import {
+  coversLabel,
+  optionLabel,
+  ymdLabel,
+  coachesShort,
+} from "@/lib/packages"
 import type { PackageItem, PackageOption } from "@/types/package"
 
 /** "YYYY-MM-DD" n days or months after today in the branch time zone */
@@ -64,7 +69,7 @@ export function PackageBuySummary({
         {pkg.coach_names?.length > 0 && (
           <li className="flex items-start gap-2">
             <UserRoundIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            {t("packages.withCoaches", { names: pkg.coach_names.join(", ") })}
+            {coachesShort(t, pkg.coach_names)}
           </li>
         )}
         {option.kind === "times" && option.minutes_per_visit > 0 && (

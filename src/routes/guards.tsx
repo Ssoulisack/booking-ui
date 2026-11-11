@@ -1,4 +1,3 @@
-import { useEffect } from "react"
 import { Navigate, Outlet, useLocation, useSearchParams } from "react-router"
 
 import { useMe } from "@/hooks/use-auth"
@@ -43,13 +42,6 @@ export function RequireCompany() {
   const user = useSession((s) => s.user)
   if (!runsCompany(user)) return <Navigate to="/" replace />
   return <Outlet />
-}
-
-/** Clears the session as a side effect and shows the login page with the reason */
-export function EndSession({ reason }: { reason: string }) {
-  const signOut = useSession((s) => s.signOut)
-  useEffect(() => signOut(reason), [signOut, reason])
-  return <PageLoader />
 }
 
 /** /setup/courts/… → /setup/spaces/… (bookmarks from before the rename) */

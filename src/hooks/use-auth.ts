@@ -128,6 +128,33 @@ export function useAcceptInvitation(
   })
 }
 
+/** Choose a new password: the answer's new tokens replace the session's (older logins end) */
+export function useChangePassword() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: authService.changePassword,
+    onSuccess: (auth) => {
+      useSession.getState().signIn(auth)
+      queryClient.setQueryData(authKeys.me, auth.user)
+    },
+  })
+}
+
+export const useSendEmailCode = () =>
+  useMutation({ mutationFn: authService.sendEmailCode })
+
+export function useVerifyEmail(options?: { onSuccess?: () => void }) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: authService.verifyEmail,
+    onSuccess: (updated) => {
+      useSession.getState().setUser(updated)
+      queryClient.setQueryData(authKeys.me, updated)
+      options?.onSuccess?.()
+    },
+  })
+}
+
 export function useUpdateProfile(options?: {
   onSuccess?: (user: User) => void
 }) {

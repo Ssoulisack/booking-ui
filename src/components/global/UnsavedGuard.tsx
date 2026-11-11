@@ -44,12 +44,10 @@ export function UnsavedGuard() {
         // the table step of a booking page, left for the step before (in-page Back or the browser's)
         (choosingTables() &&
           !new URLSearchParams(nextLocation.search).has("step")) ||
-        // the time step with a start picked, left for the step before (Back): the time is lost (going on to the
-        // coach step keeps it)
+        // the time step with a start picked, left for the step before (Back): the time is lost
         (pickedTime() &&
           stepOf(currentLocation.search) === "time" &&
-          stepOf(nextLocation.search) !== "time" &&
-          stepOf(nextLocation.search) !== "coach")),
+          stepOf(nextLocation.search) !== "time")),
   )
   // the blocked move stays on this page: going back a booking step, not leaving it
   const stepBack =

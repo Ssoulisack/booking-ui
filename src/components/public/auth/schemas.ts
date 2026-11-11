@@ -32,12 +32,18 @@ const phoneRequired = z
       ctx.addIssue({ code: "custom", message: "identity.phoneInvalid" })
   })
 
-export const registerSchema = z.object({
-  name,
-  password,
-  phone: phoneRequired,
-  email: emailField,
-})
+export const registerSchema = z
+  .object({
+    name,
+    password,
+    confirm: z.string(),
+    phone: phoneRequired,
+    email: emailField,
+  })
+  .refine((v) => v.password === v.confirm, {
+    message: "validation.passwordsMatch",
+    path: ["confirm"],
+  })
 
 // My account: an older account may have no phone yet; it then needs an email, so there is always a way to reach it
 export const profileSchema = z

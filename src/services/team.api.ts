@@ -2,8 +2,11 @@ import { api, apiMessage, apiPage } from "@/lib/api/client"
 import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
 import type { User } from "@/types/auth"
 import type {
+  AddTeamMemberInput,
+  BranchTeamMember,
   Invitation,
   InviteInput,
+  TeamCandidate,
   TeamMember,
   TeamMemberInput,
 } from "@/types/team"
@@ -23,6 +26,33 @@ export const teamService = {
     apiMessage(API_ENDPOINTS.COMPANY.TRANSFER_OWNERSHIP, {
       method: "POST",
       body: { user_id: userId },
+    }),
+
+  /** find a registered account by phone or member number */
+  lookup: (q: string) =>
+    api<TeamCandidate>(API_ENDPOINTS.COMPANY.TEAM_LOOKUP, { query: { q } }),
+  /** put a registered account on the team, without an invitation */
+  add: (body: AddTeamMemberInput) =>
+    api<TeamMember>(API_ENDPOINTS.COMPANY.TEAM, { method: "POST", body }),
+
+  /** who works at a branch; role and q (phone, member number or name) filter */
+  branchTeam: (branchId: number, role: string, q: string) =>
+    api<BranchTeamMember[]>(API_ENDPOINTS.BRANCH.TEAM(branchId), {
+      query: { role: role || undefined, q: q || undefined },
+    }),
+  /** switch someone's access to the branch off or on */
+  setBranchAccess: (
+    branchId: number,
+    input: { userId: number; active: boolean },
+  ) =>
+    apiMessage(API_ENDPOINTS.BRANCH.TEAM_MEMBER(branchId, input.userId), {
+      method: "PATCH",
+      body: { active: input.active },
+    }),
+  /** take someone off the branch */
+  removeFromBranch: (branchId: number, userId: number) =>
+    apiMessage(API_ENDPOINTS.BRANCH.TEAM_MEMBER(branchId, userId), {
+      method: "DELETE",
     }),
 
   invitations: () => api<Invitation[]>(API_ENDPOINTS.COMPANY.INVITATIONS),
