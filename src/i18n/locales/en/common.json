@@ -310,7 +310,15 @@
       "schedule": "Schedule",
       "scheduleOf": "Schedule of {{name}}",
       "freeTimes": "Free to book (next 7 days, with this space)",
-      "noneWeek": "No free time in the next 7 days."
+      "noneWeek": "No free time in the next 7 days.",
+      "seeAll_one": "See all {{count}} coach",
+      "seeAll_other": "See all {{count}} coaches",
+      "count_one": "{{count}} coach free",
+      "count_other": "{{count}} coaches free",
+      "search": "Search a coach",
+      "noMatch": "No coach with that name.",
+      "seeMore_one": "See {{count}} more",
+      "seeMore_other": "See {{count}} more"
     },
     "classesTitle": "Coming up",
     "coachesTitle": "Coaches",

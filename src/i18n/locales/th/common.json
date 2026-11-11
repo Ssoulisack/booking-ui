@@ -305,7 +305,12 @@
       "schedule": "ตาราง",
       "scheduleOf": "ตารางของ {{name}}",
       "freeTimes": "ว่างให้จอง (7 วันถัดไป กับสถานที่นี้)",
-      "noneWeek": "ไม่มีเวลาว่างใน 7 วันถัดไป"
+      "noneWeek": "ไม่มีเวลาว่างใน 7 วันถัดไป",
+      "seeAll_other": "ดูโค้ชทั้งหมด {{count}}",
+      "count_other": "โค้ชว่าง {{count}}",
+      "search": "ค้นหาโค้ช",
+      "noMatch": "ไม่มีโค้ชชื่อนี้",
+      "seeMore_other": "ดูเพิ่ม {{count}}"
     },
     "classesTitle": "เร็ว ๆ นี้",
     "coachesTitle": "โค้ช",

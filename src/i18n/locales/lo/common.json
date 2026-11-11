@@ -305,7 +305,12 @@
       "schedule": "ຕາຕະລາງ",
       "scheduleOf": "ຕາຕະລາງຂອງ {{name}}",
       "freeTimes": "ວ່າງໃຫ້ຈອງ (7 ມື້ຕໍ່ໄປ, ກັບບ່ອນນີ້)",
-      "noneWeek": "ບໍ່ມີເວລາວ່າງໃນ 7 ມື້ຕໍ່ໄປ."
+      "noneWeek": "ບໍ່ມີເວລາວ່າງໃນ 7 ມື້ຕໍ່ໄປ.",
+      "seeAll_other": "ເບິ່ງຄູຝຶກທັງໝົດ {{count}}",
+      "count_other": "ຄູຝຶກວ່າງ {{count}}",
+      "search": "ຊອກຫາຄູຝຶກ",
+      "noMatch": "ບໍ່ມີຄູຝຶກຊື່ນີ້.",
+      "seeMore_other": "ເບິ່ງເພີ່ມ {{count}}"
     },
     "classesTitle": "ກຳລັງຈະມາເຖິງ",
     "coachesTitle": "ຄູຝຶກ",
