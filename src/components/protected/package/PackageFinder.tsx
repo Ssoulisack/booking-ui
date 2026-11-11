@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { CustomerPackage } from "@/types/package"
 import { dayIn, money } from "@/lib/format"
-import { leftLabel, optionLabel, ymdLabel } from "@/lib/packages"
+import { leftLabel, optionLabel, ymdLabel, statusLabel } from "@/lib/packages"
 import { displayPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
@@ -135,7 +135,7 @@ function Result({ pkg: p, tz }: { pkg: CustomerPackage; tz: string }) {
             <span className="font-mono font-semibold">{p.code}</span>
             <span className="font-medium">{p.name}</span>
             <Badge className={cn("border-0", statusTone(p.status))}>
-              {t(`packages.status.${p.status}`)}
+              {statusLabel(t, p)}
             </Badge>
           </p>
           <p className="text-sm text-muted-foreground">

@@ -9,7 +9,7 @@ import { AuthHeading } from "@/components/layout/AuthLayout"
 
 import { useRegister } from "@/hooks/use-auth"
 import { IdentityFields } from "./IdentityFields"
-import { safeNext } from "./landing"
+import { afterAuthPath, safeNext } from "./landing"
 import { SocialButtons } from "./SocialButtons"
 import { registerSchema, type RegisterValues } from "./schemas"
 
@@ -39,7 +39,7 @@ export function RegisterPage() {
         email: values.email || undefined,
       },
       {
-        onSuccess: () => navigate(next ?? "/", { replace: true }),
+        onSuccess: () => navigate(afterAuthPath(next), { replace: true }),
       },
     ),
   )

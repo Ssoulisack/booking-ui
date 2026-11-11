@@ -2,6 +2,7 @@ import {
   ArrowLeftIcon,
   CalendarCheckIcon,
   MenuIcon,
+  PackageIcon,
   type LucideIcon,
 } from "lucide-react"
 import { UnsavedGuard } from "@/components/global/UnsavedGuard"
@@ -342,10 +343,34 @@ function NavList({
 }
 
 /** The nav items as the Gooey Nav: the longest address that matches this page is the active one */
-function AccountNav({ nav }: { nav: NavItem[] }) {
+function AccountNav({ nav: menu }: { nav: NavItem[] }) {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
   const color = usePublicCompany().data?.brand_color
   const navigate = useNavigate()
+  // the same menu as the branch page: My bookings, My packages | the round Booking button | Packages for sale, My account (Policy
+  // stays in the laptop header only)
+  const booking = menu.find((i) => i.id === "booking")
+  const by = (id: string) => menu.filter((i) => i.id === id)
+  const nav: NavItem[] = booking
+    ? [
+        ...by("bookings"),
+        ...by("packages"),
+        booking,
+        // packages for sale: the branch page's Package tab (sport branches, where My packages is in the menu)
+        ...(by("packages").length > 0 && booking.to !== "/home"
+          ? [
+              {
+                id: "sale",
+                to: booking.to.replace("#book", "#packages"),
+                label: t("public.tabs.package"),
+                icon: PackageIcon,
+              },
+            ]
+          : []),
+        ...by("account"),
+      ]
+    : menu
   let active = 0
   let best = -1
   nav.forEach((item, i) => {
@@ -362,12 +387,13 @@ function AccountNav({ nav }: { nav: NavItem[] }) {
       themed
       color={color}
       active={active}
-      items={nav.map((item, i) => ({
+      items={nav.map((item) => ({
         id: item.id,
         label: item.label,
         icon: item.icon,
-        // three or more items do not fit in one row on a phone: only the open page keeps its words
-        iconOnly: nav.length > 2 && i !== active,
+        // icons only, also on the open item (its name stays as the accessible name)
+        iconOnly: nav.length > 2,
+        center: item.id === "booking",
         onSelect: () => navigate(item.to),
       }))}
     />

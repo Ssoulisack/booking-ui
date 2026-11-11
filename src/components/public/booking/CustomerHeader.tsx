@@ -42,7 +42,7 @@ export function useCustomerMenu(
   return [
     {
       id: "booking",
-      to: slug ? `${home}#book` : "/",
+      to: slug ? `${home}#book` : "/home",
       label: t("public.nav.booking"),
       icon: CalendarPlusIcon,
       here: pathname === home,

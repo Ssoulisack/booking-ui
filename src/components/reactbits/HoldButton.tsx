@@ -19,6 +19,35 @@ const HIT_PAD = 10;
 const LINEAR = (t: number) => t;
 const EASE_OUT = (t: number) => 1 - Math.pow(1 - t, 3);
 
+/**
+ * The hold is done while the finger is still down, and what happens next (an error message, a popup) can move the page. A
+ * phone then sends the tap of the release to whatever is under the finger now (a "Back" link). So the first click after
+ * the release is dropped.
+ */
+function swallowReleaseClick() {
+  const stop = (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  let off = 0;
+  const end = () => {
+    window.removeEventListener('click', stop, true);
+    window.removeEventListener('pointerup', later, true);
+    window.removeEventListener('pointercancel', later, true);
+    window.clearTimeout(off);
+  };
+  // the click comes right after the release: keep the guard a moment longer, then remove it
+  const later = () => {
+    window.clearTimeout(off);
+    off = window.setTimeout(end, 400);
+  };
+  window.addEventListener('click', stop, true);
+  window.addEventListener('pointerup', later, true);
+  window.addEventListener('pointercancel', later, true);
+  // never stays on if no release is seen
+  off = window.setTimeout(end, 15000);
+}
+
 type Phase = 'idle' | 'holding' | 'done';
 type InputKind = 'pointer' | 'key' | null;
 
@@ -124,6 +153,7 @@ export default function HoldButton({
     if (phaseRef.current !== 'holding') return;
     if (performance.now() - gesture.current.start < holdTime - 50) return;
     clearTimers();
+    if (inputRef.current === 'pointer') swallowReleaseClick();
     go('done', inputRef.current);
     onHold?.();
     if (resetAfter > 0) {

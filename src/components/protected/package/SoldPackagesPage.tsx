@@ -1,33 +1,26 @@
-import { useQueryClient } from "@tanstack/react-query"
-import { useSellPackage } from "@/hooks/use-package"
 import { PlusIcon, SearchIcon, SendIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { toast } from "sonner"
 
-import { ErrorAlert } from "@/components/global/form"
 import { PageError } from "@/components/global/page-state"
 import { RefreshButton } from "@/components/global/RefreshButton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Spinner } from "@/components/ui/spinner"
-import { Textarea } from "@/components/ui/textarea"
-import type { CustomerPackageStatus, PackageItem } from "@/types/package"
+import type { CustomerPackageStatus } from "@/types/package"
 import { dayIn, money } from "@/lib/format"
-import { leftLabel, optionLabel, ymdLabel } from "@/lib/packages"
+import { leftLabel, optionLabel, ymdLabel, statusLabel } from "@/lib/packages"
 import { displayPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
 import { useSettings } from "@/hooks/use-branch"
-import { useFindCustomer } from "@/hooks/use-customer"
-import { PageHeader, FormDialog } from "@/components/protected/branch/ui"
-import { usePackages, useSoldPackages } from "@/hooks/use-package"
+import { PageHeader } from "@/components/protected/branch/ui"
+import { useSoldPackages } from "@/hooks/use-package"
 import { PackageActions } from "./PackageActions"
+import { SellDialog } from "./SellDialog"
 import { searchable } from "./PackageFinder"
-import { MethodPicker, statusTone } from "./PackageDialogs"
+import { statusTone } from "./PackageDialogs"
 
 const STATUSES: CustomerPackageStatus[] = [
   "pending_payment",
@@ -36,9 +29,6 @@ const STATUSES: CustomerPackageStatus[] = [
   "expired",
   "cancelled",
 ]
-const input = "h-11 text-base lg:h-9 lg:text-sm"
-const selectClass =
-  "h-11 w-full rounded-lg border border-input bg-background px-2.5 text-base lg:h-9 lg:text-sm"
 
 /** /dashboard/:id/packages — what customers bought: sell at the desk, mark paid, adjust visits, see the log */
 export function SoldPackagesPage() {
@@ -225,7 +215,7 @@ export function SoldPackagesPage() {
                   </td>
                   <td className="py-3 pr-3 whitespace-nowrap">
                     <Badge className={cn("border-0", statusTone(p.status))}>
-                      {t(`packages.status.${p.status}`)}
+                      {statusLabel(t, p)}
                     </Badge>
                   </td>
                   <td className="py-3">
@@ -239,182 +229,5 @@ export function SoldPackagesPage() {
       )}
       {selling && <SellDialog onClose={() => setSelling(false)} />}
     </div>
-  )
-}
-
-/** Sell a package to a customer who has an account; with a payment method it starts at once */
-function SellDialog({ onClose }: { onClose: () => void }) {
-  const { t } = useTranslation()
-  const packages = (usePackages().data ?? []).filter((p) => p.active)
-  const [lookup, setLookup] = useState("")
-  const find = useFindCustomer()
-  const account = find.data
-  const [packageId, setPackageId] = useState<number>(0)
-  const [optionId, setOptionId] = useState<number>(0)
-  const [method, setMethod] = useState<string>("cash")
-  const [paidNow, setPaidNow] = useState(true)
-  const [notes, setNotes] = useState("")
-  const [missing, setMissing] = useState(false)
-  const queryClient = useQueryClient()
-  const sell = useSellPackage()
-
-  const pkg: PackageItem | undefined =
-    packages.find((p) => p.id === packageId) ?? packages[0]
-  const options = pkg?.options.filter((o) => o.active) ?? []
-  const option = options.find((o) => o.id === optionId) ?? options[0]
-
-  return (
-    <FormDialog
-      open
-      onOpenChange={(o) => !o && onClose()}
-      title={t("packages.sell")}
-      description={t("packages.sellLead")}
-      submitLabel={t("packages.sellSubmit")}
-      pending={sell.isPending}
-      error={sell.error}
-      onSubmit={(e) => {
-        e.preventDefault()
-        if (!account || !pkg || !option) {
-          setMissing(true)
-          return
-        }
-        sell.mutate(
-          {
-            customer_id: account.user_id,
-            package_id: pkg.id,
-            option_id: option.id,
-            payment_method: paidNow ? method : "",
-            notes: notes.trim(),
-          },
-          {
-            onSuccess: () => {
-              toast.success(t("packages.sold"))
-              void queryClient.invalidateQueries({
-                queryKey: ["me", "packages"],
-              })
-              onClose()
-            },
-          },
-        )
-      }}
-    >
-      <div className="space-y-5">
-        <div className="space-y-1.5">
-          <Label htmlFor="sp-account">{t("desk.findAccount")}</Label>
-          <div className="flex gap-2">
-            <Input
-              id="sp-account"
-              value={lookup}
-              aria-invalid={(missing && !account) || undefined}
-              onChange={(e) => {
-                setLookup(e.target.value)
-                find.reset()
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  if (lookup.trim()) find.mutate(lookup.trim())
-                }
-              }}
-              className={input}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 lg:h-9"
-              disabled={!lookup.trim() || find.isPending}
-              onClick={() => find.mutate(lookup.trim())}
-            >
-              {find.isPending ? <Spinner /> : <SearchIcon />}
-              <span className="sr-only">{t("desk.findCustomer")}</span>
-            </Button>
-          </div>
-          {account ? (
-            <p className="rounded-lg bg-muted/50 p-3 text-sm">
-              <span className="block font-medium">{account.name}</span>
-              <span className="text-muted-foreground">
-                {[
-                  account.member_no,
-                  account.phone && displayPhone(account.phone),
-                  account.email,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
-            </p>
-          ) : (
-            <ErrorAlert error={find.error} />
-          )}
-        </div>
-
-        {packages.length === 0 ? (
-          <p className="text-sm text-amber-700 dark:text-amber-300">
-            {t("packages.nothingToSell")}
-          </p>
-        ) : (
-          <>
-            <div className="space-y-1.5">
-              <Label htmlFor="sp-package">{t("packages.package")}</Label>
-              <select
-                id="sp-package"
-                value={pkg?.id ?? ""}
-                onChange={(e) => {
-                  setPackageId(Number(e.target.value))
-                  setOptionId(0)
-                }}
-                className={selectClass}
-              >
-                {packages.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="sp-option">{t("packages.pick")}</Label>
-              <select
-                id="sp-option"
-                value={option?.id ?? ""}
-                onChange={(e) => setOptionId(Number(e.target.value))}
-                className={selectClass}
-              >
-                {options.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {optionLabel(t, o)} · {money(o.price, pkg!.currency)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </>
-        )}
-
-        <label className="flex min-h-11 cursor-pointer items-center gap-3">
-          <input
-            type="checkbox"
-            checked={paidNow}
-            onChange={(e) => setPaidNow(e.target.checked)}
-            className="size-5 accent-primary"
-          />
-          <span className="text-sm font-medium">{t("packages.paidNow")}</span>
-        </label>
-        {paidNow ? (
-          <MethodPicker name="sp-method" value={method} onChange={setMethod} />
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {t("packages.notPaidHint")}
-          </p>
-        )}
-        <div className="space-y-1.5">
-          <Label htmlFor="sp-notes">{t("packages.notes")}</Label>
-          <Textarea
-            id="sp-notes"
-            rows={2}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-        </div>
-      </div>
-    </FormDialog>
   )
 }

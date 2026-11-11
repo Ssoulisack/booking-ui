@@ -58,6 +58,14 @@ export const router = createBrowserRouter([
         }),
       },
       {
+        // the brand home with its list of branches, also for the team (who are sent from "/" to their own area)
+        path: "home",
+        lazy: async () => ({
+          Component: (await import("@/components/public/home/BrandHome"))
+            .BrandHome,
+        }),
+      },
+      {
         path: "privacy",
         lazy: async () => ({
           Component: () => <LegalPage page="privacy" />,

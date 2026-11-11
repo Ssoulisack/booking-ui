@@ -58,11 +58,14 @@ export function TimePicker({
   const firstWithTimes =
     PERIODS.find((p) => byPeriod[p].length > 0) ?? "morning"
   const [picked, setPicked] = useState<Period | null>(null)
-  const period = chosen
-    ? periodOf(timeIn(chosen.starts_at, tz))
-    : picked && byPeriod[picked].length
+  // the part of the day tapped last wins (also after a time is chosen: the customer may look at another part); before
+  // any tap, the part of the chosen time, else the first part with free times
+  const period =
+    picked && byPeriod[picked].length
       ? picked
-      : firstWithTimes
+      : chosen
+        ? periodOf(timeIn(chosen.starts_at, tz))
+        : firstWithTimes
   const keepsStart = (d: number) =>
     !!start &&
     !!availability.slots

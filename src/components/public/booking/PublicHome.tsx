@@ -1,7 +1,7 @@
 import {
   CalendarCheckIcon,
   CalendarPlusIcon,
-  FileTextIcon,
+  PackageIcon,
   MapIcon,
   MapPinIcon,
   PhoneIcon,
@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils"
 import { BookingPanel } from "./BookingPanel"
 import { TableBookingPanel } from "./TableBookingPanel"
 import { MobileNav } from "./MobileNav"
-import { useScrollSpy } from "./scroll-spy"
 import { usePublic } from "./context"
 import { BrandRings } from "./BrandRings"
 import { EventAds } from "./EventAds"
@@ -128,9 +127,10 @@ export function PublicHome() {
           </section>
         )}
         <Policy />
-        <ContactSection />
+        {/* the coach and time steps keep to the booking, like the confirm page: no Contact part, no bottom menu */}
+        {!inSteps && <ContactSection />}
       </main>
-      <SectionNav page="book" />
+      {!inSteps && <SectionNav tab={tab} />}
     </>
   )
 }
@@ -140,50 +140,37 @@ export function PublicHome() {
  * (sport), My account. The page's own parts (Booking, Policy) are followed
  * while scrolling; the others leave the page, so only their icons show.
  */
-function SectionNav({ page }: { page: "book" }) {
+function SectionNav({ tab }: { tab: "booking" | "packages" }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { pathname, search, hash } = useLocation()
   const { business } = usePublic()
-  // the parts of this page, top to bottom (the booking panel has its own Book button, so the item says "Booking")
-  const sections = [
-    {
-      id: "book",
-      nav: "booking",
-      label: t("public.nav.booking"),
-      icon: CalendarPlusIcon,
-      show: true,
-    },
-    {
-      id: "policy",
-      nav: "policy",
-      label: t("public.nav.policy"),
-      icon: FileTextIcon,
-      show: !!business.booking_policy,
-    },
-  ].filter((s) => s.show)
-  const spy = useScrollSpy(page === "book" ? sections.map((s) => s.id) : [])
-  const activeNav = sections[spy.active]?.nav ?? "booking"
-  const own = (nav: string) => {
-    const s = sections.find((x) => x.nav === nav)
-    return (
-      s && {
-        id: s.nav,
-        label: s.label,
-        icon: s.icon,
-        onSelect: () => spy.jump(sections.indexOf(s)),
-      }
-    )
+  // the page's two tabs live in the address (#packages; anything else is Booking): the menu opens the right one and
+  // scrolls to it
+  const open = (part: "book" | "packages") => {
+    const want = `#${part}`
+    if (hash === want || (part === "book" && tab === "booking"))
+      document
+        .getElementById(part)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" })
+    else
+      navigate(
+        { pathname, search, hash: want },
+        { replace: true, preventScrollReset: true },
+      )
   }
+  const activeNav = tab === "packages" ? "sale" : "booking"
+  // My bookings, My packages | the round Booking button | Packages for sale, My account (sport); a restaurant has no
+  // packages: My bookings | Booking | My account
+  const sport = business.type === "sport"
   const items = [
-    own("booking"),
-    own("policy"),
     {
       id: "bookings",
       label: t("nav.myBookings"),
       icon: CalendarCheckIcon,
       onSelect: () => navigate("/account"),
     },
-    ...(business.type === "sport"
+    ...(sport
       ? [
           {
             id: "packages",
@@ -194,12 +181,30 @@ function SectionNav({ page }: { page: "book" }) {
         ]
       : []),
     {
+      id: "booking",
+      label: t("public.nav.booking"),
+      icon: CalendarPlusIcon,
+      // the main action: the round button in the middle of the menu
+      center: true,
+      onSelect: () => open("book"),
+    },
+    ...(sport
+      ? [
+          {
+            id: "sale",
+            label: t("public.tabs.package"),
+            icon: PackageIcon,
+            onSelect: () => open("packages"),
+          },
+        ]
+      : []),
+    {
       id: "account",
       label: t("nav.account"),
       icon: UserRoundIcon,
       onSelect: () => navigate("/account/profile"),
     },
-  ].filter((i): i is NonNullable<typeof i> => !!i)
+  ]
   return (
     <MobileNav
       themed
@@ -208,7 +213,8 @@ function SectionNav({ page }: { page: "book" }) {
         items.findIndex((i) => i.id === activeNav),
         0,
       )}
-      items={items.map((i) => ({ ...i, iconOnly: i.id !== activeNav }))}
+      // icons only: no name on the open item when switching pages
+      items={items.map((i) => ({ ...i, iconOnly: true }))}
     />
   )
 }

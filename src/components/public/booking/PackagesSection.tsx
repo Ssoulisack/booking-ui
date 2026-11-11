@@ -17,13 +17,14 @@ import {
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
 import type { PackageItem, PackageOption } from "@/types/package"
-import { money } from "@/lib/format"
+import { duration, money } from "@/lib/format"
 import { coversLabel, optionLabel } from "@/lib/packages"
 import { useSession } from "@/stores/session"
 
 import { packageKeys } from "@/hooks/use-account"
 import { usePublicPackages } from "@/hooks/use-public"
 import { usePublic } from "./context"
+import { PackageBuySummary } from "./PackageBuySummary"
 
 /**
  * The passes the branch sells (10 or 20 times, 1 or 3 months). A customer picks one, it waits for payment, and the
@@ -57,7 +58,7 @@ export function PackagesSection() {
     <section id="packages" className="scroll-mt-20">
       <div className="mb-5">
         <h2 className="display-tight text-3xl">
-          <span className="candy-label [--candy:var(--candy-purple)]">
+          <span className="candy-label [--candy:var(--candy-yellow)]">
             {t("packages.public.title")}
           </span>
         </h2>
@@ -76,6 +77,13 @@ export function PackagesSection() {
               <p className="text-sm text-muted-foreground">
                 {coversLabel(t, p)}
               </p>
+              {p.coach_names?.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {t("packages.withCoaches", {
+                    names: p.coach_names.join(", "),
+                  })}
+                </p>
+              )}
               {p.description && (
                 <p className="mt-1 text-sm whitespace-pre-line">
                   {p.description}
@@ -96,6 +104,9 @@ export function PackagesSection() {
                         : o.valid_days > 0
                           ? t("packages.validDays", { count: o.valid_days })
                           : t("packages.public.noExpiry")}
+                      {o.kind === "times" &&
+                        o.minutes_per_visit > 0 &&
+                        ` · ${t("packages.perVisit", { length: duration(o.minutes_per_visit) })}`}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
@@ -133,15 +144,11 @@ export function PackagesSection() {
             </DialogDescription>
           </DialogHeader>
           {choice && (
-            <div className="rounded-lg bg-muted/50 p-3">
-              <p className="font-semibold">{choice.pkg.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {optionLabel(t, choice.option)}
-              </p>
-              <p className="display-tight text-2xl tabular-nums">
-                {money(choice.option.price, choice.pkg.currency)}
-              </p>
-            </div>
+            <PackageBuySummary
+              pkg={choice.pkg}
+              option={choice.option}
+              tz={business.timezone}
+            />
           )}
           <ErrorAlert error={buy.error} />
           <DialogFooter>

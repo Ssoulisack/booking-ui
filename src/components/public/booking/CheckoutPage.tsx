@@ -2,9 +2,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { isLaoPhone } from "@/lib/phone"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import { ArrowLeftIcon, MapPinIcon } from "lucide-react"
+import { ArrowLeftIcon, MapPinIcon, TicketIcon } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { contactOf } from "@/lib/contact"
 import {
   Link,
   Navigate,
@@ -29,10 +30,16 @@ import { ApiError } from "@/lib/api/client"
 import { floorName, zoneHolds } from "@/lib/floor-plan"
 import type { CreateBookingInput } from "@/types/booking"
 import { dayIn, duration, money, timeIn, todayIn } from "@/lib/format"
-import { coversClassOf, leftLabel, ymdLabel } from "@/lib/packages"
+import {
+  coversClassOf,
+  leftLabel,
+  ymdLabel,
+  visitsFor,
+  afterBooking,
+} from "@/lib/packages"
 import { useSession } from "@/stores/session"
 
-import { useMyPackages } from "@/hooks/use-account"
+import { packageKeys, useMyPackages } from "@/hooks/use-account"
 import {
   publicKeys,
   useAvailability,
@@ -108,7 +115,11 @@ export function CheckoutPage() {
   const needsLogin = !user && mode === "account"
   // a package (course pass) of the customer's may pay a class or a space (a table is free: no pass needed)
   const myPackages = useMyPackages(asCustomer && !isTable)
-  const [packageId, setPackageId] = useState<number | null>(null)
+  // undefined: not chosen yet (a fitting package of theirs is picked for them); null: they chose to pay
+  // the booking page's choice comes along (?pkg=: a package, or 0 = without package)
+  const [packageId, setPackageId] = useState<number | null | undefined>(
+    sel.pkg === 0 ? null : sel.pkg,
+  )
   const here = encodeURIComponent(pathname + search)
 
   const form = useForm<GuestValues>({
@@ -121,7 +132,7 @@ export function CheckoutPage() {
     ? `/b/${slug}?${selectionQuery({ ...sel, step: "table" })}#book`
     : isClass
       ? `/b/${slug}?${selectionQuery({ ...sel, start: undefined, cls: undefined })}#book`
-      : `/b/${slug}?${selectionQuery({ ...sel, step: "time", withCoach: sel.coach ? 1 : undefined })}#book`
+      : `/b/${slug}?${selectionQuery({ ...sel, step: sel.coach ? "coach" : "time", withCoach: sel.coach ? 1 : undefined })}#book`
   const tableIds = tableIdsOf(sel)
   const complete = isTable
     ? !!(sel.start && sel.guests && tableIds.length)
@@ -196,7 +207,11 @@ export function CheckoutPage() {
   const usable = (myPackages.data ?? []).filter((p) => {
     if (p.branch_slug !== slug || p.status !== "active" || !bookingDay)
       return false
-    if (p.kind === "times" && p.times_left < 1) return false
+    // the visits this booking takes (a space: one per "minutes per visit"; a length that is not a whole number of
+    // visits is not paid by the package) and enough of them left
+    const need = visitsFor(p, sel.length, isClass)
+    if (need === null || (p.kind === "times" && p.times_left < need))
+      return false
     const last = p.kind === "months" ? p.ends_on : p.expires_on
     if (last && bookingDay > last) return false
     return isClass
@@ -204,9 +219,22 @@ export function CheckoutPage() {
           p.sport_id === cls?.sport_id &&
           coversClassOf(p, cls?.timetable_id) &&
           seats === 1
-      : p.covers === "space" && p.resource_id === sel.court && !sel.coach
+      : p.covers === "space" &&
+          p.resource_id === sel.court &&
+          // with a coach only when the package includes that coach
+          (!sel.coach || !!p.coach_ids?.includes(sel.coach))
   })
-  const usePackage = usable.find((p) => p.id === packageId) ?? null
+  // a customer with a package that fits pays with it by default: the one that runs out first (they can still choose to pay)
+  const lastDay = (p: (typeof usable)[number]) =>
+    // no last day ("") counts as the latest: one that expires is used first
+    (p.kind === "months" ? p.ends_on : p.expires_on) || "9999-12-31"
+  const firstToEnd = [...usable].sort((a, b) =>
+    lastDay(a).localeCompare(lastDay(b)),
+  )[0]
+  const usePackage =
+    packageId === undefined
+      ? (firstToEnd ?? null)
+      : (usable.find((p) => p.id === packageId) ?? null)
 
   const submit = (guest?: GuestValues) => {
     const body: CreateBookingInput = isTable
@@ -233,6 +261,9 @@ export function CheckoutPage() {
       onSuccess: (booking) => {
         void queryClient.invalidateQueries({ queryKey: ["public", slug] })
         void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
+        // a package paid: its visits changed (the confirmed page shows what is left)
+        if (body.package_id)
+          void queryClient.invalidateQueries({ queryKey: packageKeys.mine })
         navigate(`/b/${slug}/confirmed`, { replace: true, state: { booking } })
       },
     })
@@ -327,20 +358,47 @@ export function CheckoutPage() {
                 </p>
               )}
             </div>
-            {price && (
-              <p
-                className={
-                  usePackage
-                    ? "shrink-0 display-tight text-2xl text-muted-foreground tabular-nums line-through"
-                    : "shrink-0 display-tight text-2xl tabular-nums"
-                }
-              >
-                {money(price.amount, price.currency)}
-              </p>
-            )}
+            {price &&
+              (usePackage ? (
+                // paid with the package: the price struck out, 0 to pay
+                <div className="shrink-0 text-right tabular-nums">
+                  <p className="text-sm text-muted-foreground line-through">
+                    {money(price.amount, price.currency)}
+                  </p>
+                  <p className="display-tight text-2xl">
+                    {money(0, price.currency)}
+                  </p>
+                </div>
+              ) : (
+                <p className="shrink-0 display-tight text-2xl tabular-nums">
+                  {money(price.amount, price.currency)}
+                </p>
+              ))}
             {isTable && (
               <p className="shrink-0 text-sm font-medium text-emerald-700 dark:text-emerald-400">
                 {t("public.tables.free")}
+              </p>
+            )}
+          </div>
+        )}
+        {/* paying with a package: which one, what this booking takes from it and what is left after */}
+        {!loading && usePackage && (
+          <div className="mt-3 space-y-0.5 rounded-lg border border-[var(--brand)] p-3 text-sm">
+            <p className="flex flex-wrap items-center gap-x-2 font-medium">
+              <TicketIcon className="size-4 shrink-0" />
+              {t("public.pkg.paidWith", { name: usePackage.name })}
+              <span className="font-mono text-xs text-muted-foreground">
+                {usePackage.code}
+              </span>
+            </p>
+            <p className="text-muted-foreground">
+              {usePackage.kind === "times"
+                ? `${t("packages.checkout.uses", { count: visitsFor(usePackage, sel.length, isClass) ?? 1 })} · ${t("public.pkg.leftAfter", { left: leftLabel(t, afterBooking(usePackage, sel.length, isClass), ymdLabel) })}`
+                : leftLabel(t, usePackage, ymdLabel)}
+            </p>
+            {usePackage.kind === "times" && usePackage.expires_on && (
+              <p className="text-muted-foreground">
+                {t("packages.useBy", { day: ymdLabel(usePackage.expires_on) })}
               </p>
             )}
           </div>
@@ -379,53 +437,64 @@ export function CheckoutPage() {
           }}
         >
           <p className="text-sm text-muted-foreground">
-            {t("public.bookingAs", { name: user!.name, email: user!.email })}
+            {t("public.bookingAs", {
+              name: user!.name,
+              email: contactOf(user),
+            })}
           </p>
           {usable.length > 0 && (
-            <fieldset className="space-y-2 rounded-xl bg-card p-4">
-              <legend className="px-1 text-sm font-medium">
+            // the title sits inside the box (a plain legend is drawn on the box's top edge and sticks out above it)
+            <fieldset className="rounded-xl bg-card p-4">
+              <legend className="float-left mb-3 w-full text-sm font-medium">
                 {t("packages.checkout.title")}
               </legend>
-              <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
-                <input
-                  type="radio"
-                  name="use-package"
-                  checked={!usePackage}
-                  onChange={() => setPackageId(null)}
-                  className="accent-primary"
-                />
-                <span className="text-sm font-medium">
-                  {price
-                    ? t("packages.checkout.payPrice", {
-                        price: money(price.amount, price.currency),
-                      })
-                    : t("packages.checkout.payNormal")}
-                </span>
-              </label>
-              {usable.map((p) => (
-                <label
-                  key={p.id}
-                  className="flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary"
-                >
+              <div className="clear-both space-y-2">
+                <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
                   <input
                     type="radio"
                     name="use-package"
-                    checked={usePackage?.id === p.id}
-                    onChange={() => setPackageId(p.id)}
-                    className="mt-1 accent-primary"
+                    checked={!usePackage}
+                    onChange={() => setPackageId(null)}
+                    className="accent-primary"
                   />
-                  <span>
-                    <span className="block text-sm font-medium">
-                      {t("packages.checkout.useMine", { name: p.name })}
-                    </span>
-                    <span className="block text-sm text-muted-foreground">
-                      {leftLabel(t, p, ymdLabel)}
-                      {p.kind === "times" &&
-                        ` · ${t("packages.checkout.usesOne")}`}
-                    </span>
+                  <span className="text-sm font-medium">
+                    {price
+                      ? t("packages.checkout.payPrice", {
+                          price: money(price.amount, price.currency),
+                        })
+                      : t("packages.checkout.payNormal")}
                   </span>
                 </label>
-              ))}
+                {usable.map((p) => (
+                  <label
+                    key={p.id}
+                    className="flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary"
+                  >
+                    <input
+                      type="radio"
+                      name="use-package"
+                      checked={usePackage?.id === p.id}
+                      onChange={() => setPackageId(p.id)}
+                      className="mt-1 accent-primary"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium">
+                        {t("packages.checkout.useMine", { name: p.name })}
+                      </span>
+                      <span className="block text-sm text-muted-foreground">
+                        {/* what is left after this booking (1 h of a 60-minute package: 1 of 2) */}
+                        {leftLabel(
+                          t,
+                          afterBooking(p, sel.length, isClass),
+                          ymdLabel,
+                        )}
+                        {p.kind === "times" &&
+                          ` · ${t("packages.checkout.uses", { count: visitsFor(p, sel.length, isClass) ?? 1 })}`}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
             </fieldset>
           )}
           <Policy text={business.booking_policy} />

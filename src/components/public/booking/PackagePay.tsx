@@ -15,6 +15,7 @@ import { AccountRow } from "./EventPay"
 import { PayOnline } from "./PayOnline"
 import { saveImage } from "./save-image"
 import { SlipSender } from "./SlipSender"
+import { AskToApprove } from "./AskToApprove"
 
 /**
  * Paying for a package the customer bought: online (a bank QR, confirms by itself) or by transfer with the slip
@@ -185,6 +186,10 @@ export function PackagePay({
             error={slip.error}
             onSend={(input) => slip.mutateAsync(input)}
           />
+          {/* the slip is sent and the team has not approved it yet: ask them on WhatsApp */}
+          {slipSent && (
+            <AskToApprove pkg={pkg} slug={slug} className="h-11 w-full" />
+          )}
           {!slipSent && !info?.slip_telegram && !whatsapp && (
             <p className="text-sm text-muted-foreground">
               {t("packages.my.tellDesk", { code: pkg.code })}

@@ -12,6 +12,8 @@ export interface PackageOption {
   price: number
   /** a times option must be used within this many days of buying; 0 = no expiry */
   valid_days: number
+  /** times: how long one visit books a space (60: 1 h = 1 visit, 2 h = 2); 0 = one visit per booking, any length */
+  minutes_per_visit: number
   active: boolean
 }
 
@@ -28,6 +30,9 @@ export interface PackageItem {
   /** the weekly classes a group-class package covers; empty = every class of the sport */
   class_ids: number[]
   class_names: string[]
+  /** a space package: the coaches it includes (booked with the space at no extra cost); empty = no coach */
+  coach_ids: number[]
+  coach_names: string[]
   active: boolean
   currency: string
   options: PackageOption[]
@@ -41,6 +46,8 @@ export interface PackageInput {
   resource_id: number | null
   /** group classes only: the weekly classes it covers; empty = every class of the sport */
   class_ids: number[]
+  /** space packages only: the coaches it includes */
+  coach_ids: number[]
   active: boolean
   /** an option with an id is changed, one without is added, one left out is removed */
   options: {
@@ -49,6 +56,7 @@ export interface PackageInput {
     amount: number
     price: number
     valid_days: number
+    minutes_per_visit: number
     active: boolean
   }[]
 }
@@ -68,6 +76,8 @@ export interface CustomerPackage {
   customer_name?: string
   customer_phone?: string
   package_id: number
+  /** the way it was bought (buying it again uses the same one) */
+  option_id: number
   sport_id: number
   name: string
   covers: PackageCovers
@@ -75,11 +85,16 @@ export interface CustomerPackage {
   resource_name: string
   class_ids: number[]
   class_names: string[]
+  /** the coaches it includes with its space (no extra cost) */
+  coach_ids: number[]
+  coach_names: string[]
   kind: "times" | "months"
   amount: number
   price: number
   currency: string
   times_left: number
+  /** how long one visit books a space; 0 = one visit per booking, any length */
+  minutes_per_visit: number
   starts_on: string
   ends_on: string
   expires_on: string

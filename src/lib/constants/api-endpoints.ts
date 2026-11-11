@@ -91,6 +91,8 @@ export const API_ENDPOINTS = {
       `/branches/${branchId}/coaches/${coachId}`,
     COACHES: (branchId: number) => `/branches/${branchId}/coaches`,
     CUSTOMERS: (branchId: number) => `/branches/${branchId}/customers`,
+    /** customers who bought a package here (the Membership tab) */
+    MEMBERS: (branchId: number) => `/branches/${branchId}/members`,
     CUSTOMERS_FIND: (branchId: number) =>
       `/branches/${branchId}/customers/find`,
     CUSTOMER_PACKAGES: (branchId: number) =>
@@ -172,6 +174,8 @@ export const API_ENDPOINTS = {
   PUBLIC: {
     AVAILABILITY: (slug: string) =>
       `/public/branches/${encodeURIComponent(slug)}/availability`,
+    COACH_AVAILABILITY: (slug: string) =>
+      `/public/branches/${encodeURIComponent(slug)}/coach-availability`,
     BOOKING: (slug: string, token: string) =>
       `/public/branches/${encodeURIComponent(slug)}/bookings/${encodeURIComponent(token)}`,
     BOOKINGS: (slug: string) =>

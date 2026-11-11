@@ -1,6 +1,6 @@
 import { api, apiPage } from "@/lib/api/client"
 import { API_ENDPOINTS } from "@/lib/constants/api-endpoints"
-import type { Customer, CustomerMatch } from "@/types/customer"
+import type { Customer, CustomerMatch, Member } from "@/types/customer"
 
 export const customerService = {
   /** Every customer of the company, all branches */
@@ -13,6 +13,11 @@ export const customerService = {
   find: (branchId: number, q: string) =>
     api<CustomerMatch>(API_ENDPOINTS.BRANCH.CUSTOMERS_FIND(branchId), {
       query: { q },
+    }),
+  /** Customers who bought a package at the branch */
+  members: (branchId: number, keyword: string, page: number, limit: number) =>
+    apiPage<Member>(API_ENDPOINTS.BRANCH.MEMBERS(branchId), {
+      query: { keyword, page, limit },
     }),
   branchList: (
     branchId: number,

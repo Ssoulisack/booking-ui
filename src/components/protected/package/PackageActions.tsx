@@ -1,4 +1,4 @@
-import { HistoryIcon, SlidersHorizontalIcon } from "lucide-react"
+import { HistoryIcon, RotateCwIcon, SlidersHorizontalIcon } from "lucide-react"
 import { useCancelPackage } from "@/hooks/use-package"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -15,10 +15,11 @@ import {
   MarkPaidDialog,
   VisitsDialog,
 } from "./PackageDialogs"
+import { SellDialog } from "./SellDialog"
 
 /**
- * What the team can do with one customer package: mark it paid, adjust it (manager), see its history, cancel it
- * (manager). Used on the Customer packages table and in the Overview search.
+ * What the team can do with one customer package: mark it paid, adjust it (manager), see its history, renew it when
+ * it is used up or out of time (sell the same again), cancel it (manager). Used on the Customer packages table and in the Overview search.
  */
 export function PackageActions({ pkg: p }: { pkg: CustomerPackage }) {
   const { t } = useTranslation()
@@ -27,6 +28,7 @@ export function PackageActions({ pkg: p }: { pkg: CustomerPackage }) {
   const [paying, setPaying] = useState(false)
   const [adjusting, setAdjusting] = useState(false)
   const [log, setLog] = useState(false)
+  const [renewing, setRenewing] = useState(false)
   const cancel = useCancelPackage()
   const paid = p.payment_status === "paid"
 
@@ -61,6 +63,18 @@ export function PackageActions({ pkg: p }: { pkg: CustomerPackage }) {
           <span className="sr-only">{t("packages.log")}</span>
         </Button>
       )}
+      {/* used up or out of time: sell the same package and option again to this customer */}
+      {paid && (p.status === "used_up" || p.status === "expired") && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-9"
+          onClick={() => setRenewing(true)}
+        >
+          <RotateCwIcon />
+          {t("packages.renew")}
+        </Button>
+      )}
       {p.status !== "cancelled" && canManage && (
         <CancelPackage
           pkg={p}
@@ -74,6 +88,7 @@ export function PackageActions({ pkg: p }: { pkg: CustomerPackage }) {
         <AdjustDialog pkg={p} onClose={() => setAdjusting(false)} />
       )}
       {log && <VisitsDialog pkg={p} onClose={() => setLog(false)} />}
+      {renewing && <SellDialog renew={p} onClose={() => setRenewing(false)} />}
     </div>
   )
 }

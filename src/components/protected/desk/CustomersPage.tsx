@@ -1,12 +1,13 @@
 import { SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link } from "react-router"
+import { Link, useSearchParams } from "react-router"
 
 import { PageError } from "@/components/global/page-state"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { dayIn } from "@/lib/format"
 import { displayPhone } from "@/lib/phone"
 
@@ -14,7 +15,8 @@ import { useSettings } from "@/hooks/use-branch"
 import { PageHeader } from "@/components/protected/branch/ui"
 import { Pager } from "@/components/global/Pager"
 
-import { useCustomers } from "@/hooks/use-customer"
+import { useCustomers, useMembers } from "@/hooks/use-customer"
+import { MembersTable } from "./MembersTable"
 
 /** /dashboard/:id/customers — people with an account who booked here; open their bookings */
 export function CustomersPage() {
@@ -24,12 +26,39 @@ export function CustomersPage() {
   const [keyword, setKeyword] = useState("")
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(20)
+  // two tabs (in the address, ?tab=membership): everyone who booked here, and those who bought a package
+  const [params, setParams] = useSearchParams()
+  const membership = params.get("tab") === "membership"
+  const switchTab = (v: string) => {
+    setPage(1)
+    setParams(v === "membership" ? { tab: "membership" } : {}, {
+      replace: true,
+    })
+  }
   const customers = useCustomers(keyword, page, limit)
-  const meta = customers.data?.meta
+  const members = useMembers(keyword, page, limit)
+  const shown = membership ? members : customers
+  const meta = shown.data?.meta
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t("nav.customers")} lead={t("desk.customersLead")} />
+      <PageHeader
+        title={t("nav.customers")}
+        lead={t(membership ? "desk.membershipLead" : "desk.customersLead")}
+      />
+      <Tabs
+        value={membership ? "membership" : "customers"}
+        onValueChange={switchTab}
+      >
+        <TabsList className="h-11 lg:h-9">
+          <TabsTrigger value="customers" className="px-4">
+            {t("desk.tabCustomers")}
+          </TabsTrigger>
+          <TabsTrigger value="membership" className="px-4">
+            {t("desk.tabMembership")}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       <form
         className="relative max-w-md"
         onSubmit={(e) => {
@@ -51,7 +80,23 @@ export function CustomersPage() {
           className="h-11 pl-9 text-base lg:h-9 lg:text-sm"
         />
       </form>
-      {customers.isPending ? (
+      {membership ? (
+        members.isPending ? (
+          <Skeleton className="h-64 rounded-xl" />
+        ) : members.isError ? (
+          <PageError error={members.error} onRetry={() => members.refetch()} />
+        ) : members.data.items.length === 0 ? (
+          <p className="rounded-xl bg-background p-6 text-muted-foreground ring-1 ring-border">
+            {t("desk.noMembers")}
+          </p>
+        ) : (
+          <MembersTable
+            members={members.data.items}
+            first={(page - 1) * limit + 1}
+            tz={tz}
+          />
+        )
+      ) : customers.isPending ? (
         <Skeleton className="h-64 rounded-xl" />
       ) : customers.isError ? (
         <PageError

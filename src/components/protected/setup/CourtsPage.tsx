@@ -367,7 +367,7 @@ export function CourtDetailPage() {
     <div className="space-y-6">
       <div>
         <Button asChild variant="ghost" className="-ml-3 h-11 lg:h-9">
-          <Link to="..">
+          <Link to=".." relative="path">
             <ArrowLeftIcon />
             {t("setup.tabs.spaces")}
           </Link>

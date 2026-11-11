@@ -19,7 +19,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import type { Booking, StaffBookingInput } from "@/types/booking"
 import { money, timeIn } from "@/lib/format"
-import { coversClassOf, leftLabel, ymdLabel } from "@/lib/packages"
+import { coversClassOf, leftLabel, ymdLabel, visitsFor } from "@/lib/packages"
 import { displayPhone, isLaoPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 
@@ -137,7 +137,10 @@ export function NewBookingDialog({
   const usable = (
     who === "account" && account ? (theirs.data ?? []) : []
   ).filter((p) => {
-    if (p.kind === "times" && p.times_left < 1) return false
+    // the visits the booking takes (see visitsFor) and enough of them left
+    const need = visitsFor(p, len, what === "class")
+    if (need === null || (p.kind === "times" && p.times_left < need))
+      return false
     const last = p.kind === "months" ? p.ends_on : p.expires_on
     if (last && date > last) return false
     if (what === "class")
@@ -153,7 +156,7 @@ export function NewBookingDialog({
       p.covers === "space" &&
       !!court &&
       p.resource_id === court.id &&
-      !coach
+      (!coach || !!p.coach_ids?.includes(coach.id))
     )
   })
   const usePkg = usable.find((p) => p.id === packageId) ?? null
@@ -508,6 +511,8 @@ export function NewBookingDialog({
                   </span>
                   <span className="block text-muted-foreground">
                     {leftLabel(t, p, ymdLabel)}
+                    {p.kind === "times" &&
+                      ` · ${t("packages.checkout.uses", { count: visitsFor(p, len, what === "class") ?? 1 })}`}
                   </span>
                 </span>
               </label>

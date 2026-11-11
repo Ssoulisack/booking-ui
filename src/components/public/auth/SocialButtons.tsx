@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 
 import { useSocialConfig, useSocialLogin } from "@/hooks/use-auth"
+import { afterAuthPath } from "./landing"
 
 // the little of each provider's browser script that is used here
 interface GoogleId {
@@ -83,7 +84,7 @@ export function SocialButtons({ next }: { next: string | null }) {
   const googleId = config?.google_client_id
   const facebookId = config?.facebook_app_id
 
-  const done = () => navigate(next ?? "/", { replace: true })
+  const done = () => navigate(afterAuthPath(next), { replace: true })
 
   useEffect(() => {
     if (!googleId) return

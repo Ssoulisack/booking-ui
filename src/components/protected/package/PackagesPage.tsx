@@ -1,7 +1,8 @@
-import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
+import { PencilIcon, PlusIcon, SearchIcon, Trash2Icon } from "lucide-react"
 import { useDeletePackage, useSavePackage } from "@/hooks/use-package"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useCoachesList } from "@/hooks/use-coach"
 import { Link } from "react-router"
 import { toast } from "sonner"
 
@@ -14,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import type { PackageInput, PackageItem } from "@/types/package"
 import { coversLabel, optionLabel } from "@/lib/packages"
-import { money } from "@/lib/format"
+import { duration, money } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 import { useBiz } from "@/hooks/use-branch"
@@ -124,11 +125,21 @@ export function PackagesPage() {
                           className="border-r py-3 pr-3 whitespace-nowrap"
                         >
                           {coversLabel(t, p)}
+                          {p.coach_names?.length > 0 && (
+                            <span className="block text-xs text-muted-foreground">
+                              {t("packages.withCoaches", {
+                                names: p.coach_names.join(", "),
+                              })}
+                            </span>
+                          )}
                         </td>
                       </>
                     )}
                     <td className="py-2.5 pr-3 pl-3 whitespace-nowrap">
                       {optionLabel(t, o)}
+                      {o.kind === "times" &&
+                        o.minutes_per_visit > 0 &&
+                        ` · ${t("packages.perVisit", { length: duration(o.minutes_per_visit) })}`}
                     </td>
                     <td className="py-2.5 pr-3 text-right whitespace-nowrap tabular-nums">
                       {money(o.price, p.currency)}
@@ -190,6 +201,7 @@ interface OptionRow {
   amount: string
   price: string
   valid_days: string
+  minutes_per_visit: string
   active: boolean
 }
 
@@ -200,6 +212,7 @@ function toRow(o: PackageItem["options"][number]): OptionRow {
     amount: String(o.amount),
     price: String(o.price),
     valid_days: o.valid_days ? String(o.valid_days) : "",
+    minutes_per_visit: o.minutes_per_visit ? String(o.minutes_per_visit) : "",
     active: o.active,
   }
 }
@@ -234,6 +247,12 @@ function PackageDialog({
     item?.resource_id ?? null,
   )
   const [classIds, setClassIds] = useState<number[]>(item?.class_ids ?? [])
+  const [coachIds, setCoachIds] = useState<number[]>(item?.coach_ids ?? [])
+  // "Include coaches": the coach list shows only when ticked; unticked, the package has no coach
+  const [withCoaches, setWithCoaches] = useState(
+    (item?.coach_ids?.length ?? 0) > 0,
+  )
+  const coaches = useCoachesList().data ?? []
   const [active, setActive] = useState(item?.active ?? true)
   const [rows, setRows] = useState<OptionRow[]>(
     item?.options.map(toRow) ?? [
@@ -242,6 +261,7 @@ function PackageDialog({
         amount: "10",
         price: "",
         valid_days: "60",
+        minutes_per_visit: "",
         active: true,
       },
     ],
@@ -259,6 +279,26 @@ function PackageDialog({
   // the weekly classes of the chosen sport that a group-class package can be limited to
   const sportClasses = timetables.filter((c) => c.sport_id === sid)
   const ticked = classIds.filter((id) => sportClasses.some((c) => c.id === id))
+  // the coaches of the chosen sport that a space package can include
+  const sportCoaches = coaches.filter(
+    (c) =>
+      (c.active || coachIds.includes(c.id)) &&
+      c.sports.some((s) => s.id === sid),
+  )
+  const coachTicked = coachIds.filter((id) =>
+    sportCoaches.some((c) => c.id === id),
+  )
+  // many coaches: a search box, 5 at a time ("See more" shows 5 more), the ticked ones first
+  const [coachSearch, setCoachSearch] = useState("")
+  const [coachShown, setCoachShown] = useState(5)
+  const coachFound = sportCoaches
+    .filter((c) =>
+      c.name.toLowerCase().includes(coachSearch.trim().toLowerCase()),
+    )
+    .sort(
+      (a, b) =>
+        Number(coachTicked.includes(b.id)) - Number(coachTicked.includes(a.id)),
+    )
 
   const setRow = (i: number, patch: Partial<OptionRow>) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)))
@@ -283,6 +323,7 @@ function PackageDialog({
       covers,
       resource_id: space?.id ?? null,
       class_ids: covers === "group_class" ? ticked : [],
+      coach_ids: covers === "space" && withCoaches ? coachTicked : [],
       active,
       options: rows.map((r) => ({
         ...(r.id ? { id: r.id } : {}),
@@ -290,6 +331,11 @@ function PackageDialog({
         amount: Number(r.amount),
         price: Number(r.price),
         valid_days: r.kind === "times" ? Number(r.valid_days) || 0 : 0,
+        // only a space package counts visits by length (a class seat is always one visit)
+        minutes_per_visit:
+          r.kind === "times" && covers === "space"
+            ? Number(r.minutes_per_visit) || 0
+            : 0,
         active: r.active,
       })),
     }
@@ -434,6 +480,92 @@ function PackageDialog({
                 ))}
               </select>
             ))}
+          {/* a space package may include coaches: booked with the space at no extra cost */}
+          {covers === "space" && (
+            <div className="space-y-2 rounded-lg border p-3">
+              <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={withCoaches}
+                  onChange={(e) => setWithCoaches(e.target.checked)}
+                  className="size-4 accent-primary"
+                />
+                {t("packages.includeCoaches")}
+              </label>
+              {withCoaches && (
+                <>
+                  {sportCoaches.length > 5 && (
+                    <div className="relative">
+                      <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        type="search"
+                        aria-label={t("packages.coachSearch")}
+                        placeholder={t("packages.coachSearch")}
+                        value={coachSearch}
+                        onChange={(e) => {
+                          setCoachSearch(e.target.value)
+                          setCoachShown(5)
+                        }}
+                        className={cn(input, "pl-9")}
+                      />
+                    </div>
+                  )}
+                  {coachTicked.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("packages.coachesTicked", {
+                        count: coachTicked.length,
+                      })}
+                    </p>
+                  )}
+                  {sportCoaches.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t("packages.noCoaches")}
+                    </p>
+                  ) : coachFound.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t("packages.noCoachFound")}
+                    </p>
+                  ) : (
+                    coachFound.slice(0, coachShown).map((c) => (
+                      <label
+                        key={c.id}
+                        className="flex min-h-11 cursor-pointer items-center gap-3 text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={coachTicked.includes(c.id)}
+                          onChange={(e) =>
+                            setCoachIds(
+                              e.target.checked
+                                ? [...coachTicked, c.id]
+                                : coachTicked.filter((id) => id !== c.id),
+                            )
+                          }
+                          className="size-4 accent-primary"
+                        />
+                        {c.name}
+                      </label>
+                    ))
+                  )}
+                  {coachFound.length > coachShown && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-11 lg:h-9"
+                      onClick={() => setCoachShown((n) => n + 5)}
+                    >
+                      {t("packages.seeMore", {
+                        count: Math.min(5, coachFound.length - coachShown),
+                      })}
+                    </Button>
+                  )}
+                </>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {t("packages.coachesHint")}
+              </p>
+            </div>
+          )}
         </fieldset>
         <div className="space-y-1.5">
           <Label htmlFor="pk-desc">{t("packages.description")}</Label>
@@ -521,6 +653,28 @@ function PackageDialog({
                     />
                   </div>
                 )}
+                {r.kind === "times" && covers === "space" && (
+                  <div className="col-span-2 space-y-1.5">
+                    <Label htmlFor={`pk-minutes-${i}`}>
+                      {t("packages.minutesPerVisit")}
+                    </Label>
+                    <Input
+                      id={`pk-minutes-${i}`}
+                      inputMode="numeric"
+                      value={r.minutes_per_visit}
+                      placeholder={t("packages.anyLength")}
+                      onChange={(e) =>
+                        setRow(i, {
+                          minutes_per_visit: digits(e.target.value).slice(0, 4),
+                        })
+                      }
+                      className={input}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t("packages.minutesPerVisitHint")}
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <ActiveSwitch
@@ -558,6 +712,7 @@ function PackageDialog({
                     amount: "",
                     price: "",
                     valid_days: "",
+                    minutes_per_visit: "",
                     active: true,
                   },
                 ])

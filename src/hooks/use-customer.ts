@@ -21,6 +21,17 @@ export function useFindCustomer() {
   })
 }
 
+/** The Membership tab: customers who bought a package here */
+export function useMembers(keyword: string, page: number, limit = 20) {
+  const { id: branchId, key } = useBiz()
+  return useQuery({
+    // under sold-packages: selling, paying or cancelling a package refreshes it
+    queryKey: key("sold-packages", "members", keyword, page, limit),
+    queryFn: () => customerService.members(branchId, keyword, page, limit),
+    placeholderData: keepPreviousData,
+  })
+}
+
 export function useCustomers(keyword: string, page: number, limit = 20) {
   const { id: branchId, key } = useBiz()
   return useQuery({

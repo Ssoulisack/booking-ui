@@ -8,7 +8,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { money } from "@/lib/format"
-import { leftLabel, optionLabel, ymdLabel, coversLabel } from "@/lib/packages"
+import {
+  leftLabel,
+  optionLabel,
+  ymdLabel,
+  coversLabel,
+  statusLabel,
+} from "@/lib/packages"
 import { useSession } from "@/stores/session"
 
 import { useMyPackages } from "@/hooks/use-account"
@@ -22,7 +28,9 @@ export function PackagePayPage() {
   const { slug } = usePublic()
   const { id } = useParams()
   const user = useSession((s) => s.user)
-  const { pathname } = useLocation()
+  const { pathname, state } = useLocation()
+  // opened from My packages (Pay now, View, Buy again): Back returns there, not to the branch's packages
+  const fromMine = (state as { from?: string } | null)?.from === "my-packages"
   const mine = useMyPackages(!!user)
 
   const waitingBy =
@@ -49,9 +57,9 @@ export function PackagePayPage() {
   return (
     <main className="mx-auto max-w-xl space-y-6 px-4 pt-4 pb-16">
       <Button asChild variant="ghost" className="-ml-3 h-11">
-        <Link to={`/b/${slug}#packages`}>
+        <Link to={fromMine ? "/account/packages" : `/b/${slug}#packages`}>
           <ArrowLeftIcon />
-          {t("packages.my.backToPackages")}
+          {t(fromMine ? "packages.my.title" : "packages.my.backToPackages")}
         </Link>
       </Button>
       <h1 className="display-tight text-4xl">{t("packages.my.pageTitle")}</h1>
@@ -73,9 +81,7 @@ export function PackagePayPage() {
                   {coversLabel(t, pkg)} · {optionLabel(t, pkg)}
                 </p>
               </div>
-              <Badge variant="secondary">
-                {t(`packages.status.${pkg.status}`)}
-              </Badge>
+              <Badge variant="secondary">{statusLabel(t, pkg)}</Badge>
             </div>
             <p className="display-tight text-2xl tabular-nums">
               {money(pkg.price, pkg.currency)}

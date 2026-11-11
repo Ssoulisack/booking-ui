@@ -13,7 +13,7 @@ import { useSession } from "@/stores/session"
 
 import { useLogin } from "@/hooks/use-auth"
 import { SocialButtons } from "./SocialButtons"
-import { safeNext } from "./landing"
+import { afterAuthPath, safeNext } from "./landing"
 import { loginSchema, type LoginValues } from "./schemas"
 
 export function LoginPage() {
@@ -32,7 +32,7 @@ export function LoginPage() {
 
   const onSubmit = form.handleSubmit((values) =>
     login.mutate(values, {
-      onSuccess: () => navigate(next ?? "/", { replace: true }),
+      onSuccess: () => navigate(afterAuthPath(next), { replace: true }),
     }),
   )
 

@@ -70,6 +70,8 @@ export interface PublicCoach {
   sports: Array<{ id: number; name: string }>
   price_per_hour: number | null
   currency?: string
+  /** open at least one day a week: offered as a coach to book (false: closed every day) */
+  bookable: boolean
 }
 
 export interface EffectiveRule {
@@ -93,6 +95,14 @@ export interface Availability {
   date: string
   timezone: string
   rule: EffectiveRule
+  slots: Slot[]
+  currency?: string
+  prices: Array<{ duration_min: number; price: number }>
+}
+
+/** One coach's free times together with a space on a day, with the price of each length (space + coach) */
+export interface CoachAvailability {
+  coach_id: number
   slots: Slot[]
   currency?: string
   prices: Array<{ duration_min: number; price: number }>

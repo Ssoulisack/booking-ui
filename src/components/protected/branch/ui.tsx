@@ -50,7 +50,12 @@ export function PageHeader({
         </h1>
         {lead && <p className="max-w-prose text-muted-foreground">{lead}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && (
+        // phone: the buttons use the full row, one at each end
+        <div className="flex flex-wrap gap-2 max-sm:w-full max-sm:justify-between">
+          {actions}
+        </div>
+      )}
     </div>
   )
 }

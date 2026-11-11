@@ -1,10 +1,11 @@
-import { CalendarCheckIcon } from "lucide-react"
+import { ArrowLeftIcon, CalendarCheckIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link, Outlet } from "react-router"
 
 import { usePublicCompany } from "@/hooks/use-place"
 import { BrandMark } from "@/components/public/booking/BrandMark"
 import { CustomerTheme } from "@/components/public/booking/CustomerTheme"
+import { readBack } from "@/components/public/booking/origin"
 import { ThemeToggle } from "@/components/public/booking/ThemeToggle"
 import { LanguageToggle } from "@/components/global/LanguageToggle"
 
@@ -30,6 +31,22 @@ export function CompanyLink() {
   )
 }
 
+/** Someone who came from a branch and does not want to log in goes back to it (nothing when they came from the list of all branches) */
+function BackToBranch() {
+  const { t } = useTranslation()
+  const back = readBack()
+  if (!back?.name) return null
+  return (
+    <Link
+      to={back.to}
+      className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+    >
+      <ArrowLeftIcon className="size-4 shrink-0" />
+      {t("nav.backTo", { name: back.name })}
+    </Link>
+  )
+}
+
 /** Login, register and password pages: full width on phones, a centred card from tablets up */
 export function AuthLayout() {
   const { t } = useTranslation()
@@ -46,6 +63,7 @@ export function AuthLayout() {
       </header>
       <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-10 sm:items-center sm:pt-0">
         <div className="w-full max-w-sm candy-card bg-card p-5 sm:p-8">
+          <BackToBranch />
           <Outlet />
         </div>
       </main>

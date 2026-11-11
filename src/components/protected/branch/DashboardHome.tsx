@@ -1,9 +1,14 @@
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query"
 import { useBranchActions } from "@/hooks/use-branch"
-import { CheckCircle2Icon, CircleIcon, ListChecksIcon } from "lucide-react"
+import {
+  CheckCircle2Icon,
+  CircleIcon,
+  StoreIcon,
+  ListChecksIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/global/form"
@@ -16,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import HoldButton from "@/components/reactbits/HoldButton"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -44,6 +50,7 @@ export function DashboardHome() {
   const user = useSession((s) => s.user)
   const { branch } = useDashboard()
   const canSetUp = roleAtLeast(branch.role, "manager")
+  const navigate = useNavigate()
 
   return (
     <div className="space-y-6">
@@ -53,7 +60,29 @@ export function DashboardHome() {
           role: t(`roles.${branch.role}`),
           branch: branch.name,
         })}
-        actions={<RefreshPage />}
+        actions={
+          <>
+            <RefreshPage />
+            {/* the customers' page of this branch, in this tab (the browser's Back returns to the dashboard) */}
+            {/* hold, not tap: leaving the dashboard is on purpose */}
+            <HoldButton
+              className="h-11 lg:h-9"
+              backgroundColor="var(--muted)"
+              textColor="var(--foreground)"
+              fillColor="#FBBF24"
+              fillTextColor="#000000"
+              radius={8}
+              holdTime={1200}
+              resetAfter={1500}
+              icon={<StoreIcon className="size-4" />}
+              doneLabel={t("overview.openPage")}
+              hint={t("overview.openPageHint", { seconds: 1.2 })}
+              onHold={() => navigate(`/b/${branch.slug}`)}
+            >
+              {t("overview.openPageHold")}
+            </HoldButton>
+          </>
+        }
       />
       {branch.type === "sport" && <PackageFinder />}
       {canSetUp ? (

@@ -78,6 +78,28 @@ export const dayIn = (iso: string, tz: string) => {
     : formatInTimeZone(iso, tz, "EEE d MMM")
 }
 
+/** "23 Oct" (Lao and Thai: the same in their words) */
+export const dayMonthIn = (iso: string, tz: string) => {
+  const tag = localeTag()
+  return tag
+    ? new Intl.DateTimeFormat(tag, {
+        timeZone: tz,
+        day: "numeric",
+        month: "short",
+      }).format(new Date(iso))
+    : formatInTimeZone(iso, tz, "d MMM")
+}
+
+/** "Thu" (Lao and Thai: the same in their words) */
+export const weekdayIn = (iso: string, tz: string) => {
+  const tag = localeTag()
+  return tag
+    ? new Intl.DateTimeFormat(tag, { timeZone: tz, weekday: "short" }).format(
+        new Date(iso),
+      )
+    : formatInTimeZone(iso, tz, "EEE")
+}
+
 /** "Thursday 23 October 2026" (in Lao and Thai: the same in their words) */
 export const longDayIn = (iso: string, tz: string) => {
   const tag = localeTag()

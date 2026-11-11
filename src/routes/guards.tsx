@@ -1,8 +1,9 @@
 import { useEffect } from "react"
-import { Navigate, Outlet, useLocation } from "react-router"
+import { Navigate, Outlet, useLocation, useSearchParams } from "react-router"
 
 import { useMe } from "@/hooks/use-auth"
 import { PageLoader } from "@/components/global/page-state"
+import { afterAuthPath } from "@/components/public/auth/landing"
 import { runsCompany, useSession } from "@/stores/session"
 
 function loginPath(location: { pathname: string; search: string }) {
@@ -25,10 +26,15 @@ export function RequireUser() {
   return <Outlet />
 }
 
-/** Login and register pages: someone already logged in goes to their start page */
+/**
+ * Login and register pages: someone already logged in leaves them. They go to the page they came from (?next=) or the
+ * branch they scanned, not to the list of all branches (logging in sets the token, which runs this before the page's own
+ * redirect does).
+ */
 export function GuestOnly() {
   const token = useSession((s) => s.accessToken)
-  if (token) return <Navigate to="/" replace />
+  const [params] = useSearchParams()
+  if (token) return <Navigate to={afterAuthPath(params.get("next"))} replace />
   return <Outlet />
 }
 

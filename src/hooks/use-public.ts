@@ -30,6 +30,8 @@ export const publicKeys = {
   upcomingClasses: (slug: string) => ["public", slug, "classes"] as const,
   availability: (slug: string, q: AvailabilityQuery) =>
     ["public", slug, "availability", q] as const,
+  coachAvailability: (slug: string, q: AvailabilityQuery) =>
+    ["public", slug, "coach-availability", q] as const,
   events: (slug: string) => ["public", slug, "events"] as const,
   event: (slug: string, id: number, date: string) =>
     ["public", slug, "events", id, date] as const,
@@ -114,6 +116,20 @@ export function useAvailability(slug: string, q: AvailabilityQuery | null) {
     queryFn: () => publicService.availability(slug, q!),
     enabled: !!q,
     // free times change as people book: refresh often, keep the old grid while loading
+    staleTime: 15_000,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** The coaches free with a space on a day (each with their times): the booking page offers those free at the time picked */
+export function useCoachAvailability(
+  slug: string,
+  q: AvailabilityQuery | null,
+) {
+  return useQuery({
+    queryKey: publicKeys.coachAvailability(slug, q ?? { date: "" }),
+    queryFn: () => publicService.coachAvailability(slug, q!),
+    enabled: !!q,
     staleTime: 15_000,
     placeholderData: keepPreviousData,
   })

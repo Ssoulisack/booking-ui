@@ -26,8 +26,9 @@ export function RefreshButton({
   const tz = useSettings().data?.in_force.timezone ?? "Asia/Vientiane"
   return (
     <div className="flex items-center gap-2">
+      {/* on a phone the time is left out: the button and the page's other buttons then fit in one row */}
       {updatedAt > 0 && (
-        <span className="text-xs text-muted-foreground">
+        <span className="hidden text-xs text-muted-foreground sm:inline">
           {t("common.updatedAt", {
             time: stampIn(new Date(updatedAt).toISOString(), tz).slice(11),
           })}

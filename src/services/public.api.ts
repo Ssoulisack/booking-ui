@@ -17,6 +17,7 @@ import type { PaymentOption, PublicPayInfo } from "@/types/payment"
 import type {
   Availability,
   AvailabilityQuery,
+  CoachAvailability,
   PublicBranch,
   PublicCoach,
   PublicResource,
@@ -54,6 +55,11 @@ export const publicService = {
 
   availability: (slug: string, q: AvailabilityQuery) =>
     api<Availability>(API_ENDPOINTS.PUBLIC.AVAILABILITY(slug), {
+      query: { ...q },
+    }),
+  /** for a space on a day: the coaches free with it, each with their times */
+  coachAvailability: (slug: string, q: AvailabilityQuery) =>
+    api<CoachAvailability[]>(API_ENDPOINTS.PUBLIC.COACH_AVAILABILITY(slug), {
       query: { ...q },
     }),
   createBooking: (slug: string, body: CreateBookingInput) =>

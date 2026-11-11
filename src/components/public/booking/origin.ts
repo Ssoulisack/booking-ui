@@ -28,8 +28,8 @@ function write(key: string, value: unknown) {
 
 /** Called on every page change: remembers the home or branch page, and leaves the rest alone */
 export function trackPage(pathname: string) {
-  if (pathname === "/") {
-    write(PAGE, { to: "/" } satisfies Back)
+  if (pathname === "/" || pathname === "/home") {
+    write(PAGE, { to: pathname } satisfies Back)
     return
   }
   const branch = /^\/b\/([^/]+)/.exec(pathname)

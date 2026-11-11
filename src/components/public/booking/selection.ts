@@ -24,6 +24,8 @@ export interface Selection {
   withCoach?: number
   /** the open step: the table (restaurants), the coach or the time (courts) */
   step?: "table" | "coach" | "time"
+  /** sport: pay with this package of the customer's; 0 = they chose to book without package; none = picked for them */
+  pkg?: number
 }
 
 const NUMBERS = [
@@ -51,6 +53,8 @@ export function readSelection(params: URLSearchParams): Selection {
   if (start) sel.start = start
   const step = params.get("step")
   if (step === "table" || step === "coach" || step === "time") sel.step = step
+  const pkg = params.get("pkg")
+  if (pkg !== null && /^\d{1,9}$/.test(pkg)) sel.pkg = Number(pkg)
   const tables = params.get("tables")
   if (tables && /^\d+(-\d+)*$/.test(tables)) sel.tables = tables
   return sel

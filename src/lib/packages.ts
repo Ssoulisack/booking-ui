@@ -59,3 +59,45 @@ export function ymdLabel(ymd: string) {
     year: "numeric",
   })
 }
+
+/**
+ * How many visits a booking takes from a customer's package: a months pass none, a class seat one, a space booking
+ * one per "minutes per visit" (one when not set). null: the length is not a whole number of visits, so the package
+ * does not pay it (the customer pays). The server decides the same way.
+ */
+export function visitsFor(
+  p: Pick<CustomerPackage, "kind" | "minutes_per_visit">,
+  minutes: number | undefined,
+  isClass = false,
+): number | null {
+  if (p.kind === "months") return 0
+  if (isClass || !p.minutes_per_visit) return 1
+  if (!minutes || minutes % p.minutes_per_visit !== 0) return null
+  return minutes / p.minutes_per_visit
+}
+
+/**
+ * The status words of a customer package: one waiting for payment whose slip was already sent (paid, the team checks
+ * it) reads "Waiting for approval", not "Waiting for payment"
+ */
+export function statusLabel(
+  t: TFunction,
+  p: Pick<CustomerPackage, "status" | "slip_sent_at">,
+) {
+  return p.status === "pending_payment" && p.slip_sent_at
+    ? t("packages.status.awaiting_approval")
+    : t(`packages.status.${p.status}`)
+}
+
+/**
+ * The package as it will be after this booking: a times package with the visits the booking takes already taken off
+ * (60 min per visit: 1 h leaves 1 of 2, 2 h leaves 0 of 2). Unchanged for a months pass, or a length it cannot pay.
+ */
+export function afterBooking<
+  P extends Pick<CustomerPackage, "kind" | "minutes_per_visit" | "times_left">,
+>(p: P, minutes: number | undefined, isClass = false): P {
+  if (p.kind !== "times") return p
+  const need = visitsFor(p, minutes, isClass)
+  if (need === null) return p
+  return { ...p, times_left: Math.max(0, p.times_left - need) }
+}

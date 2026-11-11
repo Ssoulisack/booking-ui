@@ -12,6 +12,7 @@ import { BookingCard } from "./BookingCard"
 import { CancelledNotice } from "./CancelledNotice"
 import { CopyCode } from "./CopyCode"
 import { EventPayPanel, recallPay } from "./EventPay"
+import { PackageUsed } from "./PackageUsed"
 import { PayOnline, payableOnline } from "./PayOnline"
 import { StepBar } from "./TableBookingPanel"
 import { usePublic } from "./context"
@@ -69,7 +70,7 @@ function Confirmed({ created }: { created: CreatedBooking }) {
 
       <div className="rounded-xl border-2 border-dashed border-[var(--brand-line)] bg-card px-4 py-5 text-center">
         <p className="text-sm text-muted-foreground">{t("public.showCode")}</p>
-        <p className="display-tight text-6xl tracking-wider text-[var(--brand-ink)]">
+        <p className="display-tight text-5xl tracking-wider break-all text-[var(--brand-ink)] sm:text-6xl">
           {booking.code}
         </p>
         <div className="mt-3 flex justify-center">
@@ -117,6 +118,9 @@ function Confirmed({ created }: { created: CreatedBooking }) {
           guestToken={booking.guest_token}
         />
       )}
+
+      {/* paid with a package: what it used and what is left now */}
+      <PackageUsed booking={booking} />
 
       <BookingCard booking={booking} tz={business.timezone} />
 

@@ -8,6 +8,7 @@ import {
 import { isLaoPhone } from "@/lib/phone"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { contactOf } from "@/lib/contact"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router"
 
 import { ErrorAlert } from "@/components/global/form"
@@ -524,7 +525,7 @@ export function EventPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("public.events.bookingAs", {
                     name: user!.name,
-                    email: user!.email,
+                    email: contactOf(user),
                   })}
                 </p>
               ) : (

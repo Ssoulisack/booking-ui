@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 
 import { colord } from "colord"
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import GooeyNav from "@/components/reactbits/GooeyNav"
 
@@ -14,6 +14,8 @@ export interface MobileNavItem {
   icon?: LucideIcon
   // only the icon shows (saves width); the label stays as its accessible name
   iconOnly?: boolean
+  /** the main action: a big round button in the middle of the pill, raised above the others (needs 3 or more items) */
+  center?: boolean
   onSelect: () => void
 }
 
@@ -66,17 +68,64 @@ export function MobileNav({
     mode === "dark" && color && colord(color).contrast("#0e1330") < 3
       ? "#fbbf24"
       : color
+
+  // the main action goes to the middle of the row: the pill keeps an empty slot there and the round button sits on it
+  const hero = items.length >= 3 ? items.findIndex((i) => i.center) : -1
+  const order = items.map((_, i) => i)
+  if (hero >= 0) {
+    order.splice(hero, 1)
+    order.splice(Math.floor(items.length / 2), 0, hero)
+  }
+  const slot = hero >= 0 ? order.indexOf(hero) : -1
+  const shownSlot = Math.max(0, order.indexOf(shown))
+  const box = useRef<HTMLDivElement>(null)
+  const [at, setAt] = useState<{ x: number; y: number } | null>(null)
+  useLayoutEffect(() => {
+    const root = box.current
+    if (!root || slot < 0) return
+    const measure = () => {
+      const li = root.querySelector<HTMLElement>(
+        `li[data-gooey-index="${slot}"]`,
+      )
+      if (!li) return
+      const a = root.getBoundingClientRect()
+      const b = li.getBoundingClientRect()
+      setAt({
+        x: Math.round(b.left - a.left + b.width / 2),
+        y: Math.round(b.top - a.top + b.height / 2),
+      })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(root)
+    return () => ro.disconnect()
+  }, [slot, items.length])
+  const heroItem = hero >= 0 ? items[hero] : null
+  const heroColor = pill || (mode === "dark" ? "#fbbf24" : "#27272a")
+  const HeroIcon = heroItem?.icon
+
   return (
     <div className="mobile-nav pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 flex justify-center px-3 lg:hidden">
-      <div className="pointer-events-auto max-w-full">
+      <div ref={box} className="pointer-events-auto relative max-w-full">
         <GooeyNav
-          items={items.map(({ label, icon: Icon, iconOnly }) => ({
-            label: iconOnly ? "" : label,
-            ariaLabel: iconOnly ? label : undefined,
-            icon: Icon ? <Icon /> : undefined,
-          }))}
-          activeIndex={shown}
-          onChange={(i) => items[i]?.onSelect()}
+          items={order.map((o) => {
+            const { label, icon: Icon, iconOnly } = items[o]
+            if (o === hero) {
+              // an empty slot as wide as the round button's foot
+              return {
+                label: "",
+                ariaLabel: label,
+                icon: <span className="block h-5 w-8" aria-hidden />,
+              }
+            }
+            return {
+              label: iconOnly ? "" : label,
+              ariaLabel: iconOnly ? label : undefined,
+              icon: Icon ? <Icon /> : undefined,
+            }
+          })}
+          activeIndex={shownSlot}
+          onChange={(i) => items[order[i]]?.onSelect()}
           theme={mode}
           color={pill}
           size="sm"
@@ -85,6 +134,22 @@ export function MobileNav({
           animationTime={520}
           timeVariance={220}
         />
+        {heroItem && at && (
+          <button
+            type="button"
+            aria-label={heroItem.label}
+            onClick={() => heroItem.onSelect()}
+            className="nav-hero absolute flex size-16 -translate-x-1/2 -translate-y-[calc(50%+22px)] items-center justify-center rounded-full border-4 border-background shadow-xl transition-transform outline-none focus-visible:ring-3 focus-visible:ring-ring active:scale-95"
+            style={{
+              left: at.x,
+              top: at.y,
+              background: heroColor,
+              color: colord(heroColor).isLight() ? "#10142c" : "#ffffff",
+            }}
+          >
+            {HeroIcon && <HeroIcon className="size-7" />}
+          </button>
+        )}
       </div>
     </div>
   )
