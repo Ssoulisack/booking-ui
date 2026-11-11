@@ -309,10 +309,8 @@
       "none": "No coach is free on this day with this space.",
       "schedule": "Schedule",
       "scheduleOf": "Schedule of {{name}}",
-      "freeOn": "Free on {{day}} (with this space)",
-      "week": "Working hours each week",
-      "off": "Off",
-      "weekHint": "Times already booked are not free, even inside working hours."
+      "freeTimes": "Free to book (next 7 days, with this space)",
+      "noneWeek": "No free time in the next 7 days."
     },
     "classesTitle": "Coming up",
     "coachesTitle": "Coaches",

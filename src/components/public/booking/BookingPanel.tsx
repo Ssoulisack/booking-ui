@@ -366,6 +366,8 @@ export function BookingPanel() {
                 coaches={bookableCoaches}
                 free={coachAvail.data}
                 date={date}
+                days={days}
+                base={{ resource_id: court?.id, sport_id: sport.id }}
                 tz={tz}
                 included={court?.coach_ids ?? []}
               />

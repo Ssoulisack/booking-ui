@@ -1,4 +1,5 @@
 import {
+  useQueries,
   keepPreviousData,
   useInfiniteQuery,
   useMutation,
@@ -132,6 +133,25 @@ export function useCoachAvailability(
     enabled: !!q,
     staleTime: 15_000,
     placeholderData: keepPreviousData,
+  })
+}
+
+/** The coaches free with a space on several days at once (one answer per day, the same cache as above) */
+export function useCoachAvailabilityDays(
+  slug: string,
+  base: Omit<AvailabilityQuery, "date"> | null,
+  dates: string[],
+) {
+  return useQueries({
+    queries: dates.map((date) => {
+      const q = { ...base, date } as AvailabilityQuery
+      return {
+        queryKey: publicKeys.coachAvailability(slug, q),
+        queryFn: () => publicService.coachAvailability(slug, q),
+        enabled: !!base,
+        staleTime: 15_000,
+      }
+    }),
   })
 }
 

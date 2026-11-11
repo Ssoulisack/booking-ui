@@ -10,8 +10,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useCoachAvailabilityDays } from "@/hooks/use-public"
 import { dayIn, money, timeIn } from "@/lib/format"
-import type { CoachAvailability, PublicCoach } from "@/types/public"
+import type {
+  AvailabilityQuery,
+  CoachAvailability,
+  PublicCoach,
+} from "@/types/public"
+
+import { usePublic } from "./context"
 
 /** A coach's free times on the day as ranges: each start with its longest length, joined where they touch */
 function freeRanges(slots: CoachAvailability["slots"]) {
@@ -35,18 +43,24 @@ function freeRanges(slots: CoachAvailability["slots"]) {
 
 /**
  * Under the day: the coaches free on it with this space, each with their free hours ("07:00–14:00") and a Schedule
- * button that opens their week in a popup. Coaches with no free time that day are not listed.
+ * button that opens the times they can be booked over the next days in a popup. Coaches with no free time that day are not listed.
  */
 export function CoachDay({
   coaches,
   free,
   date,
+  days,
+  base,
   tz,
   included,
 }: {
   coaches: PublicCoach[]
   free: CoachAvailability[]
   date: string
+  /** the days that can be booked: the schedule shows the next 7 from the day picked */
+  days: string[]
+  /** the space (and sport) the times are with */
+  base: Omit<AvailabilityQuery, "date">
   tz: string
   /** coaches that come free with the space ("Included") */
   included: number[]
@@ -112,8 +126,11 @@ export function CoachDay({
       {open && (
         <ScheduleDialog
           coach={open}
-          day={day}
-          slots={free.find((f) => f.coach_id === open.id)?.slots ?? []}
+          dates={days.slice(
+            Math.max(0, days.indexOf(date)),
+            Math.max(0, days.indexOf(date)) + 7,
+          )}
+          base={base}
           tz={tz}
           onClose={() => setOpen(null)}
         />
@@ -122,24 +139,35 @@ export function CoachDay({
   )
 }
 
-/** A coach's week (working hours Monday to Sunday) and their free times on the day picked */
+/**
+ * A coach's schedule: the times they can be booked with this space, day by day for the next 7 days from the day picked.
+ * Only days with free time are listed (a day off or a fully booked day is left out).
+ */
 function ScheduleDialog({
   coach,
-  day,
-  slots,
+  dates,
+  base,
   tz,
   onClose,
 }: {
   coach: PublicCoach
-  day: string
-  slots: CoachAvailability["slots"]
+  dates: string[]
+  base: Omit<AvailabilityQuery, "date">
   tz: string
   onClose: () => void
 }) {
   const { t } = useTranslation()
-  // Monday first
-  const week = [1, 2, 3, 4, 5, 6, 0]
-  const hours = coach.hours ?? []
+  const { slug } = usePublic()
+  const answers = useCoachAvailabilityDays(slug, base, dates)
+  const loading = answers.some((a) => a.isPending)
+  const days = dates
+    .map((date, i) => ({
+      date,
+      ranges: freeRanges(
+        answers[i].data?.find((f) => f.coach_id === coach.id)?.slots ?? [],
+      ),
+    }))
+    .filter((d) => d.ranges.length > 0)
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
@@ -147,49 +175,36 @@ function ScheduleDialog({
           <DialogTitle>{coach.name}</DialogTitle>
           {coach.bio && <DialogDescription>{coach.bio}</DialogDescription>}
         </DialogHeader>
-        <section className="space-y-1.5">
-          <h4 className="text-sm font-semibold">
-            {t("public.coachDay.freeOn", { day })}
-          </h4>
-          <div className="flex flex-wrap gap-1.5">
-            {freeRanges(slots).map(([a, b]) => (
-              <span
-                key={a}
-                className="rounded-full bg-[var(--brand-soft)] px-2.5 py-1 text-sm tabular-nums"
-              >
-                {timeIn(a, tz)}–{timeIn(b, tz)}
-              </span>
-            ))}
-          </div>
-        </section>
-        <section className="space-y-1.5">
-          <h4 className="text-sm font-semibold">{t("public.coachDay.week")}</h4>
-          <dl className="divide-y rounded-lg ring-1 ring-border">
-            {week.map((d) => {
-              const list = hours.filter((h) => h.weekday === d)
-              return (
-                <div
-                  key={d}
-                  className="flex justify-between gap-3 px-3 py-2 text-sm"
-                >
-                  <dt>{t(`weekday.${d}`)}</dt>
-                  <dd
-                    className={
-                      list.length ? "tabular-nums" : "text-muted-foreground"
-                    }
-                  >
-                    {list.length
-                      ? list.map((h) => `${h.open}–${h.close}`).join(", ")
-                      : t("public.coachDay.off")}
-                  </dd>
-                </div>
-              )
-            })}
-          </dl>
-          <p className="text-xs text-muted-foreground">
-            {t("public.coachDay.weekHint")}
+        <h4 className="text-sm font-semibold">
+          {t("public.coachDay.freeTimes")}
+        </h4>
+        {loading ? (
+          <Skeleton className="h-40 rounded-lg" />
+        ) : days.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {t("public.coachDay.noneWeek")}
           </p>
-        </section>
+        ) : (
+          <dl className="divide-y rounded-lg ring-1 ring-border">
+            {days.map((d) => (
+              <div key={d.date} className="space-y-1.5 px-3 py-2.5">
+                <dt className="text-sm font-medium">
+                  {dayIn(`${d.date}T12:00:00`, tz)}
+                </dt>
+                <dd className="flex flex-wrap gap-1.5">
+                  {d.ranges.map(([a, b]) => (
+                    <span
+                      key={a}
+                      className="rounded-full bg-muted px-2.5 py-1 text-sm tabular-nums"
+                    >
+                      {timeIn(a, tz)}–{timeIn(b, tz)}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </DialogContent>
     </Dialog>
   )
