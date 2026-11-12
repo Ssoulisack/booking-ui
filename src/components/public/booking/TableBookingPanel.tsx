@@ -351,6 +351,13 @@ export function TableBookingPanel() {
 
       {onTables && time && (
         <Step title={t("public.tables.pickTable")}>
+          {/* nothing chosen yet: the hint sits above the plan, never floating over the tables */}
+          {chosen.length === 0 && (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <InfoIcon className="size-4 shrink-0" />
+              {t("public.tables.tapTable", { count: guests })}
+            </p>
+          )}
           {plans.isError ? (
             <ErrorAlert error={plans.error} />
           ) : !plans.data ? (
@@ -378,18 +385,21 @@ export function TableBookingPanel() {
               {t("public.tables.extraOnly")}
             </p>
           )}
-          <ChoiceBar
-            guests={guests}
-            chosen={chosen}
-            check={check}
-            onBack={back}
-            onContinue={() => {
-              releaseTables()
-              navigate(
-                `/b/${slug}/book?${selectionQuery({ ...sel, step: undefined, date, guests, start: time.starts_at })}`,
-              )
-            }}
-          />
+          {/* the floating bar only once a table is chosen */}
+          {chosen.length > 0 && (
+            <ChoiceBar
+              guests={guests}
+              chosen={chosen}
+              check={check}
+              onBack={back}
+              onContinue={() => {
+                releaseTables()
+                navigate(
+                  `/b/${slug}/book?${selectionQuery({ ...sel, step: undefined, date, guests, start: time.starts_at })}`,
+                )
+              }}
+            />
+          )}
         </Step>
       )}
     </div>
@@ -640,7 +650,8 @@ function ChoiceBar({
   const { t } = useTranslation()
   const ok = check?.ok
   return (
-    <div className="sticky bottom-24 z-30 space-y-3 rounded-xl bg-card p-4 shadow-lg ring-1 ring-border lg:bottom-4">
+    // no bottom menu on this step, so the bar sits at the bottom of the screen
+    <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-30 space-y-3 rounded-xl bg-card p-4 shadow-lg ring-1 ring-border">
       <div className="flex items-start gap-3">
         {ok ? (
           <CheckCircle2Icon className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
@@ -649,15 +660,13 @@ function ChoiceBar({
         )}
         <div className="min-w-0">
           <p className="font-semibold">
-            {chosen.length === 0
-              ? t("public.tables.tapTable", { count: guests })
-              : t("public.tables.summary", {
-                  tables: chosen.map((x) => x.name).join(" + "),
-                  count: guests,
-                  seats: check?.seats ?? 0,
-                })}
+            {t("public.tables.summary", {
+              tables: chosen.map((x) => x.name).join(" + "),
+              count: guests,
+              seats: check?.seats ?? 0,
+            })}
           </p>
-          {check && !check.ok && chosen.length > 0 && (
+          {check && !check.ok && (
             <p className="text-sm text-muted-foreground">
               {t(`public.tables.why.${check.code}`, { count: guests })}
             </p>
@@ -669,26 +678,29 @@ function ChoiceBar({
           )}
         </div>
       </div>
-      <div className="grid grid-cols-[auto_1fr] gap-2">
-        <Button
-          type="button"
-          size="lg"
-          variant="outline"
-          className="h-12 px-5 text-base"
-          onClick={onBack}
-        >
-          <ArrowLeftIcon />
-          {t("public.tables.back")}
-        </Button>
-        <Button
-          size="lg"
-          className="h-12 bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
-          disabled={!ok}
-          onClick={onContinue}
-        >
-          {t("public.continue")}
-        </Button>
-      </div>
+      {/* nothing chosen yet: only the hint (Back is at the top of the step) */}
+      {chosen.length > 0 && (
+        <div className="grid grid-cols-[auto_1fr] gap-2">
+          <Button
+            type="button"
+            size="lg"
+            variant="outline"
+            className="h-12 px-5 text-base"
+            onClick={onBack}
+          >
+            <ArrowLeftIcon />
+            {t("public.tables.back")}
+          </Button>
+          <Button
+            size="lg"
+            className="h-12 bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
+            disabled={!ok}
+            onClick={onContinue}
+          >
+            {t("public.continue")}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

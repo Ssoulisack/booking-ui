@@ -43,9 +43,11 @@ export function PublicHome() {
   const navigate = useNavigate()
   const packages = usePublicPackages(slug, business.type === "sport")
   const hasPackages = business.type === "sport" && !!packages.data?.length
-  // the later steps of a booking (the coach, then the time): no tabs there, so nobody mixes a pass into booking
+  // the later steps of a booking (a restaurant's table, a court's coach, then the time): no tabs, no Contact part and
+  // no bottom menu there, so the booking has the whole screen
   const [sel] = useSelection()
-  const inSteps = sel.step === "coach" || sel.step === "time"
+  const inSteps =
+    sel.step === "table" || sel.step === "coach" || sel.step === "time"
   // the tab is kept in the address (#packages), so "Log in to buy" comes back to the Package tab; anything else is Booking
   const tab = hasPackages && hash === "#packages" ? "packages" : "booking"
   const pickTab = (v: string) =>
@@ -127,7 +129,7 @@ export function PublicHome() {
           </section>
         )}
         <Policy />
-        {/* the coach and time steps keep to the booking, like the confirm page: no Contact part, no bottom menu */}
+        {/* the table, coach and time steps keep to the booking, like the confirm page: no Contact part, no bottom menu */}
         {!inSteps && <ContactSection />}
       </main>
       {!inSteps && <SectionNav tab={tab} />}

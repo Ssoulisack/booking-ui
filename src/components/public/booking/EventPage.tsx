@@ -357,6 +357,13 @@ export function EventPage() {
                       {t("public.events.pickHint")}
                     </p>
                   </div>
+                  {/* nothing chosen yet: the hint sits above the plan, never floating over the tables */}
+                  {picked.length === 0 && (
+                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <InfoIcon className="size-4 shrink-0" />
+                      {t("public.events.tapTable")}
+                    </p>
+                  )}
                   {plans.isError ? (
                     <ErrorAlert error={plans.error} />
                   ) : !plans.data ? (
@@ -412,54 +419,46 @@ export function EventPage() {
                     )}
                   </ul>
 
-                  {/* what is chosen and the total; Continue once something is */}
-                  <div className="sticky bottom-24 z-30 space-y-3 rounded-xl bg-card p-4 shadow-lg ring-1 ring-border lg:bottom-4">
-                    {picked.length === 0 ? (
-                      <p className="flex items-center gap-2 text-muted-foreground">
-                        <InfoIcon className="size-5 shrink-0" />
-                        {t("public.events.tapTable")}
+                  {/* what is chosen and the total, floating, only once a table is chosen */}
+                  {picked.length > 0 && (
+                    <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-30 space-y-3 rounded-xl bg-card p-4 shadow-lg ring-1 ring-border">
+                      <p className="flex items-start gap-2 font-semibold">
+                        <CheckCircle2Icon className="mt-0.5 size-5 shrink-0 text-emerald-600" />
+                        {t("public.events.summary", {
+                          tables: picked.map((x) => x.name).join(" + "),
+                          count: seats,
+                        })}
                       </p>
-                    ) : (
-                      <>
-                        <p className="flex items-start gap-2 font-semibold">
-                          <CheckCircle2Icon className="mt-0.5 size-5 shrink-0 text-emerald-600" />
-                          {t("public.events.summary", {
-                            tables: picked.map((x) => x.name).join(" + "),
-                            count: seats,
-                          })}
-                        </p>
-                        <p className="flex items-baseline justify-between">
-                          <span className="text-muted-foreground">
-                            {t("public.events.total")}
-                          </span>
-                          <span className="display-tight text-3xl text-[var(--brand-ink)]">
-                            {money(total, currency)}
-                          </span>
-                        </p>
-                      </>
-                    )}
-                    {/* Back as on a normal table booking: to the branch page (where the event was chosen) */}
-                    <div className="grid grid-cols-[auto_1fr] gap-2">
-                      <Button
-                        type="button"
-                        size="lg"
-                        variant="outline"
-                        className="h-12 px-5 text-base"
-                        onClick={() => navigate(`/b/${slug}`)}
-                      >
-                        <ArrowLeftIcon />
-                        {t("public.tables.back")}
-                      </Button>
-                      <Button
-                        size="lg"
-                        className="h-12 bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
-                        disabled={picked.length === 0}
-                        onClick={next}
-                      >
-                        {t("public.continue")}
-                      </Button>
+                      <p className="flex items-baseline justify-between">
+                        <span className="text-muted-foreground">
+                          {t("public.events.total")}
+                        </span>
+                        <span className="display-tight text-3xl text-[var(--brand-ink)]">
+                          {money(total, currency)}
+                        </span>
+                      </p>
+                      {/* Back as on a normal table booking: to the branch page (where the event was chosen) */}
+                      <div className="grid grid-cols-[auto_1fr] gap-2">
+                        <Button
+                          type="button"
+                          size="lg"
+                          variant="outline"
+                          className="h-12 px-5 text-base"
+                          onClick={() => navigate(`/b/${slug}`)}
+                        >
+                          <ArrowLeftIcon />
+                          {t("public.tables.back")}
+                        </Button>
+                        <Button
+                          size="lg"
+                          className="h-12 bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
+                          onClick={next}
+                        >
+                          {t("public.continue")}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </section>
               )}
             </>
