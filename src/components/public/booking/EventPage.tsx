@@ -10,6 +10,7 @@ import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { contactOf } from "@/lib/contact"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router"
+import { releaseTables, useUnsaved } from "@/stores/unsaved"
 
 import { ErrorAlert } from "@/components/global/form"
 import HoldButton from "@/components/reactbits/HoldButton"
@@ -101,7 +102,8 @@ export function EventPage() {
         }
         return next
       },
-      { replace: !push },
+      // the page stays where it is (choosing a table must not jump to the top); a new step scrolls on purpose
+      { replace: !push, preventScrollReset: true },
     )
   const setChosen = (ids: number[]) =>
     change({ tables: ids.length ? ids.join("-") : undefined, step: undefined })
@@ -188,6 +190,8 @@ export function EventPage() {
     setChosen(
       chosen.includes(tid) ? chosen.filter((x) => x !== tid) : [...chosen, tid],
     )
+  // tables chosen and not booked yet: leaving the page asks first (Stay / Leave), as on a normal table booking
+  useUnsaved(picked.length > 0, "tables")
   const toTop = () => window.scrollTo({ top: 0, behavior: "smooth" })
   const next = () => {
     change({ date: ev?.date, step: "confirm" }, true)
@@ -236,6 +240,8 @@ export function EventPage() {
               event: ev.name,
               tables: picked.map((x) => x.name).join(", "),
             })
+          // booked: going on to the confirmation is not leaving the tables behind
+          releaseTables()
           navigate(`/b/${slug}/confirmed`, {
             replace: true,
             state: { booking },
@@ -432,14 +438,27 @@ export function EventPage() {
                         </p>
                       </>
                     )}
-                    <Button
-                      size="lg"
-                      className="h-12 w-full bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
-                      disabled={picked.length === 0}
-                      onClick={next}
-                    >
-                      {t("public.continue")}
-                    </Button>
+                    {/* Back as on a normal table booking: to the branch page (where the event was chosen) */}
+                    <div className="grid grid-cols-[auto_1fr] gap-2">
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        className="h-12 px-5 text-base"
+                        onClick={() => navigate(`/b/${slug}`)}
+                      >
+                        <ArrowLeftIcon />
+                        {t("public.tables.back")}
+                      </Button>
+                      <Button
+                        size="lg"
+                        className="h-12 bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
+                        disabled={picked.length === 0}
+                        onClick={next}
+                      >
+                        {t("public.continue")}
+                      </Button>
+                    </div>
                   </div>
                 </section>
               )}

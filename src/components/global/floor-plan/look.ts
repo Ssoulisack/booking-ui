@@ -140,3 +140,6 @@ export function itemLook(item: FloorItem) {
       return "rounded-sm border-stone-500 text-stone-900 bg-[repeating-linear-gradient(0deg,var(--color-stone-200)_0_6px,var(--color-stone-400)_6px_8px)]"
   }
 }
+
+/** An object's icon: 14 px, smaller in a small box (down to 8 px) so it always fits */
+export const iconSize = (side: number) => Math.max(8, Math.min(14, side - 4))

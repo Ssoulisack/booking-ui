@@ -41,8 +41,10 @@ export function UnsavedGuard() {
     ({ currentLocation, nextLocation }) =>
       anyUnsaved() &&
       (currentLocation.pathname !== nextLocation.pathname ||
-        // the table step of a booking page, left for the step before (in-page Back or the browser's)
+        // the table step of a restaurant booking (?step=table), left for the step before (in-page Back or the
+        // browser's). An event page keeps its tables without a step: choosing them there never asks.
         (choosingTables() &&
+          stepOf(currentLocation.search) === "table" &&
           !new URLSearchParams(nextLocation.search).has("step")) ||
         // the time step with a start picked, left for the step before (Back): the time is lost
         (pickedTime() &&

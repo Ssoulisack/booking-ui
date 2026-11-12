@@ -62,6 +62,7 @@ import {
   itemLook,
   ZONE_COLORS,
   ZONE_STYLES,
+  iconSize,
 } from "@/components/global/floor-plan/look"
 import { ZoneOutline } from "@/components/global/floor-plan/ZoneOutline"
 import { useUnsaved } from "@/stores/unsaved"
@@ -1660,7 +1661,9 @@ function Canvas({
   const itemButton = (item: FloorItem, z: string) => {
     const Icon = ITEM_ICONS[item.kind]
     const f = footprint(item)
-    const roomy = Math.min(f.w, f.h) * cell > 28
+    const side = Math.min(f.w, f.h) * cell
+    const named =
+      item.kind === "zone" || item.kind === "label" || f.w * cell > 48
     return (
       <button
         key={`i${item.id}`}
@@ -1678,10 +1681,15 @@ function Canvas({
         style={place({ type: "item", ...item })}
       >
         <ZoneOutline zone={item} />
-        {item.kind !== "zone" && item.kind !== "label" && roomy && (
-          <Icon className="size-3.5 shrink-0" />
-        )}
-        {(item.kind === "zone" || item.kind === "label" || f.w * cell > 48) && (
+        {item.kind !== "zone" &&
+          item.kind !== "label" &&
+          (side > 28 || !named) && (
+            <Icon
+              className="shrink-0"
+              style={{ width: iconSize(side), height: iconSize(side) }}
+            />
+          )}
+        {named && (
           <span className="relative truncate px-0.5">{item.label}</span>
         )}
       </button>

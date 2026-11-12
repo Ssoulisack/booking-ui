@@ -2,7 +2,11 @@ import { FootprintsIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { ITEM_ICONS, itemLook } from "@/components/global/floor-plan/look"
+import {
+  ITEM_ICONS,
+  itemLook,
+  iconSize,
+} from "@/components/global/floor-plan/look"
 import type { PublicArea } from "@/types/floor-plan"
 import { footprint } from "@/lib/floor-plan"
 import { ZoneOutline } from "@/components/global/floor-plan/ZoneOutline"
@@ -223,15 +227,18 @@ export function TablePlan({
       {objects.map((item) => {
         const Icon = ITEM_ICONS[item.kind]
         const f = footprint(item)
-        const roomy = Math.min(f.w, f.h) * cell > 28
+        const side = Math.min(f.w, f.h) * cell
+        const named = item.kind === "label" || f.w * cell > 48
+        // small on a phone: without room for the name the icon still shows (smaller), so a WC is never an empty box
         const content = (
           <>
-            {item.kind !== "label" && roomy && (
-              <Icon className="size-3.5 shrink-0" />
+            {item.kind !== "label" && (side > 28 || !named) && (
+              <Icon
+                className="shrink-0"
+                style={{ width: iconSize(side), height: iconSize(side) }}
+              />
             )}
-            {(item.kind === "label" || f.w * cell > 48) && (
-              <span className="truncate px-0.5">{item.label}</span>
-            )}
+            {named && <span className="truncate px-0.5">{item.label}</span>}
           </>
         )
         const look = cn(
