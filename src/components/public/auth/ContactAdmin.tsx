@@ -2,7 +2,7 @@ import { MessageCircleIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { Button } from "@/components/ui/button"
-import { usePublicPayInfo } from "@/hooks/use-public"
+import { useBranchWhatsapp } from "@/hooks/use-branch-whatsapp"
 import { readOriginSlug } from "@/components/public/booking/origin"
 
 /**
@@ -21,8 +21,7 @@ export function ContactAdmin({
 }) {
   const { t } = useTranslation()
   const branch = slug ?? readOriginSlug()
-  const info = usePublicPayInfo(branch ?? "", !!branch).data
-  const number = (info?.whatsapp ?? "").replace(/[^\d]/g, "")
+  const number = useBranchWhatsapp(branch)
   if (!branch || !number) return null
   const message = t("login.adminMessage", { login: login.trim() || "-" })
   return (

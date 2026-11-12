@@ -29,10 +29,14 @@ export function useBookingList(q: BookingFilters) {
  * under the branch's "bookings" cache key, so approving or declining one refreshes it at once; it
  * is also read again every 30 seconds and when the tab is opened, to catch new requests.
  */
-export function usePendingBookings(branchId: number | undefined) {
+/** How many bookings wait for the team ("approval", the menu badge) or for the customer's money ("payment") */
+export function usePendingBookings(
+  branchId: number | undefined,
+  waiting: "approval" | "payment" = "approval",
+) {
   return useQuery({
-    queryKey: ["manage", branchId, "bookings", { pending: "count" }],
-    queryFn: () => bookingService.pending(branchId as number),
+    queryKey: ["manage", branchId, "bookings", { pending: "count", waiting }],
+    queryFn: () => bookingService.pending(branchId as number, waiting),
     select: (page) => page.meta.total,
     enabled: branchId !== undefined,
     refetchInterval: 30_000,

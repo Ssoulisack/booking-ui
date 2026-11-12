@@ -23,17 +23,25 @@ const STATUS_STYLE: Record<Booking["status"], string> = {
 export function StatusBadge({
   status,
   awaitingPayment,
+  slipSent,
+  staff,
 }: {
   status: Booking["status"]
   /** an event booking waits for the money, not for the team's approval */
   awaitingPayment?: boolean
+  /** the customer sent the payment slip: the team checks it ("Check slip"; the customer reads "Checking slip") */
+  slipSent?: boolean
+  /** the team's pages: the words say what to do */
+  staff?: boolean
 }) {
   const { t } = useTranslation()
   return (
     <Badge className={cn("border-0", STATUS_STYLE[status])}>
-      {awaitingPayment
-        ? t("booking.status.awaitingPayment")
-        : t(`booking.status.${status}`)}
+      {status === "pending" && slipSent
+        ? t(staff ? "slipCheck.staff" : "slipCheck.customer")
+        : awaitingPayment
+          ? t("booking.status.awaitingPayment")
+          : t(`booking.status.${status}`)}
     </Badge>
   )
 }
@@ -88,6 +96,7 @@ export function BookingCard({
             booking.status === "pending" &&
             booking.payment_status === "unpaid"
           }
+          slipSent={!!booking.slip_sent_at}
         />
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">

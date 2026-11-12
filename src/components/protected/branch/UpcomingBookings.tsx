@@ -112,7 +112,16 @@ function Row({
           ) : null}
         </p>
       </div>
-      <StatusBadge status={b.status} />
+      <StatusBadge
+        status={b.status}
+        slipSent={!!b.slip_sent_at}
+        awaitingPayment={
+          !!b.event_id &&
+          b.status === "pending" &&
+          b.payment_status === "unpaid"
+        }
+        staff
+      />
     </li>
   )
 }

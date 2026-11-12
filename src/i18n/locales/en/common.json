@@ -62,6 +62,10 @@
     "close": "Close",
     "badge": "Email not verified"
   },
+  "slipCheck": {
+    "staff": "Check slip",
+    "customer": "Checking slip"
+  },
   "employees": {
     "lead": "Who works at this branch. The owner and admins can switch someone's access off or take them off the branch.",
     "leadAdmin": "Who works at this branch. Switch access off or remove someone: from their next page they see the site as a customer here.",
@@ -584,6 +588,7 @@
         "total": "Total to pay",
         "before": "Pay before {{when}}",
         "scan": "Scan to pay",
+        "approveMessage": "Hello, I booked {{tables}} for {{event}} (booking {{code}}, {{total}}) and sent the slip. Please check and confirm it. Thank you. {{customer}}",
         "whatsapp": "Send the slip to the team on WhatsApp",
         "slipSent": "I sent the slip",
         "slipDone": "Slip sent. The team will confirm your tables on WhatsApp. Keep your phone close.",
@@ -1308,6 +1313,7 @@
     "clear": "Show all",
     "noBookings": "No bookings match.",
     "noPending": "No bookings are waiting for approval.",
+    "noAwaitingPayment": "No event tables are waiting for payment.",
     "pageOf": "Page {{page}} of {{pages}} ({{total}} bookings)",
     "customersLead": "People with an account who booked here.",
     "customerSearch": "Name, email or phone",
@@ -1390,7 +1396,8 @@
     "packageUndo": "Nothing to take at the desk. To undo it, cancel the booking: the visit goes back to the package.",
     "tabs": {
       "bookings": "Bookings",
-      "approval": "Waiting for approval"
+      "approval": "Waiting for approval",
+      "payment": "Waiting for payment"
     },
     "unpaidToCollect": "UNPAID · {{amount}} to collect",
     "findCustomer": "Find customer",

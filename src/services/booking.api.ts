@@ -21,9 +21,9 @@ export const bookingService = {
       query: { ...q },
     }),
   /** One page with one row: only its total matters (the badge on the Bookings menu) */
-  pending: (branchId: number) =>
+  pending: (branchId: number, waiting: "approval" | "payment" = "approval") =>
     apiPage<Booking>(API_ENDPOINTS.BRANCH.BOOKINGS(branchId), {
-      query: { status: "pending", limit: 1 },
+      query: { waiting, limit: 1 },
     }),
   get: (branchId: number, id: number) =>
     api<Booking>(API_ENDPOINTS.BRANCH.BOOKING(branchId, id)),

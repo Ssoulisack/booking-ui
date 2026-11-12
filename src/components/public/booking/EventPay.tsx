@@ -3,6 +3,8 @@ import { useSendBookingSlip } from "@/hooks/use-checkout"
 import { useEffect, useState } from "react"
 import { CheckCircle2Icon, ClockIcon, DownloadIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { AskToApproveTables } from "./AskToApprove"
+import { bookingTitle } from "./booking-utils"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -292,6 +294,16 @@ export function EventPayPanel({
             markOnly
             onSend={(input) => slip.mutateAsync(input)}
           />
+          {/* the slip is sent and the team has not confirmed the payment yet: ask them on WhatsApp, as for a package */}
+          {slipSent && (
+            <AskToApproveTables
+              booking={booking}
+              slug={slug}
+              event={info?.event ?? booking.event_name ?? ""}
+              tables={info?.tables || bookingTitle(booking)}
+              className="h-11 w-full"
+            />
+          )}
         </>
       )}
     </section>

@@ -137,7 +137,16 @@ function Details({ booking: b }: { booking: Booking }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-2">
-        <StatusBadge status={b.status} />
+        <StatusBadge
+          status={b.status}
+          slipSent={!!b.slip_sent_at}
+          awaitingPayment={
+            !!b.event_id &&
+            b.status === "pending" &&
+            b.payment_status === "unpaid"
+          }
+          staff
+        />
         <span className="text-sm text-muted-foreground">
           {t(`desk.createdBy.${b.created_by ?? "customer"}`)}
         </span>

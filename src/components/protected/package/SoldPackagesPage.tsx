@@ -215,7 +215,7 @@ export function SoldPackagesPage() {
                   </td>
                   <td className="py-3 pr-3 whitespace-nowrap">
                     <Badge className={cn("border-0", statusTone(p.status))}>
-                      {statusLabel(t, p)}
+                      {statusLabel(t, p, true)}
                     </Badge>
                   </td>
                   <td className="py-3">

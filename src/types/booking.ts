@@ -120,6 +120,8 @@ export interface BookingFilters {
   resource_id?: number
   coach_id?: number
   customer_id?: number
+  /** "approval": pending, the team decides; "payment": event tables not paid and no slip sent yet */
+  waiting?: "approval" | "payment"
 }
 
 export interface WalkInInput {

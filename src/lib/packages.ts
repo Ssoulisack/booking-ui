@@ -77,15 +77,16 @@ export function visitsFor(
 }
 
 /**
- * The status words of a customer package: one waiting for payment whose slip was already sent (paid, the team checks
- * it) reads "Waiting for approval", not "Waiting for payment"
+ * The status words of a customer package: waiting with the payment slip already sent reads "Check slip" for the team
+ * ("Checking slip" for the customer); without a slip the status stays as it is ("Waiting for payment")
  */
 export function statusLabel(
   t: TFunction,
   p: Pick<CustomerPackage, "status" | "slip_sent_at">,
+  staff = false,
 ) {
   return p.status === "pending_payment" && p.slip_sent_at
-    ? t("packages.status.awaiting_approval")
+    ? t(staff ? "slipCheck.staff" : "slipCheck.customer")
     : t(`packages.status.${p.status}`)
 }
 

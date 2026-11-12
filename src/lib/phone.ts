@@ -19,6 +19,12 @@ export function displayPhone(phone: string): string {
   return normalizePhone(phone) ?? phone
 }
 
+/** The number for a wa.me link: a Lao mobile gets the country code (2055551234 → 8562055551234); others: the digits */
+export function waNumber(raw: string): string {
+  const lao = normalizePhone(raw)
+  return lao ? `856${lao}` : raw.replace(/\D/g, "")
+}
+
 /** A link that dials from any phone: 2055551234 → tel:+8562055551234; other numbers as typed */
 export function telHref(phone: string): string {
   const lao = normalizePhone(phone)

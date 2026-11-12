@@ -55,11 +55,22 @@ export function BookingsPage() {
   const restaurant = useDashboard().branch.type === "restaurant"
 
   const today = todayIn(tz)
-  // two tabs: the day's bookings (opens on today), and the ones waiting for approval. An old link with period=pending
-  // opens the second one.
-  const approval =
-    params.get("tab") === "approval" || params.get("period") === "pending"
-  const pending = usePendingBookings(useDashboard().branch.branch_id)
+  // tabs: the day's bookings (opens on today), the ones waiting for approval (the team decides; also event tables whose
+  // slip was sent) and, at a restaurant, event tables waiting for payment (no slip yet). An old link with
+  // period=pending opens the approval tab.
+  const tab: "bookings" | "approval" | "payment" =
+    params.get("tab") === "payment" && restaurant
+      ? "payment"
+      : params.get("tab") === "approval" || params.get("period") === "pending"
+        ? "approval"
+        : "bookings"
+  const approval = tab !== "bookings"
+  const branchId = useDashboard().branch.branch_id
+  const pending = usePendingBookings(branchId)
+  const unpaid = usePendingBookings(
+    restaurant ? branchId : undefined,
+    "payment",
+  )
   const period = approval
     ? "pending"
     : ((params.get("period") ?? "today") as (typeof PERIODS)[number])
@@ -81,8 +92,8 @@ export function BookingsPage() {
       ? {}
       : range),
     keyword: params.get("q") || undefined,
-    status:
-      period === "pending" ? "pending" : params.get("status") || undefined,
+    status: approval ? undefined : params.get("status") || undefined,
+    waiting: approval ? tab : undefined,
     payment_status: params.get("pay") || undefined,
     customer_id: Number(params.get("customer")) || undefined,
     page,
@@ -130,10 +141,10 @@ export function BookingsPage() {
         }
       />
       <Tabs
-        value={approval ? "approval" : "bookings"}
+        value={tab}
         onValueChange={(v) =>
           set({
-            tab: v === "approval" ? "approval" : undefined,
+            tab: v === "bookings" ? undefined : v,
             period: undefined,
             status: undefined,
             from: undefined,
@@ -153,6 +164,16 @@ export function BookingsPage() {
               </span>
             )}
           </TabsTrigger>
+          {restaurant && (
+            <TabsTrigger value="payment" className="gap-2 px-4">
+              {t("desk.tabs.payment")}
+              {!!unpaid.data && (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-xs font-semibold text-white">
+                  {unpaid.data}
+                </span>
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
       </Tabs>
       <form
@@ -253,7 +274,7 @@ export function BookingsPage() {
       ) : list.data.items.length === 0 ? (
         <p className="rounded-xl bg-background p-6 text-muted-foreground ring-1 ring-border">
           {period === "pending" && !params.get("q") && !params.get("customer")
-            ? t("desk.noPending")
+            ? t(tab === "payment" ? "desk.noAwaitingPayment" : "desk.noPending")
             : t("desk.noBookings")}
         </p>
       ) : (
@@ -325,7 +346,11 @@ export function BookingsPage() {
                     </span>
                   </span>
                   <span className="flex items-center gap-2">
-                    <StatusBadge status={b.status} />
+                    <StatusBadge
+                      status={b.status}
+                      slipSent={!!b.slip_sent_at}
+                      staff
+                    />
                     {!b.guests && <PaymentBadge b={b} />}
                   </span>
                 </button>

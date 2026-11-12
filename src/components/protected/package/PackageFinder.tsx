@@ -135,7 +135,7 @@ function Result({ pkg: p, tz }: { pkg: CustomerPackage; tz: string }) {
             <span className="font-mono font-semibold">{p.code}</span>
             <span className="font-medium">{p.name}</span>
             <Badge className={cn("border-0", statusTone(p.status))}>
-              {statusLabel(t, p)}
+              {statusLabel(t, p, true)}
             </Badge>
           </p>
           <p className="text-sm text-muted-foreground">

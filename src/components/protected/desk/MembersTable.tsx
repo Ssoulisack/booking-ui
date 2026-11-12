@@ -148,7 +148,7 @@ function MemberDialog({
                   </span>
                 </span>
                 <Badge className={cn("border-0", statusTone(p.status))}>
-                  {statusLabel(t, p)}
+                  {statusLabel(t, p, true)}
                 </Badge>
               </div>
               <p className="text-muted-foreground">
