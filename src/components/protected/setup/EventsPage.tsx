@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { MoneyInput } from "@/components/global/MoneyInput"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
@@ -380,13 +381,10 @@ function EventDialog({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="ev-price">{t("events.defaultPrice")}</Label>
-          <Input
+          <MoneyInput
             id="ev-price"
-            type="number"
-            inputMode="numeric"
-            min={0}
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            onChange={setPrice}
             className={input}
           />
           <p className="text-sm text-muted-foreground">
@@ -641,14 +639,11 @@ function PricesForm({
             : t("events.notForSale")}
         </span>
       </Label>
-      <Input
+      <MoneyInput
         id={`table-${x.table_id}`}
-        type="number"
-        inputMode="numeric"
-        min={0}
         placeholder={t("events.samePrice")}
         value={tables[x.table_id] ?? ""}
-        onChange={(e) => setTables({ ...tables, [x.table_id]: e.target.value })}
+        onChange={(v) => setTables({ ...tables, [x.table_id]: v })}
         className={`${input} w-36`}
       />
     </div>
@@ -686,13 +681,10 @@ function PricesForm({
       <ErrorAlert error={save.error} />
       <div className="space-y-1.5">
         <Label htmlFor="pr-default">{t("events.defaultPrice")}</Label>
-        <Input
+        <MoneyInput
           id="pr-default"
-          type="number"
-          inputMode="numeric"
-          min={0}
           value={fallback}
-          onChange={(e) => setFallback(e.target.value)}
+          onChange={setFallback}
           className={input}
         />
         <p className="text-sm text-muted-foreground">
@@ -739,16 +731,11 @@ function PricesForm({
               >
                 {z.label || t("events.zoneNoName")}
               </Label>
-              <Input
+              <MoneyInput
                 id={`zone-${z.item_id}`}
-                type="number"
-                inputMode="numeric"
-                min={0}
                 placeholder={t("events.samePrice")}
                 value={zones[z.item_id] ?? ""}
-                onChange={(e) =>
-                  setZones({ ...zones, [z.item_id]: e.target.value })
-                }
+                onChange={(v) => setZones({ ...zones, [z.item_id]: v })}
                 className={`${input} w-36`}
               />
             </div>

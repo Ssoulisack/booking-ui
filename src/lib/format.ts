@@ -16,6 +16,10 @@ export function shortPhone(phone: string) {
   return local.replace(/^0+/, "")
 }
 
+/** "1000000" → "1.000.000": dots between thousands, as written in Laos (the price fields) */
+export const groupDigits = (digits: string) =>
+  digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+
 export function money(amount: number, currency: string, locale = "en") {
   try {
     return new Intl.NumberFormat(locale, {

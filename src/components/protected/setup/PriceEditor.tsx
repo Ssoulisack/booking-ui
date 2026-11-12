@@ -6,7 +6,7 @@ import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { MoneyInput } from "@/components/global/MoneyInput"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
@@ -100,11 +100,10 @@ function PriceForm({
             {t("setup.price.perHour", { currency })}
           </Label>
           <div className="flex flex-wrap items-center gap-2">
-            <Input
+            <MoneyInput
               id={`price-${owner}-${id}`}
-              inputMode="numeric"
               value={value}
-              onChange={(e) => setValue(e.target.value.replace(/[^\d]/g, ""))}
+              onChange={setValue}
               className="h-11 w-48 text-base lg:h-9 lg:text-sm"
             />
             {valid && (

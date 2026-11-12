@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { MoneyInput } from "@/components/global/MoneyInput"
 import { TimeInput } from "@/components/global/time-input"
 import { Label } from "@/components/ui/label"
 import {
@@ -536,13 +537,10 @@ function ClassDialog({
           <Label htmlFor="cls-price">
             {t("setup.classes.price", { currency: settings.in_force.currency })}
           </Label>
-          <Input
+          <MoneyInput
             id="cls-price"
-            inputMode="numeric"
             value={f.price}
-            onChange={(e) =>
-              set({ price: e.target.value.replace(/[^\d]/g, "") })
-            }
+            onChange={(price) => set({ price })}
             className={input}
           />
         </div>

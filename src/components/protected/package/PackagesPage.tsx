@@ -11,6 +11,7 @@ import { PageError } from "@/components/global/page-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { MoneyInput } from "@/components/global/MoneyInput"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
@@ -533,14 +534,11 @@ function PackageDialog({
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor={`pk-price-${i}`}>{t("packages.price")}</Label>
-                  <Input
+                  <MoneyInput
                     id={`pk-price-${i}`}
-                    inputMode="numeric"
                     value={r.price}
                     aria-invalid={(missing && Number(r.price) < 1) || undefined}
-                    onChange={(e) =>
-                      setRow(i, { price: digits(e.target.value) })
-                    }
+                    onChange={(price) => setRow(i, { price })}
                     className={input}
                   />
                 </div>
