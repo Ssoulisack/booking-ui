@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Switch } from "@/components/ui/switch"
-import { usePublicCompany } from "@/hooks/use-place"
 import {
   DEFAULT_BODY_FONT,
   DEFAULT_HEADING_FONT,
@@ -23,10 +22,7 @@ import {
   ModePicker,
   Text,
 } from "@/components/protected/settings/fields"
-import {
-  FontField,
-  RingColorsField,
-} from "@/components/protected/settings/look-fields"
+import { FontField } from "@/components/protected/settings/look-fields"
 import { LookPreview } from "@/components/protected/settings/LookPreview"
 import { SettingsTabs } from "@/components/protected/settings/SettingsTabs"
 import {
@@ -125,8 +121,6 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
     body_font: settings.in_force.body_font ?? "",
   }
   const links = f.social_links ?? {}
-  // the saved brand colour and logo (set in Company settings) for the colours and the preview
-  const brand = usePublicCompany().data ?? { brand_color: "", logo_url: "" }
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -348,29 +342,6 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
                   <div className="divide-y">
                     <Override
-                      id="o-rings"
-                      label={t("look.rings")}
-                      companyValue={
-                        company.ring_colors.length > 0
-                          ? company.ring_colors.join(", ")
-                          : t("look.fromBrand")
-                      }
-                      own={f.ring_colors !== null}
-                      onOwn={(on) =>
-                        set({
-                          ring_colors: on
-                            ? (f.ring_colors ?? company.ring_colors)
-                            : null,
-                        })
-                      }
-                    >
-                      <RingColorsField
-                        value={f.ring_colors ?? []}
-                        onChange={(v) => set({ ring_colors: v })}
-                        brand={brand.brand_color}
-                      />
-                    </Override>
-                    <Override
                       id="o-heading-font"
                       label={t("look.headingFont")}
                       companyValue={fontLabel(
@@ -423,7 +394,6 @@ function SettingsForm({ settings }: { settings: BranchSettings }) {
                   <div className="order-first space-y-2 lg:sticky lg:top-20 lg:order-none lg:self-start">
                     <LookPreview
                       name={f.name}
-                      brand={brand.brand_color}
                       look={{
                         ring_colors: f.ring_colors ?? company.ring_colors,
                         heading_font: f.heading_font ?? company.heading_font,

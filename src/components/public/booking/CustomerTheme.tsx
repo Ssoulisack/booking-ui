@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 import { usePublicCompany } from "@/hooks/use-place"
 import { cn } from "@/lib/utils"
 
-import { brandStyle, DEFAULT_BRAND } from "./brand"
+import { brandStyle } from "./brand"
 import { useBrandOnPage, usePublicTheme } from "./theme"
 
 /**
@@ -20,7 +20,7 @@ export function CustomerTheme({
 }) {
   const mode = usePublicTheme()
   const company = usePublicCompany().data
-  const brand = brandStyle(company?.brand_color ?? DEFAULT_BRAND, company, mode)
+  const brand = brandStyle(company, mode)
   useBrandOnPage(brand)
   return (
     <div

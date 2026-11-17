@@ -29,7 +29,6 @@ export const FONTS: FontChoice[] = [
 
 export const DEFAULT_HEADING_FONT = "noto-condensed"
 export const DEFAULT_BODY_FONT = "noto-sans"
-export const MAX_RING_COLORS = 4
 
 const FALLBACK = '"Noto Sans Lao", "Noto Sans Thai", sans-serif'
 

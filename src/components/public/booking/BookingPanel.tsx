@@ -259,7 +259,7 @@ export function BookingPanel() {
 
   return (
     // once a day is picked, the panel takes its colour (Monday yellow, Tuesday pink, …)
-    <div className="space-y-6" style={dayBrandStyle(sel.date && date, tz)}>
+    <div className="space-y-6" style={dayBrandStyle(date, tz)}>
       {step !== "when" && (
         <Button variant="ghost" className="-mb-1 -ml-3 h-11" onClick={back}>
           <ArrowLeftIcon />
@@ -1112,7 +1112,7 @@ export function DateStrip({
         <DialogContent
           style={
             {
-              ...brandStyle(business.brand_color, business, mode),
+              ...brandStyle(business, mode),
               // the picked date takes the colour of its weekday, like the day buttons
               "--primary": picked.bg,
               "--primary-foreground": picked.fg,

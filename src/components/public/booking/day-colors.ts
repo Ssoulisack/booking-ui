@@ -29,7 +29,8 @@ export function dayColorOf(iso: string, tz: string): DayColor {
 
 /**
  * The brand colours swapped for a day's colour (CSS variables): put on a wrapper, every button,
- * chip and step inside it takes the colour of the picked day. Nothing until a day is picked.
+ * chip and step inside it takes the colour of the day shown as picked (today on the first visit). Nothing
+ * without a day.
  */
 export function dayBrandStyle(
   date: string | undefined,

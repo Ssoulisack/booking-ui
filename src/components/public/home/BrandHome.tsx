@@ -14,11 +14,7 @@ import BlurText from "@/components/reactbits/BlurText"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  brandStyle,
-  DEFAULT_BRAND,
-  heroIsDark,
-} from "@/components/public/booking/brand"
+import { brandStyle, DEFAULT_BRAND } from "@/components/public/booking/brand"
 import { ThemeToggle } from "@/components/public/booking/ThemeToggle"
 import {
   useBrandOnPage,
@@ -39,7 +35,6 @@ import { UserMenu } from "@/components/layout/UserMenu"
 import { useSession } from "@/stores/session"
 
 import { useLiveBranches, usePublicCompany } from "@/hooks/use-place"
-import { BrandRings } from "@/components/public/booking/BrandRings"
 import { LanguageToggle } from "@/components/global/LanguageToggle"
 
 /** From this many branches on, the list gets a search, sport chips and a province picker */
@@ -55,7 +50,7 @@ export function BrandHome() {
   const branches = useLiveBranches()
   const data = company.data
   const mode = usePublicTheme()
-  const brand = brandStyle(data?.brand_color, data, mode)
+  const brand = brandStyle(data, mode)
   useBrandOnPage(brand)
 
   useEffect(() => {
@@ -132,7 +127,7 @@ function HomeNav({ company }: { company: PublicCompany }) {
   return (
     <MobileNav
       themed
-      color={company.brand_color}
+      color={DEFAULT_BRAND}
       active={active}
       items={[
         ...sections.map((s, i) => ({
@@ -201,7 +196,6 @@ function Hero({
           className="absolute inset-0 size-full object-cover opacity-35 mix-blend-luminosity"
         />
       )}
-      <BrandRings brand={company.brand_color} colors={company.ring_colors} />
       <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-4 pt-8 pb-8 sm:pt-12 sm:pb-12">
         <div role="heading" aria-level={1}>
           <BlurText
@@ -211,7 +205,7 @@ function Hero({
             delay={35}
             className={cn(
               "display-tight text-5xl sm:text-7xl",
-              heroIsDark(company.brand_color) && "text-[var(--candy-yellow)]",
+              "text-[var(--candy-yellow)]",
             )}
           />
         </div>
@@ -539,7 +533,7 @@ function Footer({ company }: { company: PublicCompany }) {
 
 function HomeSkeleton() {
   return (
-    <div style={brandStyle(DEFAULT_BRAND)} aria-busy="true">
+    <div style={brandStyle()} aria-busy="true">
       <div className="h-14 border-b bg-card" />
       <Skeleton className="h-56 rounded-none" />
       <div className="mx-auto grid max-w-5xl gap-4 px-4 py-8 sm:grid-cols-2 lg:grid-cols-3">

@@ -66,10 +66,10 @@ export function useWizardStep() {
     try {
       await work()
       await branchService.setSetupStep(id, next)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["manage", id] }),
-        queryClient.invalidateQueries({ queryKey: ["me", "branches"] }),
-      ])
+      // the branch's lists first, then the step: the next step must open with what this one saved (a new sport
+      // that arrives after it opened has no form yet)
+      await queryClient.invalidateQueries({ queryKey: ["manage", id] })
+      await queryClient.invalidateQueries({ queryKey: ["me", "branches"] })
       if (next === 0) navigate(`/dashboard/${id}`, { replace: true })
       else window.scrollTo({ top: 0 })
     } catch (err) {
