@@ -68,7 +68,8 @@ export function BookingCard({
   return (
     <article
       className={cn(
-        "rounded-xl bg-card p-4",
+        // min-w-0: a long name never makes the card (and the page) wider than the screen
+        "min-w-0 rounded-xl bg-card p-4",
         booking.status === "cancelled" && "opacity-75",
       )}
     >
@@ -99,7 +100,7 @@ export function BookingCard({
           slipSent={!!booking.slip_sent_at}
         />
       </div>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+      <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 text-sm break-words">
         {booking.guests ? (
           // a table: when, how many, and the time to be there by (no length or price)
           <>

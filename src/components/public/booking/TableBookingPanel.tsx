@@ -125,7 +125,7 @@ export function TableBookingPanel() {
 
   return (
     // once a day is picked, the panel takes its colour (Monday yellow, Tuesday pink, …)
-    <div className="space-y-7" style={dayBrandStyle(sel.date && date, tz)}>
+    <div className="space-y-7" style={dayBrandStyle(date, tz)}>
       {/* the same place as on the Confirm page: Back above the steps */}
       {onTables && time && (
         <Button variant="ghost" className="-mb-1 -ml-3 h-11" onClick={back}>

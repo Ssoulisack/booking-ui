@@ -10,7 +10,7 @@ import { ApiError } from "@/lib/api/client"
 import type { PublicBranch } from "@/types/public"
 
 import { usePublicBranch } from "@/hooks/use-public"
-import { brandStyle, DEFAULT_BRAND } from "@/components/public/booking/brand"
+import { brandStyle } from "@/components/public/booking/brand"
 import { BranchSwitcher } from "@/components/public/booking/BranchSwitcher"
 import { rememberBranchName } from "@/components/public/booking/origin"
 import { PageSpark } from "@/components/public/booking/PageSpark"
@@ -29,7 +29,7 @@ export function PublicLayout() {
   const { slug = "" } = useParams()
   const business = usePublicBranch(slug)
   const mode = usePublicTheme()
-  const brand = brandStyle(business.data?.brand_color, business.data, mode)
+  const brand = brandStyle(business.data, mode)
   useBrandOnPage(brand)
 
   const data = business.data
@@ -77,7 +77,7 @@ function PublicTopBar({ business }: { business: PublicBranch }) {
 
 function PublicSkeleton() {
   return (
-    <div style={brandStyle(DEFAULT_BRAND)} aria-busy="true">
+    <div style={brandStyle()} aria-busy="true">
       <div className="h-16 border-b bg-card" />
       <Skeleton className="h-56 rounded-none" />
       <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">

@@ -63,7 +63,7 @@ export function BranchSwitcher({ business }: { business: PublicBranch }) {
       {/* the sheet renders outside the page: give it the brand colours again */}
       <SheetContent
         side="bottom"
-        style={brandStyle(business.brand_color, business, mode)}
+        style={brandStyle(business, mode)}
         className="max-h-[85dvh] rounded-t-2xl"
       >
         <SheetHeader>

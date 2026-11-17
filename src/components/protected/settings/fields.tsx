@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { brandStyle } from "@/components/public/booking/brand"
 import type { BranchType } from "@/types/auth"
 import type { BookingMode } from "@/types/public"
 
@@ -218,42 +217,5 @@ export function BranchTypePicker({
         })}
       </div>
     </fieldset>
-  )
-}
-
-/** The brand colour, with a sample button as customers will see it */
-export function BrandColor({
-  value,
-  onChange,
-}: {
-  value: string
-  onChange: (v: string) => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor="s-color">{t("settings.color")}</Label>
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          id="s-color"
-          type="color"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-11 w-14 cursor-pointer rounded-md border bg-transparent"
-        />
-        <Input
-          aria-label={t("settings.colorHex")}
-          value={value}
-          onChange={(e) => onChange(e.target.value.trim())}
-          className="h-11 w-32 font-mono text-base lg:h-9 lg:text-sm"
-        />
-        <span
-          style={brandStyle(value)}
-          className="inline-flex h-11 items-center rounded-lg bg-[var(--brand)] px-4 text-sm font-medium text-[var(--brand-foreground)]"
-        >
-          {t("public.book")}
-        </span>
-      </div>
-    </div>
   )
 }

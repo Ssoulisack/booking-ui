@@ -68,8 +68,10 @@ export interface LoginInput {
 export interface RegisterInput {
   name: string
   password: string
-  phone: string
+  /** Lao (default): phone required; a foreigner registers with an email (required) and no phone */
+  phone?: string
   email?: string
+  foreigner?: boolean
 }
 
 export interface ProfileInput {

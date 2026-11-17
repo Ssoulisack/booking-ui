@@ -16,20 +16,18 @@ const CANDY_YELLOW = "#fbbf24"
 const CANDY_INK = "#10142c"
 
 /**
- * CSS variables for one business's brand colour. Buttons and selected states use --primary, so
+ * CSS variables for the app theme's brand colour (navy, candy yellow on the night theme). Buttons and selected states use --primary, so
  * shadcn components follow the brand. Text on the brand is white or ink, whichever reads better;
  * the brand used as text is darkened (light pages) or lightened (dark pages) until it reads
  * (WCAG AA). On the navy night theme a brand too dark to see gives its buttons to candy yellow;
  * the hero keeps the real brand colour (--brand-hero).
  */
 export function brandStyle(
-  hex: string | undefined,
   look?: Look,
   mode: "light" | "dark" = "light",
 ): CSSProperties {
-  const real = colord(hex || DEFAULT_BRAND).isValid()
-    ? colord(hex || DEFAULT_BRAND)
-    : colord(DEFAULT_BRAND)
+  // every page uses the app theme's colour (a company's own brand colour is no longer used)
+  const real = colord(DEFAULT_BRAND)
   const page = mode === "dark" ? NAVY : WHITE
   const base =
     mode === "dark" && real.contrast(NAVY) < 3 ? colord(CANDY_YELLOW) : real
@@ -61,39 +59,4 @@ export function brandStyle(
     "--ring": base.alpha(0.5).toRgbString(),
     ...lookStyle(look),
   } as CSSProperties
-}
-
-/**
- * Colours for the MagicRings behind the hero, which sits on the brand colour itself: a dark brand
- * gets glowing lighter tints ("dark" theme), a pale brand gets deeper shades ("light" theme), so
- * the rings always show against the background.
- */
-export function ringColors(hex: string | undefined): {
-  color: string
-  colorTwo: string
-  theme: "dark" | "light"
-} {
-  const base = colord(hex || DEFAULT_BRAND).isValid()
-    ? colord(hex || DEFAULT_BRAND)
-    : colord(DEFAULT_BRAND)
-  const darkBrand = base.contrast(WHITE) >= base.contrast(INK)
-  return darkBrand
-    ? {
-        color: base.lighten(0.3).toHex(),
-        colorTwo: base.lighten(0.5).toHex(),
-        theme: "dark",
-      }
-    : {
-        color: base.darken(0.45).toHex(),
-        colorTwo: base.darken(0.6).toHex(),
-        theme: "light",
-      }
-}
-
-/** A hero on a dark brand colour (white text): it gets the bright candy accents */
-export function heroIsDark(hex: string | undefined): boolean {
-  const base = colord(hex || DEFAULT_BRAND).isValid()
-    ? colord(hex || DEFAULT_BRAND)
-    : colord(DEFAULT_BRAND)
-  return base.contrast(WHITE) >= base.contrast(INK)
 }

@@ -17,7 +17,8 @@ export const loginSchema = z.object({
   password: z.string().min(1, "validation.required"),
 })
 
-// A new account always has a Lao mobile phone (20xxxxxxxx); the email is optional. There is no nationality.
+// A Lao account (the default) has a Lao mobile phone (20xxxxxxxx), the email optional; a foreigner registers with an
+// email instead (no phone asked).
 const emailField = z
   .string()
   .trim()
@@ -37,8 +38,27 @@ export const registerSchema = z
     name,
     password,
     confirm: z.string(),
-    phone: phoneRequired,
+    foreigner: z.boolean(),
+    phone: z.string().trim(),
     email: emailField,
+  })
+  .superRefine((v, ctx) => {
+    if (v.foreigner) {
+      if (!v.email)
+        ctx.addIssue({
+          code: "custom",
+          path: ["email"],
+          message: "identity.emailRequired",
+        })
+      return
+    }
+    const phone = phoneRequired.safeParse(v.phone)
+    if (!phone.success)
+      ctx.addIssue({
+        code: "custom",
+        path: ["phone"],
+        message: phone.error.issues[0].message,
+      })
   })
   .refine((v) => v.password === v.confirm, {
     message: "validation.passwordsMatch",

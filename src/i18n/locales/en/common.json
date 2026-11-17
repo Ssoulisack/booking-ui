@@ -190,18 +190,9 @@
       "light": "Light mode",
       "dark": "Dark mode"
     },
-    "darkSwap": "Your colour is too dark to see on the dark theme, so buttons and choices use yellow there. The top banner keeps your colour.",
-    "lightPale": "Your colour is very pale: buttons and choices are hard to see on the light theme. A deeper shade works better.",
     "sampleLink": "Find my booking",
     "appearance": "Look of the pages",
-    "appearanceLead": "The rings and fonts customers see on the home and branch pages. The brand colour is set above.",
-    "rings": "Ring colours",
-    "ringsAuto": "Made from the brand colour. Add a colour to choose your own (up to 4).",
-    "ringColor": "Ring colour {{n}}",
-    "ringColorHex": "Ring colour {{n}} code",
-    "removeColor": "Remove colour {{n}}",
-    "addColor": "Add colour",
-    "useBrand": "Use the brand colour",
+    "appearanceLead": "The fonts customers see on the home and branch pages. The brand colour is set above.",
     "headingFont": "Heading font",
     "bodyFont": "Text font",
     "default": "default",
@@ -211,8 +202,7 @@
     "previewNote": "Follows your choices as you make them. Nothing is saved until you press Save.",
     "sampleName": "Your branch",
     "sameAsCompany": "Same as the company",
-    "branchAppearanceLead": "Each branch follows the company's look unless you choose its own here.",
-    "fromBrand": "made from the brand colour"
+    "branchAppearanceLead": "Each branch follows the company's look unless you choose its own here."
   },
   "area": {
     "choose": "Work in",
@@ -972,8 +962,6 @@
     "brandingLead": "Shown on the booking page.",
     "logo": "Logo",
     "cover": "Cover picture",
-    "color": "Brand colour",
-    "colorHex": "Brand colour code",
     "region": "Region",
     "timezone": "Time zone",
     "currency": "Currency",
@@ -1602,7 +1590,8 @@
     "save": "Save",
     "continue": "Continue",
     "saved": "Saved.",
-    "employeeNo": "Your employee number"
+    "employeeNo": "Your employee number",
+    "foreigner": "I'm a foreigner (no Lao phone number): use my email"
   },
   "places": {
     "searchPlaceholder": "Name or address",

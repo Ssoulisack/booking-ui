@@ -15,7 +15,6 @@ import { RuleForm } from "@/components/protected/setup/RuleEditor"
 import { DEFAULT_BRAND } from "@/components/public/booking/brand"
 import {
   Area,
-  BrandColor,
   Choice,
   ModePicker,
   Text,
@@ -28,10 +27,7 @@ import {
   TIMEZONES,
   withCurrent,
 } from "@/components/protected/settings/options"
-import {
-  FontField,
-  RingColorsField,
-} from "@/components/protected/settings/look-fields"
+import { FontField } from "@/components/protected/settings/look-fields"
 import { LookPreview } from "@/components/protected/settings/LookPreview"
 import { SettingsTabs } from "@/components/protected/settings/SettingsTabs"
 import type { Company, CompanyInput } from "@/types/company"
@@ -183,12 +179,6 @@ function CompanyForm({ company }: { company: Company }) {
                     wide
                     onChange={(key) => savePicture({ cover_key: key })}
                   />
-                  <div className="md:col-span-2">
-                    <BrandColor
-                      value={f.brand_color}
-                      onChange={(v) => set({ brand_color: v })}
-                    />
-                  </div>
                 </div>
               </Panel>
             ),
@@ -205,11 +195,6 @@ function CompanyForm({ company }: { company: Company }) {
               >
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
                   <div className="space-y-5">
-                    <RingColorsField
-                      value={f.ring_colors}
-                      onChange={(v) => set({ ring_colors: v })}
-                      brand={f.brand_color}
-                    />
                     <FontField
                       id="c-heading-font"
                       kind="heading"
@@ -227,7 +212,7 @@ function CompanyForm({ company }: { company: Company }) {
                   </div>
                   {/* follows the choices as they are made; above the controls on a phone */}
                   <div className="order-first space-y-2 lg:sticky lg:top-20 lg:order-none lg:self-start">
-                    <LookPreview name={f.name} brand={f.brand_color} look={f} />
+                    <LookPreview name={f.name} look={f} />
                     <p className="text-sm text-muted-foreground">
                       {t("look.previewNote")}
                     </p>

@@ -26,14 +26,13 @@ import { BookingPanel } from "./BookingPanel"
 import { TableBookingPanel } from "./TableBookingPanel"
 import { MobileNav } from "./MobileNav"
 import { usePublic } from "./context"
-import { BrandRings } from "./BrandRings"
 import { EventAds } from "./EventAds"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { usePublicPackages } from "@/hooks/use-public"
 import { useSelection } from "./selection"
 import { ContactSection } from "./ContactSection"
 import { PackagesSection } from "./PackagesSection"
-import { heroIsDark } from "./brand"
+import { DEFAULT_BRAND } from "./brand"
 
 /** /b/:slug — the business's page: name, booking, classes, coaches, about */
 export function PublicHome() {
@@ -210,7 +209,7 @@ function SectionNav({ tab }: { tab: "booking" | "packages" }) {
   return (
     <MobileNav
       themed
-      color={business.brand_color}
+      color={DEFAULT_BRAND}
       active={Math.max(
         items.findIndex((i) => i.id === activeNav),
         0,
@@ -233,8 +232,6 @@ function Hero() {
 
   const button =
     "inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium"
-  // on a dark brand colour the name is candy yellow (on a pale one it keeps its dark text)
-  const candy = heroIsDark(business.brand_color)
   return (
     <header className="relative overflow-hidden bg-[var(--brand-hero)] text-[var(--brand-hero-foreground)]">
       {business.cover_url && (
@@ -244,7 +241,6 @@ function Hero() {
           className="absolute inset-0 size-full object-cover opacity-30 mix-blend-luminosity"
         />
       )}
-      <BrandRings brand={business.brand_color} colors={business.ring_colors} />
       {/* a light grid behind the text, fading out to the right */}
       <div
         aria-hidden
@@ -273,7 +269,7 @@ function Hero() {
               delay={35}
               className={cn(
                 "display-tight text-4xl sm:text-5xl",
-                candy && "text-[var(--candy-yellow)]",
+                "text-[var(--candy-yellow)]",
               )}
             />
           </div>

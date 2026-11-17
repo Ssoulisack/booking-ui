@@ -362,8 +362,14 @@ function SpacesStep({
     Object.fromEntries(sports.map((s) => [s.id, presetSpaces(s.type, t)])),
   )
   const [tried, setTried] = useState(false)
-  const set = (sportId: number, change: Partial<SpacePlan>) =>
-    setPlans((p) => ({ ...p, [sportId]: { ...p[sportId], ...change } }))
+  // a sport that arrived after this step opened (the list is re-read) starts from its ready-made plan
+  const planOf = (s: ManagedSport): SpacePlan =>
+    plans[s.id] ?? presetSpaces(s.type, t)
+  const set = (s: ManagedSport, change: Partial<SpacePlan>) =>
+    setPlans((p) => ({
+      ...p,
+      [s.id]: { ...(p[s.id] ?? presetSpaces(s.type, t)), ...change },
+    }))
   // a sport that already has spaces (made before leaving half-way) is done
   const todo = sports.filter((s) => !taken.some((r) => r.sport === s.id))
 
@@ -380,10 +386,10 @@ function SpacesStep({
 
   const save = () => {
     setTried(true)
-    if (todo.some((s) => problem(plans[s.id]))) return
+    if (todo.some((s) => problem(planOf(s)))) return
     void saveSpaces(
       todo.map((s) => {
-        const p = plans[s.id]
+        const p = planOf(s)
         return {
           sportId: s.id,
           kind: p.kind,
@@ -421,7 +427,7 @@ function SpacesStep({
             </div>
           )
         }
-        const p = plans[s.id]
+        const p = planOf(s)
         const why = tried ? problem(p) : null
         return (
           <div
@@ -445,7 +451,7 @@ function SpacesStep({
                     aria-label={t("wizard.spaces.name", { n: i + 1 })}
                     value={name}
                     onChange={(e) =>
-                      set(s.id, {
+                      set(s, {
                         names: p.names.map((x, j) =>
                           j === i ? e.target.value : x,
                         ),
@@ -460,7 +466,7 @@ function SpacesStep({
                     aria-label={t("actions.remove")}
                     disabled={p.names.length === 1}
                     onClick={() =>
-                      set(s.id, { names: p.names.filter((_, j) => j !== i) })
+                      set(s, { names: p.names.filter((_, j) => j !== i) })
                     }
                   >
                     <XIcon />
@@ -470,7 +476,7 @@ function SpacesStep({
               <Button
                 variant="ghost"
                 onClick={() =>
-                  set(s.id, {
+                  set(s, {
                     names: [
                       ...p.names,
                       t(
@@ -497,7 +503,7 @@ function SpacesStep({
                 <MoneyInput
                   value={p.price}
                   placeholder="100.000"
-                  onChange={(v) => set(s.id, { price: v })}
+                  onChange={(v) => set(s, { price: v })}
                   className="h-11 text-base lg:h-9 lg:text-sm"
                 />
               </label>
@@ -507,7 +513,7 @@ function SpacesStep({
                   className="w-full rounded-lg text-left"
                   label={t("wizard.spaces.opens")}
                   value={p.open}
-                  onChange={(v) => set(s.id, { open: v })}
+                  onChange={(v) => set(s, { open: v })}
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
@@ -516,7 +522,7 @@ function SpacesStep({
                   className="w-full rounded-lg text-left"
                   label={t("wizard.spaces.closes")}
                   value={p.close}
-                  onChange={(v) => set(s.id, { close: v })}
+                  onChange={(v) => set(s, { close: v })}
                   midnightEnd
                 />
               </label>
@@ -535,7 +541,7 @@ function SpacesStep({
                 </span>
                 <Switch
                   checked={p.light}
-                  onCheckedChange={(on) => set(s.id, { light: on })}
+                  onCheckedChange={(on) => set(s, { light: on })}
                 />
               </label>
               <p className="text-xs text-muted-foreground">
@@ -550,7 +556,7 @@ function SpacesStep({
                     <MoneyInput
                       value={p.lightPrice}
                       placeholder="20.000"
-                      onChange={(v) => set(s.id, { lightPrice: v })}
+                      onChange={(v) => set(s, { lightPrice: v })}
                       className="h-11 text-base lg:h-9 lg:text-sm"
                     />
                   </label>
@@ -562,7 +568,7 @@ function SpacesStep({
                       className="w-full rounded-lg text-left"
                       label={t("wizard.spaces.lightFrom")}
                       value={p.lightFrom}
-                      onChange={(v) => set(s.id, { lightFrom: v })}
+                      onChange={(v) => set(s, { lightFrom: v })}
                     />
                   </label>
                 </div>
@@ -610,11 +616,16 @@ function ClassesStep({
     Object.fromEntries(withClass.map((s) => [s.id, presetClass(t)])),
   )
   const [tried, setTried] = useState(false)
-  const set = (sportId: number, change: Partial<ClassPlan>) =>
-    setPlans((p) => ({ ...p, [sportId]: { ...p[sportId], ...change } }))
+  // a sport that arrived after this step opened (the list is re-read) starts from its ready-made plan
+  const planOf = (s: ManagedSport): ClassPlan => plans[s.id] ?? presetClass(t)
+  const set = (s: ManagedSport, change: Partial<ClassPlan>) =>
+    setPlans((p) => ({
+      ...p,
+      [s.id]: { ...(p[s.id] ?? presetClass(t)), ...change },
+    }))
 
   const has = (sportId: number) => classSports.includes(sportId)
-  const todo = withClass.filter((s) => !has(s.id) && plans[s.id].on)
+  const todo = withClass.filter((s) => !has(s.id) && planOf(s).on)
   const problem = (p: ClassPlan) =>
     !p.title.trim()
       ? "title"
@@ -628,10 +639,10 @@ function ClassesStep({
 
   const finish = () => {
     setTried(true)
-    if (todo.some((s) => problem(plans[s.id]))) return
+    if (todo.some((s) => problem(planOf(s)))) return
     void save(
       todo.map((s) => {
-        const p = plans[s.id]
+        const p = planOf(s)
         return {
           sport_id: s.id,
           coach_id: null,
@@ -675,7 +686,7 @@ function ClassesStep({
             </div>
           )
         }
-        const p = plans[s.id]
+        const p = planOf(s)
         const why = tried && p.on ? problem(p) : null
         return (
           <div
@@ -686,10 +697,7 @@ function ClassesStep({
               <span className="font-semibold">
                 {s.name} · {t("wizard.classes.groupClass")}
               </span>
-              <Switch
-                checked={p.on}
-                onCheckedChange={(on) => set(s.id, { on })}
-              />
+              <Switch checked={p.on} onCheckedChange={(on) => set(s, { on })} />
             </label>
             {p.on && (
               <>
@@ -699,7 +707,7 @@ function ClassesStep({
                   </span>
                   <Input
                     value={p.title}
-                    onChange={(e) => set(s.id, { title: e.target.value })}
+                    onChange={(e) => set(s, { title: e.target.value })}
                     className="h-11 text-base lg:h-9 lg:text-sm"
                   />
                 </label>
@@ -713,7 +721,7 @@ function ClassesStep({
                       className="w-full rounded-lg text-left"
                       label={t("wizard.classes.start")}
                       value={p.start}
-                      onChange={(v) => set(s.id, { start: v })}
+                      onChange={(v) => set(s, { start: v })}
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-sm">
@@ -724,7 +732,7 @@ function ClassesStep({
                       className="w-full rounded-lg text-left"
                       label={t("wizard.classes.end")}
                       value={p.end}
-                      onChange={(v) => set(s.id, { end: v })}
+                      onChange={(v) => set(s, { end: v })}
                       midnightEnd
                     />
                   </label>
@@ -743,7 +751,7 @@ function ClassesStep({
                           type="button"
                           aria-pressed={on}
                           onClick={() =>
-                            set(s.id, {
+                            set(s, {
                               weekdays: on
                                 ? p.weekdays.filter((x) => x !== d)
                                 : [...p.weekdays, d],
@@ -771,7 +779,7 @@ function ClassesStep({
                     <Input
                       inputMode="numeric"
                       value={p.capacity}
-                      onChange={(e) => set(s.id, { capacity: e.target.value })}
+                      onChange={(e) => set(s, { capacity: e.target.value })}
                       className="h-11 text-base lg:h-9 lg:text-sm"
                     />
                   </label>
@@ -782,7 +790,7 @@ function ClassesStep({
                     <MoneyInput
                       value={p.price}
                       placeholder="50.000"
-                      onChange={(v) => set(s.id, { price: v })}
+                      onChange={(v) => set(s, { price: v })}
                       className="h-11 text-base lg:h-9 lg:text-sm"
                     />
                   </label>

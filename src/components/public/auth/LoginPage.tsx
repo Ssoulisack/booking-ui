@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { InfoIcon } from "lucide-react"
 import { useForm } from "react-hook-form"
@@ -14,6 +15,7 @@ import { useSession } from "@/stores/session"
 import { useLogin } from "@/hooks/use-auth"
 import { SocialButtons } from "./SocialButtons"
 import { afterAuthPath, safeNext } from "./landing"
+import { ForeignerToggle, LoginIdField } from "./ForeignerToggle"
 import { loginSchema, type LoginValues } from "./schemas"
 
 export function LoginPage() {
@@ -28,6 +30,10 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
     defaultValues: { login: params.get("email") ?? "", password: "" },
   })
+  // Lao customers log in with their phone (the default); foreigners tick the box and use their email
+  const [foreigner, setForeigner] = useState(() =>
+    (params.get("email") ?? "").includes("@"),
+  )
   const { errors } = form.formState
 
   const onSubmit = form.handleSubmit((values) =>
@@ -49,12 +55,17 @@ export function LoginPage() {
         )}
         <ErrorAlert error={login.error} />
         <FieldGroup>
-          <TextField
-            label={t("fields.emailOrPhone")}
-            autoComplete="username"
-            autoCapitalize="none"
+          <LoginIdField
+            foreigner={foreigner}
             registration={form.register("login")}
             error={errors.login}
+          />
+          <ForeignerToggle
+            checked={foreigner}
+            onChange={(on) => {
+              setForeigner(on)
+              form.setValue("login", "")
+            }}
           />
           <TextField
             label={t("fields.password")}

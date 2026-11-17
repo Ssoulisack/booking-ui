@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useSearchParams } from "react-router"
 
@@ -8,6 +8,7 @@ import { FieldGroup } from "@/components/ui/field"
 import { AuthHeading } from "@/components/layout/AuthLayout"
 
 import { useRegister } from "@/hooks/use-auth"
+import { ForeignerToggle } from "./ForeignerToggle"
 import { IdentityFields } from "./IdentityFields"
 import { afterAuthPath, safeNext } from "./landing"
 import { SocialButtons } from "./SocialButtons"
@@ -24,6 +25,7 @@ export function RegisterPage() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
+      foreigner: false,
       phone: "",
       email: "",
       password: "",
@@ -31,15 +33,25 @@ export function RegisterPage() {
     },
   })
   const { errors } = form.formState
+  // Lao (the default): phone, email optional; a foreigner: email only
+  const foreigner = useWatch({ control: form.control, name: "foreigner" })
 
   // "confirm" is only checked here: the server gets the password once
   const onSubmit = form.handleSubmit(({ confirm: _confirm, ...values }) =>
     register.mutate(
-      {
-        ...values,
-        phone: values.phone,
-        email: values.email || undefined,
-      },
+      values.foreigner
+        ? {
+            name: values.name,
+            password: values.password,
+            foreigner: true,
+            email: values.email,
+          }
+        : {
+            name: values.name,
+            password: values.password,
+            phone: values.phone,
+            email: values.email || undefined,
+          },
       {
         onSuccess: () => navigate(afterAuthPath(next), { replace: true }),
       },
@@ -61,10 +73,29 @@ export function RegisterPage() {
             registration={form.register("name")}
             error={errors.name}
           />
-          <IdentityFields
-            register={form.register}
-            errors={errors}
-            requirePhone
+          {foreigner ? (
+            <TextField
+              label={t("fields.email")}
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              registration={form.register("email")}
+              error={errors.email}
+            />
+          ) : (
+            <IdentityFields
+              register={form.register}
+              errors={errors}
+              requirePhone
+            />
+          )}
+          <ForeignerToggle
+            checked={foreigner}
+            onChange={(on) => {
+              form.setValue("foreigner", on)
+              form.clearErrors(["phone", "email"])
+            }}
           />
           <TextField
             label={t("fields.password")}

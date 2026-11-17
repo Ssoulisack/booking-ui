@@ -114,7 +114,7 @@ export function MobileNav({
 
   return (
     <div className="mobile-nav pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 flex justify-center px-3 lg:hidden">
-      <div ref={box} className="pointer-events-auto relative max-w-full">
+      <div ref={box} className="pointer-events-auto relative w-full">
         <GooeyNav
           items={order.map((o) => {
             const { label, icon: Icon, iconOnly } = items[o]

@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -15,6 +16,7 @@ import { FieldGroup } from "@/components/ui/field"
 import { useLogin } from "@/hooks/use-auth"
 
 import { SocialButtons } from "./SocialButtons"
+import { ForeignerToggle, LoginIdField } from "./ForeignerToggle"
 import { loginSchema, type LoginValues } from "./schemas"
 
 /**
@@ -36,6 +38,8 @@ export function LoginDialog({
   const { pathname, search } = useLocation()
   const here = pathname + search
   const login = useLogin()
+  // the guest's phone is put in for them; foreigners tick the box and use their email
+  const [foreigner, setForeigner] = useState(prefill.includes("@"))
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     values: { login: prefill, password: "" },
@@ -66,12 +70,17 @@ export function LoginDialog({
         >
           <ErrorAlert error={login.error} />
           <FieldGroup>
-            <TextField
-              label={t("fields.emailOrPhone")}
-              autoComplete="username"
-              autoCapitalize="none"
+            <LoginIdField
+              foreigner={foreigner}
               registration={form.register("login")}
               error={errors.login}
+            />
+            <ForeignerToggle
+              checked={foreigner}
+              onChange={(on) => {
+                setForeigner(on)
+                form.setValue("login", "")
+              }}
             />
             <TextField
               label={t("fields.password")}

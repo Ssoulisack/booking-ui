@@ -26,10 +26,10 @@ import { MobileNav } from "@/components/public/booking/MobileNav"
 import { AreaSwitch, AreaTag } from "./area"
 import { usePreviousArea, type Area } from "./area-state"
 import { ModeToggle } from "@/components/global/ModeToggle"
-import { usePublicCompany } from "@/hooks/use-place"
 import { CustomerTheme } from "@/components/public/booking/CustomerTheme"
 import { ThemeToggle } from "@/components/public/booking/ThemeToggle"
 import { dashMode, useHtmlMode } from "@/lib/color-mode"
+import { DEFAULT_BRAND } from "@/components/public/booking/brand"
 import { Breadcrumbs } from "./Breadcrumbs"
 import type { Crumb } from "@/lib/breadcrumbs"
 import { UserMenu } from "./UserMenu"
@@ -346,7 +346,6 @@ function NavList({
 function AccountNav({ nav: menu }: { nav: NavItem[] }) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
-  const color = usePublicCompany().data?.brand_color
   const navigate = useNavigate()
   // the same menu as the branch page: My bookings, My packages | the round Booking button | Packages for sale, My account (Policy
   // stays in the laptop header only)
@@ -385,7 +384,7 @@ function AccountNav({ nav: menu }: { nav: NavItem[] }) {
   return (
     <MobileNav
       themed
-      color={color}
+      color={DEFAULT_BRAND}
       active={active}
       items={nav.map((item) => ({
         id: item.id,
