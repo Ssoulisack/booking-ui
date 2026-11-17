@@ -316,7 +316,10 @@ function NewBranchDialog({
             name: name.trim(),
             slug: slug.trim(),
             // a copy keeps the type of the branch it copies
-            ...(source ? { clone_from: source } : { type }),
+            // a new sport branch is then set up step by step (sports, spaces, classes)
+            ...(source
+              ? { clone_from: source }
+              : { type, step_by_step: type === "sport" }),
           },
           {
             onSuccess: (b) => {
@@ -326,7 +329,7 @@ function NewBranchDialog({
                 }),
               )
               onClose()
-              navigate(`/dashboard/${b.id}`)
+              navigate(`/dashboard/${b.id}${b.setup_step ? "/start" : ""}`)
             },
           },
         )

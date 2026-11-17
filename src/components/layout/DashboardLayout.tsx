@@ -100,6 +100,12 @@ export function DashboardLayout() {
   if (!branch) return <Navigate to="/dashboard" replace />
 
   const base = `/dashboard/${branch.branch_id}`
+  // a new sport branch is set up step by step first: the owner and admins see only the stepper until it is done
+  const settingUp =
+    (branch.setup_step ?? 0) > 0 && roleAtLeast(branch.role, "admin")
+  const atStart = pathname === `${base}/start`
+  if (settingUp && !atStart) return <Navigate to={`${base}/start`} replace />
+  if (!settingUp && atStart) return <Navigate to={base} replace />
   const restaurant = branch.type === "restaurant"
   // a restaurant's address for a sport-only page (an old bookmark): back to its overview
   const hidden = DASHBOARD_NAV.find(
@@ -109,13 +115,15 @@ export function DashboardLayout() {
   const nav: NavItem[] = DASHBOARD_NAV.filter(
     (item) =>
       roleAtLeast(branch.role, item.min) && !(restaurant && item.sportOnly),
-  ).map(({ path, key, icon, end }) => ({
-    to: path ? `${base}/${path}` : base,
-    label: t(`nav.${key}`),
-    icon,
-    end,
-    badge: key === "bookings" ? pending : undefined,
-  }))
+  )
+    .filter(() => !settingUp)
+    .map(({ path, key, icon, end }) => ({
+      to: path ? `${base}/${path}` : base,
+      label: t(`nav.${key}`),
+      icon,
+      end,
+      badge: key === "bookings" ? pending : undefined,
+    }))
   // the owner and admins start the trail at the company; everyone else at their branch
   const company = runsCompany(user)
   const crumbs = crumbsFor(

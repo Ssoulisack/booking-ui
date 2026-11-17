@@ -311,5 +311,11 @@
   "SPACE_NOT_IN_SPORT": "That space belongs to another sport.",
   "NOT_A_SPORT_BRANCH": "Packages are for sport branches.",
   "INVALID_NAME": "Enter a name.",
-  "PAID_BY_PACKAGE": "This booking is paid by a package: its payment cannot be changed. Cancel the booking to give the visit back."
+  "PAID_BY_PACKAGE": "This booking is paid by a package: its payment cannot be changed. Cancel the booking to give the visit back.",
+  "SETUP_NOT_FINISHED": "Finish setting up the branch first (sports, spaces and classes).",
+  "LIGHT_NOT_OFFERED": "This space has no sport light.",
+  "LIGHT_NOT_WITH_PACKAGE": "Sport light cannot be added when paying with a package. Add it at the desk.",
+  "INVALID_LIGHT_FROM": "Enter the time the light starts, like 17:00.",
+  "INVALID_LIGHT_PRICE": "The light price cannot be below 0.",
+  "INVALID_SETUP_STEP": "That setup step does not exist."
 }

@@ -8,7 +8,9 @@
     "logOut": "Log out",
     "back": "Back",
     "tryAgain": "Try again",
-    "goHome": "Go to start"
+    "goHome": "Go to start",
+    "next": "Next",
+    "remove": "Remove"
   },
   "fields": {
     "name": "Full name",
@@ -220,7 +222,8 @@
   "breadcrumb": {
     "label": "Breadcrumb",
     "invite": "Invite",
-    "details": "Details"
+    "details": "Details",
+    "start": "Set up"
   },
   "switcher": {
     "label": "Branch",
@@ -653,6 +656,12 @@
     "paidLead": "Your booking is paid. The branch will confirm it soon.",
     "tabs": {
       "package": "Package"
+    },
+    "light": {
+      "add": "Add sport light",
+      "hint": "From {{from}} · {{time}} with light",
+      "line": "Sport light",
+      "included": "incl. sport light {{amount}}"
     }
   },
   "weekday": {
@@ -797,7 +806,10 @@
       "includeCoaches": "Include coaches free with this space",
       "coachesHint": "Only for this space: the same coach can still be paid with another space.",
       "afterAdd": "Next, open it to set opening hours and a price.",
-      "hoursAndPrice": "Hours and price of {{name}}"
+      "hoursAndPrice": "Hours and price of {{name}}",
+      "lightTitle": "Sport light",
+      "lightLead": "Customers can add the lights when they book. It costs the light price for each hour after the light starts.",
+      "lightOn": "Offer sport light"
     },
     "coaches": {
       "title": "Coaches",
@@ -1212,9 +1224,9 @@
     "fillIn": "Fill in who is booking (find the account) and choose a time or a class.",
     "notes": "Note",
     "createdBy": {
-      "customer": "Booked online",
-      "guest": "Booked online as a guest",
-      "staff": "Booked at the desk"
+      "customer": "by the customer, online",
+      "guest": "by a guest, online",
+      "staff": "by the team"
     },
     "itemKind": {
       "resource": "Space",
@@ -1224,11 +1236,6 @@
     "paidWith": "Paid by {{method}} · {{when}}",
     "markPaidWith": "Mark paid:",
     "createdAt": "Booked on",
-    "createdBy": {
-      "customer": "by the customer, online",
-      "guest": "by a guest, online",
-      "staff": "by the team"
-    },
     "confirmPaidTitle": "Mark as paid?",
     "confirmPaid": "Booking {{code}}: {{amount}} received by {{method}}. Make sure you really have the money. It is saved under your name.",
     "confirmPaidYes": "Yes, mark paid",
@@ -2649,5 +2656,74 @@
     "refresh": "Refresh",
     "updatedAt": "Updated {{time}}",
     "offlineStale": "Cannot reach the server. The list below may be old."
+  },
+  "wizard": {
+    "title": "Set up {{name}}",
+    "lead": "A few steps and your branch is ready. Each step is saved when you go on, so you can stop and come back later.",
+    "finish": "Finish",
+    "steps": {
+      "branch": "Branch",
+      "sports": "Sports",
+      "spaces": "Spaces",
+      "classes": "Classes"
+    },
+    "sports": {
+      "title": "Which sports do you have?",
+      "lead": "Choose every sport customers can book here. You can add more later.",
+      "popular": "Popular",
+      "more": "More sports",
+      "showMore": "More sports"
+    },
+    "spaces": {
+      "title": "Courts, pitches and rings",
+      "lead": "We made the usual spaces for each sport. Change the names, add or remove some, and set the price and hours.",
+      "made": "Already added: {{names}}",
+      "count_one": "{{count}} {{kind}}",
+      "count_other": "{{count}} × {{kind}}",
+      "name": "Name of space {{n}}",
+      "addOne": "Add one more",
+      "price": "Price per hour ({{currency}})",
+      "opens": "Opens",
+      "closes": "Closes",
+      "everyDay": "The same hours every day. You can change single days later in Setup → Spaces.",
+      "light": "Sport light",
+      "lightLead": "In the evening customers can add the lights when they book. It costs the light price for each hour after the light starts.",
+      "lightPrice": "Light price per hour ({{currency}})",
+      "lightFrom": "Light from",
+      "needName": "Every space needs a name.",
+      "needPrice": "Enter the price per hour.",
+      "needHours": "The end must be after the start.",
+      "needLightPrice": "Enter the light price, or switch the light off."
+    },
+    "classes": {
+      "title": "Group classes",
+      "lead": "A class that repeats every week. Customers book a seat in it.",
+      "none": "No group classes needed for these sports. You can add classes later in Setup → Classes.",
+      "made": "The weekly class is already added.",
+      "groupClass": "weekly group class",
+      "name": "Class name",
+      "start": "Starts",
+      "end": "Ends",
+      "days": "Days",
+      "capacity": "Places",
+      "price": "Price per person ({{currency}})",
+      "needName": "The class needs a name.",
+      "needDays": "Choose at least one day.",
+      "needCapacity": "At least 1 place."
+    },
+    "names": {
+      "court": "Court {{n}}",
+      "hardCourt": "Hard court {{n}}",
+      "clayCourt": "Clay court {{n}}",
+      "pitch": "Pitch {{n}}",
+      "ring": "Ring {{n}}",
+      "table": "Table {{n}}",
+      "lane": "Lane {{n}}",
+      "bay": "Bay {{n}}",
+      "room": "Room {{n}}",
+      "space": "Space {{n}}",
+      "privateSession": "Private session",
+      "groupClass": "Group class"
+    }
   }
 }

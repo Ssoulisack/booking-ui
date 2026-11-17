@@ -14,6 +14,12 @@ export const branchService = {
     api<BranchSettings>(API_ENDPOINTS.BRANCH.PUBLISH(branchId), {
       method: "POST",
     }),
+  /** where the step-by-step setup of a new sport branch is (0 = done) */
+  setSetupStep: (branchId: number, step: number) =>
+    api<BranchSettings>(API_ENDPOINTS.BRANCH.SETUP_STEP(branchId), {
+      method: "PUT",
+      body: { step },
+    }),
   unpublish: (branchId: number) =>
     api<BranchSettings>(API_ENDPOINTS.BRANCH.UNPUBLISH(branchId), {
       method: "POST",

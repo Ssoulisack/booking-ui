@@ -1,4 +1,5 @@
 export { DashboardHome } from "@/components/protected/branch/DashboardHome"
+export { SetupWizard } from "@/components/protected/branch/SetupWizard"
 export { EmployeesPage } from "@/components/protected/branch/EmployeesPage"
 export {
   DashboardIndex,

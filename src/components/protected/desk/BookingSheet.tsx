@@ -301,6 +301,16 @@ function Details({ booking: b }: { booking: Booking }) {
               {money(b.total_price, b.currency)}
             </span>
           </div>
+          {!!b.light_price && (
+            <p className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">
+                {t("public.light.line")}
+              </span>
+              <span className="tabular-nums">
+                {money(b.light_price, b.currency)}
+              </span>
+            </p>
+          )}
           {b.package && (
             <p className="flex items-baseline justify-between gap-3 text-sm">
               <span className="text-muted-foreground">

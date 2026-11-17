@@ -62,6 +62,9 @@ export interface PublicResource {
   currency?: string
   /** the coaches included free with this space (booked together, the coach costs nothing) */
   coach_ids?: number[]
+  /** sport light the customer may add: price per hour from light_from (0 = none) */
+  light_price?: number
+  light_from?: string
 }
 
 export interface PublicCoach {

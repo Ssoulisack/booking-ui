@@ -14,6 +14,9 @@ export interface ManagedResource extends Partial<TableFields> {
   walk_in_only?: boolean
   /** sport spaces: the coaches included free with this space (booked together, the coach costs nothing) */
   coach_ids?: number[]
+  /** sport spaces: sport light price per hour (0 = none) and the time it starts ("17:00") */
+  light_price?: number
+  light_from?: string
 }
 
 export type TableShape = "round" | "square" | "long"

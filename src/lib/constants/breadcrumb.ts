@@ -10,6 +10,7 @@ export const DASHBOARD_CRUMBS: Record<string, string> = {
   packages: "nav.packages",
   "cash-up": "nav.cashUp",
   setup: "nav.setup",
+  start: "breadcrumb.start",
   reports: "nav.reports",
   share: "nav.share",
   media: "nav.media",

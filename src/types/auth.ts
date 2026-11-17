@@ -48,6 +48,8 @@ export interface MyBranch {
   status: BranchStatus
   role: BranchRole
   active: boolean
+  /** a new sport branch still being set up step by step: the step it is at (0 = done) */
+  setup_step?: number
 }
 
 export interface InvitationInfo {

@@ -41,6 +41,8 @@ export interface BranchSummary {
   public_path: string
   published_at: string | null
   created_at: string
+  /** a new sport branch still being set up step by step (0 = done) */
+  setup_step?: number
 }
 
 export interface BranchRef {

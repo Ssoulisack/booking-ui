@@ -33,6 +33,8 @@ export interface Booking {
   ends_at: string
   total_price: number
   currency: string
+  /** the sport light's part of the total (0 = none) */
+  light_price?: number
   payment_status: "unpaid" | "paid"
   cancellable_until: string
   guest_name?: string
@@ -96,6 +98,8 @@ export interface CreateBookingInput {
   seats?: number
   /** pay with this package (course pass) of the customer: a class or a space, price 0 */
   package_id?: number
+  /** add the space's sport light for the time after its start (not with a package) */
+  with_light?: boolean
   guest?: { name: string; phone: string; email?: string }
   notes?: string
 }

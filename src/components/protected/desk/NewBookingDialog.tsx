@@ -1,4 +1,4 @@
-import { CheckCircle2Icon, SearchIcon } from "lucide-react"
+import { CheckCircle2Icon, LightbulbIcon, SearchIcon } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -18,7 +18,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import type { Booking, StaffBookingInput } from "@/types/booking"
-import { money, timeIn } from "@/lib/format"
+import { duration, money, timeIn } from "@/lib/format"
+import { lightCost } from "@/lib/light"
 import { coversClassOf, leftLabel, ymdLabel, visitsFor } from "@/lib/packages"
 import { displayPhone, isLaoPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
@@ -86,6 +87,7 @@ export function NewBookingDialog({
   const [seats, setSeats] = useState("1")
   const [notes, setNotes] = useState("")
   const [packageId, setPackageId] = useState<number | null>(null)
+  const [withLight, setWithLight] = useState(false)
   const [missing, setMissing] = useState(false)
 
   const sid = sportId ?? sports[0]?.id // the sports list may arrive after the dialog opened
@@ -160,6 +162,11 @@ export function NewBookingDialog({
     )
   })
   const usePkg = usable.find((p) => p.id === packageId) ?? null
+  // sport light for the time after it starts (a space that has it; not with a package)
+  const light =
+    what === "court" && !usePkg
+      ? lightCost(court, chosen?.starts_at, len, tz)
+      : null
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -183,6 +190,7 @@ export function NewBookingDialog({
       body.guest = { name: name.trim(), phone: phone.trim() }
     else body.customer = account!.member_no
     if (usePkg) body.package_id = usePkg.id
+    if (light && withLight) body.with_light = true
     if (notes.trim()) body.notes = notes.trim()
     create.mutate(body, {
       onSuccess: (b) => {
@@ -518,6 +526,29 @@ export function NewBookingDialog({
               </label>
             ))}
           </fieldset>
+        )}
+        {light && (
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
+            <input
+              type="checkbox"
+              checked={withLight}
+              onChange={(e) => setWithLight(e.target.checked)}
+              className="size-5 accent-primary"
+            />
+            <LightbulbIcon className="size-4 shrink-0" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium">{t("public.light.add")}</span>
+              <span className="block text-muted-foreground">
+                {t("public.light.hint", {
+                  from: light.from,
+                  time: duration(light.minutes),
+                })}
+              </span>
+            </span>
+            <span className="shrink-0 tabular-nums">
+              +{money(light.amount, availability.data?.currency ?? "")}
+            </span>
+          </label>
         )}
         <Field id="nb-notes" label={t("public.notes")}>
           <Textarea

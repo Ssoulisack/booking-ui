@@ -246,6 +246,8 @@ export const router = createBrowserRouter([
                   Component: (await dashboard()).DashboardHome,
                 }),
               },
+              // a new sport branch set up step by step (the layout sends it here until done)
+              page("start", "SetupWizard"),
               page("calendar", "CalendarPage"),
               page("bookings", "BookingsPage"),
               page("customers", "CustomersPage"),

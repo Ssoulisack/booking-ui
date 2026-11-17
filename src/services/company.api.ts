@@ -16,6 +16,8 @@ export interface NewBranch {
   slug: string
   type?: BranchType
   clone_from?: number
+  /** a new sport branch is set up step by step (sports, spaces, classes) before it can go live */
+  step_by_step?: boolean
 }
 
 export const companyService = {

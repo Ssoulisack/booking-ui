@@ -178,6 +178,13 @@ export function BookingCard({
               <span className="font-normal text-muted-foreground">
                 · {t(`booking.payment.${booking.payment_status}`)}
               </span>
+              {!!booking.light_price && (
+                <span className="block text-sm font-normal text-muted-foreground">
+                  {t("public.light.included", {
+                    amount: money(booking.light_price, booking.currency),
+                  })}
+                </span>
+              )}
             </dd>
             {booking.package && (
               <>

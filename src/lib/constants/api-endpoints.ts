@@ -154,6 +154,7 @@ export const API_ENDPOINTS = {
     RULE: (branchId: number, scope: string, id: number) =>
       `/branches/${branchId}/rules/${scope}/${id}`,
     SETTINGS: (branchId: number) => `/branches/${branchId}/settings`,
+    SETUP_STEP: (branchId: number) => `/branches/${branchId}/setup-step`,
     SPORT: (branchId: number, sportId: number) =>
       `/branches/${branchId}/sports/${sportId}`,
     SPORTS: (branchId: number) => `/branches/${branchId}/sports`,

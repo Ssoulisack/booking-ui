@@ -2,7 +2,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { isLaoPhone } from "@/lib/phone"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import { ArrowLeftIcon, MapPinIcon, TicketIcon } from "lucide-react"
+import {
+  ArrowLeftIcon,
+  LightbulbIcon,
+  MapPinIcon,
+  TicketIcon,
+} from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { LoginDialog } from "@/components/public/auth/LoginDialog"
@@ -29,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { ApiError } from "@/lib/api/client"
 import { floorName, zoneHolds } from "@/lib/floor-plan"
+import { lightCost } from "@/lib/light"
 import type { CreateBookingInput } from "@/types/booking"
 import { dayIn, duration, money, timeIn, todayIn } from "@/lib/format"
 import {
@@ -122,6 +128,8 @@ export function CheckoutPage() {
   const [packageId, setPackageId] = useState<number | null | undefined>(
     sel.pkg === 0 ? null : sel.pkg,
   )
+  // sport light the customer adds for the evening part of the booking (offered when the space has it)
+  const [withLight, setWithLight] = useState(false)
   const here = encodeURIComponent(pathname + search)
   // Log in opens a popup: after it the page goes on as the customer, with everything chosen kept
   const [loggingIn, setLoggingIn] = useState(false)
@@ -263,6 +271,13 @@ export function CheckoutPage() {
       ? (firstToEnd ?? null)
       : (usable.find((p) => p.id === packageId) ?? null)
 
+  // sport light: offered for a space that has it when part of the booking is after the light starts; not with a package
+  const light =
+    isTable || isClass || usePackage
+      ? null
+      : lightCost(court, sel.start, sel.length, tz)
+  const lit = light && withLight ? light.amount : 0
+
   const submit = (guest?: GuestValues) => {
     const body: CreateBookingInput = isTable
       ? { table_ids: tableIds, guests: sel.guests, starts_at: sel.start }
@@ -276,6 +291,7 @@ export function CheckoutPage() {
             duration_min: sel.length,
           }
     if (usePackage) body.package_id = usePackage.id
+    if (lit) body.with_light = true
     if (guest) {
       body.guest = {
         name: guest.name,
@@ -398,7 +414,7 @@ export function CheckoutPage() {
                 </div>
               ) : (
                 <p className="shrink-0 display-tight text-2xl tabular-nums">
-                  {money(price.amount, price.currency)}
+                  {money(price.amount + lit, price.currency)}
                 </p>
               ))}
             {isTable && (
@@ -427,16 +443,48 @@ export function CheckoutPage() {
                   : money(parts.coach, parts.currency)}
               </dd>
             </div>
+            {lit > 0 && (
+              <div className="flex justify-between gap-3">
+                <dt className="truncate">{t("public.light.line")}</dt>
+                <dd className="shrink-0 tabular-nums">
+                  {money(lit, parts.currency)}
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between gap-3 border-t pt-1.5 font-semibold">
               <dt>{t("public.priceTotal")}</dt>
               <dd className="shrink-0 tabular-nums">
                 {money(
-                  usePackage ? 0 : parts.space + parts.coach,
+                  usePackage ? 0 : parts.space + parts.coach + lit,
                   parts.currency,
                 )}
               </dd>
             </div>
           </dl>
+        )}
+        {/* sport light: the customer may add it for the time after it starts */}
+        {!loading && light && price && (
+          <label className="mt-3 flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
+            <input
+              type="checkbox"
+              checked={withLight}
+              onChange={(e) => setWithLight(e.target.checked)}
+              className="size-5 accent-primary"
+            />
+            <LightbulbIcon className="size-4 shrink-0" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium">{t("public.light.add")}</span>
+              <span className="block text-muted-foreground">
+                {t("public.light.hint", {
+                  from: light.from,
+                  time: duration(light.minutes),
+                })}
+              </span>
+            </span>
+            <span className="shrink-0 tabular-nums">
+              +{money(light.amount, price.currency)}
+            </span>
+          </label>
         )}
         {/* paying with a package: which one, what this booking takes from it and what is left after */}
         {!loading && usePackage && (

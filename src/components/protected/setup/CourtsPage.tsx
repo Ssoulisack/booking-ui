@@ -1,6 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useDeleteResource, useSaveResource } from "@/hooks/use-space"
-import { ArrowLeftIcon, ChevronRightIcon, PlusIcon } from "lucide-react"
+import {
+  ArrowLeftIcon,
+  ChevronRightIcon,
+  LightbulbIcon,
+  PlusIcon,
+} from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm, type UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -24,8 +29,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { MoneyInput } from "@/components/global/MoneyInput"
+import { TimeInput } from "@/components/global/time-input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
+import { Switch } from "@/components/ui/switch"
 import type { ManagedResource, ResourceKind } from "@/types/space"
 import type { ManagedSport } from "@/types/sport"
 
@@ -383,6 +391,11 @@ export function CourtDetailPage() {
       </div>
       <CourtDetails key={court.id} court={court} />
       <SpaceCoaches key={`coaches-${court.id}`} court={court} />
+      <SpaceLight
+        key={`light-${court.id}`}
+        court={court}
+        currency={settings.data.in_force.currency}
+      />
       <div className="grid gap-6 xl:grid-cols-2">
         <HoursEditor owner="resource" id={court.id} />
         <div className="space-y-6">
@@ -452,6 +465,95 @@ function SpaceCoaches({ court }: { court: ManagedResource }) {
                 kind: court.kind,
                 active: court.active,
                 coach_ids: next,
+              },
+              { onSuccess: () => toast.success(t("settings.saved")) },
+            )
+          }
+        >
+          {save.isPending && <Spinner />}
+          {t("dash.save")}
+        </Button>
+      </div>
+    </Panel>
+  )
+}
+
+/**
+ * Sport light: customers may add it when they book; it costs its price per hour for the time booked after it
+ * starts (17:00 unless changed). Saved on its own.
+ */
+function SpaceLight({
+  court,
+  currency,
+}: {
+  court: ManagedResource
+  currency: string
+}) {
+  const { t } = useTranslation()
+  const save = useSaveResource()
+  const savedPrice = court.light_price ?? 0
+  const savedFrom = court.light_from || "17:00"
+  const [on, setOn] = useState(savedPrice > 0)
+  const [price, setPrice] = useState(savedPrice ? String(savedPrice) : "")
+  const [from, setFrom] = useState(savedFrom)
+  const next = on ? Number(price.replace(/[^\d]/g, "") || 0) : 0
+  const dirty = next !== savedPrice || (on && from !== savedFrom)
+  const missing = on && next <= 0
+  useUnsaved(dirty)
+  return (
+    <Panel title={t("setup.courts.lightTitle")}>
+      <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          {t("setup.courts.lightLead")}
+        </p>
+        <ErrorAlert error={save.error} />
+        <label className="flex items-center justify-between gap-3">
+          <span className="flex items-center gap-2 font-medium">
+            <LightbulbIcon className="size-4" />
+            {t("setup.courts.lightOn")}
+          </span>
+          <Switch checked={on} onCheckedChange={setOn} />
+        </label>
+        {on && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">
+                {t("wizard.spaces.lightPrice", { currency })}
+              </span>
+              <MoneyInput
+                value={price}
+
+                onChange={(v) => setPrice(v)}
+                className="h-11 text-base lg:h-9 lg:text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="font-medium">
+                {t("wizard.spaces.lightFrom")}
+              </span>
+              <TimeInput
+                className="w-full rounded-lg text-left"
+                label={t("wizard.spaces.lightFrom")}
+                value={from}
+                onChange={(v) => setFrom(v)}
+              />
+            </label>
+          </div>
+        )}
+        <Button
+          type="button"
+          className="h-11 lg:h-9"
+          disabled={save.isPending || !dirty || missing}
+          onClick={() =>
+            save.mutate(
+              {
+                id: court.id,
+                sport_id: court.sport_id,
+                name: court.name,
+                kind: court.kind,
+                active: court.active,
+                light_price: next,
+                light_from: from,
               },
               { onSuccess: () => toast.success(t("settings.saved")) },
             )
