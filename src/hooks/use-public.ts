@@ -14,6 +14,7 @@ import type {
   Booking,
   CreateBookingInput,
   CreatedBooking,
+  FindBookingKey,
 } from "@/types/booking"
 import type { BuyEventTablesInput } from "@/types/event"
 import type { AvailabilityQuery } from "@/types/public"
@@ -193,22 +194,21 @@ export function useGuestBooking(slug: string, token: string) {
 
 export function useFindBooking(
   slug: string,
-  options?: Options<Booking, { code: string; phone: string }>,
+  options?: Options<Booking, FindBookingKey>,
 ) {
   return useMutation({
-    mutationFn: (p: { code: string; phone: string }) =>
-      publicService.findBooking(slug, p.code, p.phone),
+    mutationFn: (key: FindBookingKey) => publicService.findBooking(slug, key),
     ...options,
   })
 }
 
 export function useCancelFoundBooking(
   slug: string,
-  options?: Options<Booking, { code: string; phone: string; reason: string }>,
+  options?: Options<Booking, { key: FindBookingKey; reason: string }>,
 ) {
   return useMutation({
-    mutationFn: (p: { code: string; phone: string; reason: string }) =>
-      publicService.cancelFound(slug, p.code, p.phone, p.reason),
+    mutationFn: (p: { key: FindBookingKey; reason: string }) =>
+      publicService.cancelFound(slug, p.key, p.reason),
     ...options,
   })
 }

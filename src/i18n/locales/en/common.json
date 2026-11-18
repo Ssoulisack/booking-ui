@@ -520,6 +520,7 @@
       "link": "Find my booking",
       "title": "Find your booking",
       "lead": "Lost the link? Enter the booking code and the phone number you booked with.",
+      "leadSignedIn": "Enter the booking code. We check it against your account.",
       "code": "Booking code",
       "phone": "Phone number",
       "phoneHint": "The number you gave when booking, written any way (020…, +856…).",

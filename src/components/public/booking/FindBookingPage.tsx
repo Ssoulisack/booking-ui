@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
-import type { Booking } from "@/types/booking"
+import type { Booking, FindBookingKey } from "@/types/booking"
 import { dayIn, timeIn } from "@/lib/format"
+import { useSession } from "@/stores/session"
 
 import { BookingCard } from "./BookingCard"
 import { canCancel } from "./booking-utils"
@@ -25,7 +26,19 @@ export function FindBookingPage() {
   const { slug, business } = usePublic()
   const queryClient = useQueryClient()
   const [code, setCode] = useState("")
-  const [phone, setPhone] = useState("")
+  // logged in: only the code is asked; the account's phone (or, without a phone, its email) is sent with it, not
+  // shown. A guest types the code and the phone.
+  const user = useSession((s) => s.user)
+  const accountPhone = user?.phone?.trim() ?? ""
+  const accountEmail = user?.email?.trim() ?? ""
+  const fromAccount = !!(accountPhone || accountEmail)
+  const [typedPhone, setPhone] = useState("")
+  const key = (): FindBookingKey =>
+    accountPhone
+      ? { code: code.trim(), phone: accountPhone }
+      : accountEmail
+        ? { code: code.trim(), email: accountEmail }
+        : { code: code.trim(), phone: typedPhone.trim() }
   const [booking, setBooking] = useState<Booking | null>(null)
   const tz = business.timezone
 
@@ -48,7 +61,9 @@ export function FindBookingPage() {
       </Button>
       <div className="space-y-1">
         <h1 className="display-tight text-4xl">{t("public.find.title")}</h1>
-        <p className="text-muted-foreground">{t("public.find.lead")}</p>
+        <p className="text-muted-foreground">
+          {t(fromAccount ? "public.find.leadSignedIn" : "public.find.lead")}
+        </p>
       </div>
 
       <form
@@ -57,7 +72,7 @@ export function FindBookingPage() {
         onSubmit={(e) => {
           e.preventDefault()
           setBooking(null)
-          find.mutate({ code: code.trim(), phone: phone.trim() })
+          find.mutate(key())
         }}
       >
         <div className="space-y-1.5">
@@ -72,27 +87,33 @@ export function FindBookingPage() {
             className="h-12 text-lg tracking-wider uppercase"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="find-phone">{t("public.find.phone")}</Label>
-          <Input
-            id="find-phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="h-12 text-base"
-          />
-          <p className="text-sm text-muted-foreground">
-            {t("public.find.phoneHint")}
-          </p>
-        </div>
+        {!fromAccount && (
+          <div className="space-y-1.5">
+            <Label htmlFor="find-phone">{t("public.find.phone")}</Label>
+            <Input
+              id="find-phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={typedPhone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="h-12 text-base"
+            />
+            <p className="text-sm text-muted-foreground">
+              {t("public.find.phoneHint")}
+            </p>
+          </div>
+        )}
         <ErrorAlert error={find.error} />
         <Button
           type="submit"
           size="lg"
           className="h-12 w-full bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
-          disabled={find.isPending || !code.trim() || !phone.trim()}
+          disabled={
+            find.isPending ||
+            !code.trim() ||
+            (!fromAccount && !typedPhone.trim())
+          }
         >
           {find.isPending ? <Spinner /> : <SearchIcon />}
           {t("public.find.submit")}
@@ -113,13 +134,7 @@ export function FindBookingPage() {
                   visitReturns={!!booking.package}
                   pending={cancel.isPending}
                   error={cancel.error}
-                  onConfirm={(reason) =>
-                    cancel.mutate({
-                      code: code.trim(),
-                      phone: phone.trim(),
-                      reason,
-                    })
-                  }
+                  onConfirm={(reason) => cancel.mutate({ key: key(), reason })}
                 />
               </div>
             ) : (

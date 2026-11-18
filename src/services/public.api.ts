@@ -4,6 +4,7 @@ import type {
   Booking,
   CreateBookingInput,
   CreatedBooking,
+  FindBookingKey,
 } from "@/types/booking"
 import type { ClassSession } from "@/types/class"
 import type {
@@ -78,15 +79,15 @@ export const publicService = {
   guestBooking: (slug: string, token: string) =>
     api<Booking>(API_ENDPOINTS.PUBLIC.BOOKING(slug, token)),
   /** a booking without its link: the code and the phone it was made with */
-  findBooking: (slug: string, code: string, phone: string) =>
+  findBooking: (slug: string, key: FindBookingKey) =>
     api<Booking>(API_ENDPOINTS.PUBLIC.BOOKINGS_FIND(slug), {
       method: "POST",
-      body: { code, phone },
+      body: key,
     }),
-  cancelFound: (slug: string, code: string, phone: string, reason: string) =>
+  cancelFound: (slug: string, key: FindBookingKey, reason: string) =>
     api<Booking>(API_ENDPOINTS.PUBLIC.BOOKINGS_FIND_CANCEL(slug), {
       method: "POST",
-      body: { code, phone, reason },
+      body: { ...key, reason },
     }),
   cancelGuest: (slug: string, token: string, reason: string) =>
     api<Booking>(API_ENDPOINTS.PUBLIC.BOOKING_CANCEL(slug, token), {

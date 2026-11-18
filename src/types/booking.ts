@@ -143,3 +143,10 @@ export interface ReserveTablesInput {
   guest: { name: string; phone: string }
   notes?: string
 }
+
+/** "Find my booking": the code with the phone, or with the account's email when the account has no phone */
+export interface FindBookingKey {
+  code: string
+  phone?: string
+  email?: string
+}
