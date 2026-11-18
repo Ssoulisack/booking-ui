@@ -5,7 +5,8 @@
  * Where the other site lives is read at run time, so one image works in every environment:
  *   1. /site-config.js (Caddy fills it from WEB_URL / ADMIN_URL), else
  *   2. VITE_WEB_URL / VITE_ADMIN_URL from the build, else
- *   3. a guess: on localhost the dev ports (web :5173, admin :5175), elsewhere the "admin." subdomain.
+ *   3. a guess: on localhost the dev ports (web :5173, admin :5175); test.example.com ↔ admin-test.example.com;
+ *      example.com ↔ admin.example.com.
  */
 export const IS_ADMIN = import.meta.env.MODE === "admin"
 
@@ -28,8 +29,14 @@ function guess(target: "web" | "admin"): string {
     const to = target === "admin" ? ADMIN_DEV_PORT : WEB_DEV_PORT
     return `${protocol}//${hostname}:${to}`
   }
-  const bare = hostname.replace(/^admin\./, "")
-  const host = target === "admin" ? `admin.${bare}` : bare
+  // the website's host: admin.example.com → example.com, admin-test.example.com → test.example.com
+  const web = hostname.replace(/^admin\./, "").replace(/^admin-/, "")
+  let host = web
+  if (target === "admin") {
+    // a subdomain gets "admin-" in front (test.example.com → admin-test.example.com: Cloudflare's free certificate
+    // covers one level only); a bare domain gets "admin." (example.com → admin.example.com)
+    host = web.split(".").length > 2 ? `admin-${web}` : `admin.${web}`
+  }
   return `${protocol}//${host}${port ? `:${port}` : ""}`
 }
 
