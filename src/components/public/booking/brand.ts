@@ -16,11 +16,9 @@ const CANDY_YELLOW = "#fbbf24"
 const CANDY_INK = "#10142c"
 
 /**
- * CSS variables for the app theme's brand colour (navy, candy yellow on the night theme). Buttons and selected states use --primary, so
- * shadcn components follow the brand. Text on the brand is white or ink, whichever reads better;
- * the brand used as text is darkened (light pages) or lightened (dark pages) until it reads
- * (WCAG AA). On the navy night theme a brand too dark to see gives its buttons to candy yellow;
- * the hero keeps the real brand colour (--brand-hero).
+ * CSS variables for the app theme's brand colour. Buttons, selected states and highlights use --primary / --brand:
+ * candy yellow (#fbbf24) with ink text, on light and dark pages alike. The brand used as text is darkened (light pages)
+ * until it reads (WCAG AA). The hero keeps the navy (--brand-hero).
  */
 export function brandStyle(
   look?: Look,
@@ -29,8 +27,8 @@ export function brandStyle(
   // every page uses the app theme's colour (a company's own brand colour is no longer used)
   const real = colord(DEFAULT_BRAND)
   const page = mode === "dark" ? NAVY : WHITE
-  const base =
-    mode === "dark" && real.contrast(NAVY) < 3 ? colord(CANDY_YELLOW) : real
+  // selected states, highlights and main buttons: candy yellow in both themes (the hero keeps the navy)
+  const base = colord(CANDY_YELLOW)
 
   const onBrand =
     base.toHex() === CANDY_YELLOW

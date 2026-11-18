@@ -26,10 +26,17 @@ import { runsCompany, useSession } from "@/stores/session"
 import { adminUrlOf, IS_ADMIN, isAdminPath, webUrlOf } from "@/lib/site"
 
 /** A link in the menu: inside this site with the router, to the other site (website ↔ backoffice) as a full address */
-function MenuLink({ to, children }: { to: string; children: React.ReactNode }) {
+// the menu item (asChild) hands its class, ref and keyboard props to this link: pass them all on
+function MenuLink({
+  to,
+  ref,
+  ...rest
+}: { to: string } & React.ComponentPropsWithRef<"a">) {
   const backoffice = isAdminPath(to) || (IS_ADMIN && to === "/account/profile")
-  if (backoffice === IS_ADMIN) return <Link to={to}>{children}</Link>
-  return <a href={backoffice ? adminUrlOf(to) : webUrlOf(to)}>{children}</a>
+  if (backoffice === IS_ADMIN) return <Link ref={ref} to={to} {...rest} />
+  return (
+    <a ref={ref} href={backoffice ? adminUrlOf(to) : webUrlOf(to)} {...rest} />
+  )
 }
 
 const initials = (name: string) =>

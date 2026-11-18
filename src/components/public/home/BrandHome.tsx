@@ -16,7 +16,7 @@ import BlurText from "@/components/reactbits/BlurText"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { brandStyle, DEFAULT_BRAND } from "@/components/public/booking/brand"
+import { brandStyle } from "@/components/public/booking/brand"
 import { ThemeToggle } from "@/components/public/booking/ThemeToggle"
 import {
   useBrandOnPage,
@@ -129,7 +129,6 @@ function HomeNav({ company }: { company: PublicCompany }) {
   return (
     <MobileNav
       themed
-      color={DEFAULT_BRAND}
       active={active}
       items={[
         ...sections.map((s, i) => ({
@@ -216,11 +215,12 @@ function Hero({
             {company.description}
           </p>
         )}
+        {/* phones and tablets: the bottom menu (HomeNav) already leads to the branches */}
         {branches.length > 0 && (
-          <div>
+          <div className="hidden lg:block">
             <Button
               asChild
-              className="h-12 bg-[var(--brand-foreground)] px-6 text-base text-[var(--brand)] hover:bg-[var(--brand-foreground)]/90"
+              className="h-12 bg-[var(--brand)] px-6 text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
             >
               {only ? (
                 <Link to={`/b/${only.slug}`}>

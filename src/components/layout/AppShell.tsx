@@ -29,7 +29,6 @@ import { ModeToggle } from "@/components/global/ModeToggle"
 import { CustomerTheme } from "@/components/public/booking/CustomerTheme"
 import { ThemeToggle } from "@/components/public/booking/ThemeToggle"
 import { dashMode, useHtmlMode } from "@/lib/color-mode"
-import { DEFAULT_BRAND } from "@/components/public/booking/brand"
 import { Breadcrumbs } from "./Breadcrumbs"
 import type { Crumb } from "@/lib/breadcrumbs"
 import { UserMenu } from "./UserMenu"
@@ -384,7 +383,6 @@ function AccountNav({ nav: menu }: { nav: NavItem[] }) {
   return (
     <MobileNav
       themed
-      color={DEFAULT_BRAND}
       active={active}
       items={nav.map((item) => ({
         id: item.id,

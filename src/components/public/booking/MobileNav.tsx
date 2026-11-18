@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react"
 
-import { colord } from "colord"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import { useTranslation } from "react-i18next"
@@ -38,16 +37,14 @@ let lastActiveId: string | null = null
 export function MobileNav({
   items,
   active,
-  color,
   themed,
 }: {
   items: MobileNavItem[]
   active: number
-  color?: string
   /** customer pages: follow their dark / light mode (other pages stay light) */
   themed?: boolean
 }) {
-  // follows the page: dark frame at night; a brand too dark to see on navy gives way to candy yellow
+  // follows the page: dark frame at night
   const wanted = Math.min(Math.max(0, active), Math.max(0, items.length - 1))
   const [shown, setShown] = useState(() => {
     const from = lastActiveId
@@ -74,10 +71,6 @@ export function MobileNav({
   const attention = needsEmail(useSession((s) => s.user))
   const pubMode = usePubMode()
   const mode = themed ? pubMode : "light"
-  const pill =
-    mode === "dark" && color && colord(color).contrast("#0e1330") < 3
-      ? "#fbbf24"
-      : color
 
   // the main action goes to the middle of the row: the pill keeps an empty slot there and the round button sits on it
   const hero = items.length >= 3 ? items.findIndex((i) => i.center) : -1
@@ -126,8 +119,9 @@ export function MobileNav({
     return () => ro.disconnect()
   }, [slot, shownSlot, items.length])
   const heroItem = hero >= 0 ? items[hero] : null
-  const heroColor = pill || (mode === "dark" ? "#fbbf24" : "#27272a")
-  const activeInk = colord(heroColor).isLight() ? "#10142c" : "#ffffff"
+  // the open item's pill and the round main button: the candy yellow in both themes, with dark ink on it
+  const heroColor = "#fbbf24"
+  const activeInk = "#10142c"
   const HeroIcon = heroItem?.icon
 
   return (
@@ -138,7 +132,7 @@ export function MobileNav({
           height={56}
           borderRadius={28}
           backgroundOpacity={mode === "dark" ? 0.35 : 0.55}
-          saturation={1.6}
+          saturation={1}
           className="mobile-nav__glass"
           style={{ colorScheme: mode }}
         >

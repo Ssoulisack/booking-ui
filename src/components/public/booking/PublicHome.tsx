@@ -35,7 +35,6 @@ import { usePublicPackages } from "@/hooks/use-public"
 import { useSelection } from "./selection"
 import { ContactSection } from "./ContactSection"
 import { PackagesSection } from "./PackagesSection"
-import { DEFAULT_BRAND } from "./brand"
 
 /** /b/:slug — the business's page: name, booking, classes, coaches, about */
 export function PublicHome() {
@@ -216,7 +215,6 @@ function SectionNav({ tab }: { tab: "booking" | "packages" }) {
   return (
     <MobileNav
       themed
-      color={DEFAULT_BRAND}
       active={Math.max(
         items.findIndex((i) => i.id === activeNav),
         0,
@@ -312,11 +310,12 @@ function Hero() {
           )}
         </div>
 
-        {/* phone: a row under the text; wider: a column on the right */}
-        <div className="grid grid-cols-[1fr_auto_auto] gap-2 sm:w-56 sm:grid-cols-1">
+        {/* phone: a row under the text; wider: a column on the right. Book now only on a laptop: on phones and
+            tablets the bottom menu (MobileNav) already has Booking */}
+        <div className="flex gap-2 sm:grid sm:w-56 sm:grid-cols-1">
           <a
             href="#book"
-            className={`${button} rounded-full bg-[var(--candy-yellow)] font-bold text-[var(--candy-ink)] shadow-[0_3px_0_rgb(0_0_0/0.3)]`}
+            className={`hidden h-11 items-center justify-center gap-2 rounded-full bg-[var(--candy-yellow)] px-4 text-sm font-bold text-[var(--candy-ink)] shadow-[0_3px_0_rgb(0_0_0/0.3)] lg:inline-flex`}
           >
             <CalendarCheckIcon className="size-5" />
             {t("public.bookNow")}
