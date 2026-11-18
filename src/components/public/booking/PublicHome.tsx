@@ -22,7 +22,10 @@ import { useLiveBranches } from "@/hooks/use-place"
 
 import { cn } from "@/lib/utils"
 
+import { useSession } from "@/stores/session"
+
 import { BookingPanel } from "./BookingPanel"
+import { LoginFirst } from "./LoginFirst"
 import { TableBookingPanel } from "./TableBookingPanel"
 import { MobileNav } from "./MobileNav"
 import { usePublic } from "./context"
@@ -38,6 +41,7 @@ import { DEFAULT_BRAND } from "./brand"
 export function PublicHome() {
   const { t } = useTranslation()
   const { slug, business } = usePublic()
+  const user = useSession((s) => s.user)
   const { hash, pathname, search } = useLocation()
   const navigate = useNavigate()
   const packages = usePublicPackages(slug, business.type === "sport")
@@ -119,8 +123,11 @@ export function PublicHome() {
                 </Link>
               </div>
             </div>
-            {/* a restaurant books tables on its floor plan; a sport place books courts, coaches, classes */}
-            {business.type === "restaurant" ? (
+            {/* accounts only: log in before the first step, not at the end */}
+            {!user && business.booking_mode === "account" ? (
+              <LoginFirst />
+            ) : /* a restaurant books tables on its floor plan; a sport place books courts, coaches, classes */
+            business.type === "restaurant" ? (
               <TableBookingPanel />
             ) : (
               <BookingPanel />

@@ -6,9 +6,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { AttentionDot } from "@/components/global/AttentionDot"
-import GooeyNav from "@/components/reactbits/GooeyNav"
+import GlassSurface from "@/components/reactbits/GlassSurface"
 import { needsEmail } from "@/lib/account-email"
 import { useSession } from "@/stores/session"
+
+import { cn } from "@/lib/utils"
 
 import { usePubMode } from "./theme"
 
@@ -29,8 +31,8 @@ export interface MobileNavItem {
 let lastActiveId: string | null = null
 
 /**
- * The menu on tablets and phones (React Bits Gooey Nav): a frosted pill floating at the bottom
- * within thumb reach, in the brand colour. From laptop width the page's own top bar is used.
+ * The menu on tablets and phones (React Bits Glass Surface): a glass pill floating at the bottom
+ * within thumb reach; the open page has a brand-colour pill that slides between items. From laptop width the page's own top bar is used.
  * Items are buttons: the page decides what a tap does (scroll, or a router link).
  */
 export function MobileNav({
@@ -88,70 +90,131 @@ export function MobileNav({
   const shownSlot = Math.max(0, order.indexOf(shown))
   const box = useRef<HTMLDivElement>(null)
   const [at, setAt] = useState<{ x: number; y: number } | null>(null)
+  // the brand pill under the open item: where it stands in the box
+  const [lit, setLit] = useState<{
+    x: number
+    y: number
+    w: number
+    h: number
+  } | null>(null)
   useLayoutEffect(() => {
     const root = box.current
-    if (!root || slot < 0) return
+    if (!root) return
     const measure = () => {
-      const li = root.querySelector<HTMLElement>(
-        `li[data-gooey-index="${slot}"]`,
-      )
-      if (!li) return
       const a = root.getBoundingClientRect()
-      const b = li.getBoundingClientRect()
-      setAt({
-        x: Math.round(b.left - a.left + b.width / 2),
-        y: Math.round(b.top - a.top + b.height / 2),
-      })
+      const place = (i: number) => {
+        const b = root
+          .querySelector<HTMLElement>(`li[data-nav-index="${i}"] > button`)
+          ?.getBoundingClientRect()
+        return b
+          ? { x: b.left - a.left, y: b.top - a.top, w: b.width, h: b.height }
+          : null
+      }
+      if (slot >= 0) {
+        const p = place(slot)
+        if (p)
+          setAt({
+            x: Math.round(p.x + p.w / 2),
+            y: Math.round(p.y + p.h / 2),
+          })
+      }
+      setLit(shownSlot === slot ? null : place(shownSlot))
     }
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(root)
     return () => ro.disconnect()
-  }, [slot, items.length])
+  }, [slot, shownSlot, items.length])
   const heroItem = hero >= 0 ? items[hero] : null
   const heroColor = pill || (mode === "dark" ? "#fbbf24" : "#27272a")
+  const activeInk = colord(heroColor).isLight() ? "#10142c" : "#ffffff"
   const HeroIcon = heroItem?.icon
 
   return (
     <div className="mobile-nav pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 flex justify-center px-3 lg:hidden">
       <div ref={box} className="pointer-events-auto relative w-full">
-        <GooeyNav
-          items={order.map((o) => {
-            const { label, icon: Icon, iconOnly } = items[o]
-            if (o === hero) {
-              // an empty slot as wide as the round button's foot
-              return {
-                label: "",
-                ariaLabel: label,
-                icon: <span className="block h-5 w-8" aria-hidden />,
-              }
-            }
-            const dot = items[o].id === "account" && attention
-            return {
-              label: iconOnly ? "" : label,
-              ariaLabel: iconOnly
-                ? dot
-                  ? `${label} (${t("emailVerify.dotLabel")})`
-                  : label
-                : undefined,
-              icon: Icon ? (
-                <span className="relative inline-flex">
-                  <Icon />
-                  {dot && <AttentionDot className="-top-1 -right-1.5" />}
-                </span>
-              ) : undefined,
-            }
-          })}
-          activeIndex={shownSlot}
-          onChange={(i) => items[order[i]]?.onSelect()}
-          theme={mode}
-          color={pill}
-          size="sm"
-          particleCount={12}
-          spread={44}
-          animationTime={520}
-          timeVariance={220}
-        />
+        <GlassSurface
+          width="100%"
+          height={56}
+          borderRadius={28}
+          backgroundOpacity={mode === "dark" ? 0.35 : 0.55}
+          saturation={1.6}
+          className="mobile-nav__glass"
+          style={{ colorScheme: mode }}
+        >
+          {lit && (
+            <span
+              aria-hidden
+              className="absolute rounded-full shadow-md transition-all duration-500 ease-[cubic-bezier(.3,1.4,.5,1)]"
+              style={{
+                left: lit.x,
+                top: lit.y,
+                width: lit.w,
+                height: lit.h,
+                background: heroColor,
+              }}
+            />
+          )}
+          <nav aria-label={t("nav.menu")} className="relative w-full">
+            <ul className="flex w-full items-center gap-0.5">
+              {order.map((o, i) => {
+                const item = items[o]
+                const { label, icon: Icon, iconOnly } = item
+                const on = i === shownSlot && o !== hero
+                const dot = item.id === "account" && attention
+                return (
+                  <li
+                    key={item.id ?? i}
+                    data-nav-index={i}
+                    className="min-w-0 flex-1"
+                  >
+                    {o === hero ? (
+                      // an empty slot as wide as the round button's foot
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label={label}
+                        className="block h-10 w-full"
+                        onClick={() => item.onSelect()}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        aria-current={on ? "page" : undefined}
+                        aria-label={
+                          iconOnly
+                            ? dot
+                              ? `${label} (${t("emailVerify.dotLabel")})`
+                              : label
+                            : undefined
+                        }
+                        onClick={() => item.onSelect()}
+                        className={cn(
+                          "flex h-10 w-full items-center justify-center gap-1.5 rounded-full px-2 text-[13px] font-medium whitespace-nowrap transition-colors duration-300 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          !on &&
+                            (mode === "dark"
+                              ? "text-white/75 hover:text-white"
+                              : "text-zinc-700 hover:text-zinc-950"),
+                        )}
+                        style={on ? { color: activeInk } : undefined}
+                      >
+                        {Icon && (
+                          <span className="relative inline-flex shrink-0">
+                            <Icon className="size-[1.15em]" />
+                            {dot && (
+                              <AttentionDot className="-top-1 -right-1.5" />
+                            )}
+                          </span>
+                        )}
+                        {!iconOnly && <span className="truncate">{label}</span>}
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
+        </GlassSurface>
         {heroItem && at && (
           <button
             type="button"
@@ -162,7 +225,7 @@ export function MobileNav({
               left: at.x,
               top: at.y,
               background: heroColor,
-              color: colord(heroColor).isLight() ? "#10142c" : "#ffffff",
+              color: activeInk,
             }}
           >
             {HeroIcon && <HeroIcon className="size-7" />}

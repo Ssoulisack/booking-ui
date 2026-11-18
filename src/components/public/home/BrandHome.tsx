@@ -1,5 +1,7 @@
 import {
+  ArrowLeftIcon,
   CalendarCheckIcon,
+  ChevronRightIcon,
   MailIcon,
   MapPinIcon,
   PhoneIcon,
@@ -28,7 +30,7 @@ import { applyBusinessLanguage } from "@/i18n"
 import type { DirectoryBranch } from "@/types/place"
 import type { PublicCompany } from "@/types/public"
 import { money } from "@/lib/format"
-import { placeTypes } from "@/lib/places"
+import { placeTypes, SPORT_TYPES, type SportType } from "@/lib/places"
 import { webUrl } from "@/lib/url"
 import { cn } from "@/lib/utils"
 import { UserMenu } from "@/components/layout/UserMenu"
@@ -37,7 +39,7 @@ import { useSession } from "@/stores/session"
 import { useLiveBranches, usePublicCompany } from "@/hooks/use-place"
 import { LanguageToggle } from "@/components/global/LanguageToggle"
 
-/** From this many branches on, the list gets a search, sport chips and a province picker */
+/** From this many branches in a group on, the list gets a search and a province picker */
 const MANY = 5
 
 /**
@@ -239,7 +241,35 @@ function Hero({
   )
 }
 
-/** The branch cards; with many branches, a search and filters above them (kept in the address) */
+/** A group on the home page: a sport (branches that have it) or "restaurant" */
+type GroupKey = SportType | "restaurant"
+
+/** The branches grouped by what they offer: one group per sport, and the restaurants; a branch with
+ * several sports is in each of them. A sport branch with no known sport yet goes under "other". */
+function groupBranches(branches: DirectoryBranch[]) {
+  const groups = new Map<GroupKey, DirectoryBranch[]>()
+  const add = (key: GroupKey, b: DirectoryBranch) =>
+    groups.set(key, [...(groups.get(key) ?? []), b])
+  for (const b of branches) {
+    if (b.type === "restaurant") {
+      add("restaurant", b)
+      continue
+    }
+    const types = placeTypes(b.sports)
+    if (types.length === 0) add("other", b)
+    for (const type of types) add(type, b)
+  }
+  // the sports in the usual order, "other" and the restaurants last
+  const order = (k: GroupKey) =>
+    k === "restaurant" ? 1000 : k === "other" ? 999 : SPORT_TYPES.indexOf(k)
+  return [...groups.entries()].sort(([a], [b]) => order(a) - order(b))
+}
+
+/**
+ * The branches, grouped: first a tile per sport (and Restaurant), then the branches of the tile
+ * tapped (?sport=… in the address, so Back returns to the tiles). One group only: its branches
+ * straight away. With many branches in a group, a search and a province picker above them.
+ */
 function BranchList({
   branches,
   company,
@@ -250,20 +280,17 @@ function BranchList({
   const { t } = useTranslation()
   const [params, setParams] = useSearchParams()
   const keyword = params.get("q") ?? ""
-  const sportType = params.get("sport") ?? ""
   const province = params.get("province") ?? ""
   const [search, setSearch] = useState(keyword)
 
-  const many = branches.length >= MANY
-  // only the sports and provinces these branches have: no dead-end choices
-  const types = useMemo(
-    () => placeTypes(branches.flatMap((b) => b.sports)),
-    [branches],
-  )
-  const provinces = useMemo(
-    () => [...new Set(branches.map((b) => b.province).filter(Boolean))],
-    [branches],
-  )
+  const groups = useMemo(() => groupBranches(branches), [branches])
+  const grouped = groups.length > 1
+  const wanted = params.get("sport") ?? ""
+  const group = groups.find(([key]) => key === wanted)
+  const label = (key: GroupKey) =>
+    key === "restaurant"
+      ? t("company.types.restaurant")
+      : t(`sportTypes.${key}`)
 
   const set = (key: string, value: string) => {
     const next = new URLSearchParams(params)
@@ -271,9 +298,68 @@ function BranchList({
     else next.delete(key)
     setParams(next, { replace: true })
   }
+  // choosing a group is a step: the phone's Back button comes back to the tiles
+  const open = (key: GroupKey | "") => {
+    const next = new URLSearchParams()
+    if (key) next.set("sport", key)
+    setSearch("")
+    setParams(next)
+    document
+      .getElementById("branches")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
 
+  if (branches.length === 0) {
+    return (
+      <p className="rounded-2xl border border-dashed px-4 py-8 text-center text-muted-foreground">
+        {t("home.noBranches")}
+      </p>
+    )
+  }
+
+  if (grouped && !group) {
+    return (
+      <div className="space-y-3">
+        <p className="text-muted-foreground">{t("home.chooseSport")}</p>
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {groups.map(([key, list]) => {
+            const cover = list.find((b) => b.cover_url)?.cover_url
+            return (
+              <li key={key}>
+                <button
+                  type="button"
+                  onClick={() => open(key)}
+                  className="group relative flex h-32 w-full flex-col justify-end overflow-hidden candy-card bg-[var(--brand-hero)] p-3 text-left text-[var(--brand-hero-foreground)] transition-transform hover:-translate-y-0.5 focus-visible:outline-3 focus-visible:outline-ring/50 active:translate-y-0"
+                >
+                  {cover && (
+                    <img
+                      src={cover}
+                      alt=""
+                      loading="lazy"
+                      className="absolute inset-0 size-full object-cover opacity-45"
+                    />
+                  )}
+                  <span className="relative display-tight text-xl leading-tight">
+                    {label(key)}
+                  </span>
+                  <span className="relative flex items-center justify-between gap-1 text-sm opacity-90">
+                    {t("home.count", { count: list.length })}
+                    <ChevronRightIcon className="size-4" />
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+    )
+  }
+
+  const inGroup = group ? group[1] : branches
+  const many = inGroup.length >= MANY
+  const provinces = [...new Set(inGroup.map((b) => b.province).filter(Boolean))]
   const shown = many
-    ? branches.filter((b) => {
+    ? inGroup.filter((b) => {
         const words = keyword.toLowerCase()
         const where = [
           b.name,
@@ -284,22 +370,29 @@ function BranchList({
           .toLowerCase()
         return (
           (!words || where.includes(words)) &&
-          (!sportType || b.sports.some((s) => s.type === sportType)) &&
           (!province || b.province === province)
         )
       })
-    : branches
-
-  if (branches.length === 0) {
-    return (
-      <p className="rounded-2xl border border-dashed px-4 py-8 text-center text-muted-foreground">
-        {t("home.noBranches")}
-      </p>
-    )
-  }
+    : inGroup
 
   return (
     <div className="space-y-5">
+      {group && grouped && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <Button
+            variant="ghost"
+            className="-ml-3 h-11"
+            onClick={() => open("")}
+          >
+            <ArrowLeftIcon />
+            {t("places.allSports")}
+          </Button>
+          <h3 className="display-tight text-2xl">{label(group[0])}</h3>
+          <span className="text-sm text-muted-foreground">
+            {t("home.count", { count: inGroup.length })}
+          </span>
+        </div>
+      )}
       {many && (
         <div className="space-y-3">
           <form
@@ -323,30 +416,6 @@ function BranchList({
               className="h-12 bg-card pl-10 text-base"
             />
           </form>
-          {types.length > 1 && (
-            <div
-              role="group"
-              aria-label={t("places.sport")}
-              className="-mx-4 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
-            >
-              {["", ...types].map((type) => (
-                <button
-                  key={type || "all"}
-                  type="button"
-                  aria-pressed={sportType === type}
-                  onClick={() => set("sport", type)}
-                  className={cn(
-                    "h-11 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors",
-                    sportType === type
-                      ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
-                      : "bg-card",
-                  )}
-                >
-                  {type ? t(`sportTypes.${type}`) : t("places.allSports")}
-                </button>
-              ))}
-            </div>
-          )}
           <div className="flex flex-wrap items-center gap-3">
             {provinces.length > 1 && (
               <label className="flex items-center gap-2 text-sm">
@@ -381,7 +450,9 @@ function BranchList({
             className="h-11"
             onClick={() => {
               setSearch("")
-              setParams(new URLSearchParams(), { replace: true })
+              const next = new URLSearchParams()
+              if (group) next.set("sport", group[0])
+              setParams(next, { replace: true })
             }}
           >
             {t("home.showAll")}

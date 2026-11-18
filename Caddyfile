@@ -7,12 +7,11 @@
 	}
 }
 
-:80 {
+# What both sites share: security headers, /api and /files to the API, the single-page app from {args[0]}
+(site) {
 	encode zstd gzip
 
 	header {
-		# test sets ROBOTS_TAG="noindex, nofollow"; production "index, follow"
-		X-Robots-Tag "{$ROBOTS_TAG:noindex, nofollow}"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
 		-Server
@@ -33,8 +32,15 @@
 		}
 	}
 
+	# where the website and the backoffice live (src/lib/site.ts); empty values → the app guesses "admin.<domain>"
+	handle /site-config.js {
+		header Content-Type "application/javascript; charset=utf-8"
+		header Cache-Control "no-cache"
+		respond `window.__SITE__ = { web: "{$WEB_URL}", admin: "{$ADMIN_URL}" }`
+	}
+
 	handle {
-		root * /srv
+		root * {args[0]}
 		# files named with a hash never change: cache them for a year
 		@assets path /assets/* /fonts/*
 		header @assets Cache-Control "public, max-age=31536000, immutable"
@@ -42,4 +48,17 @@
 		try_files {path} /index.html
 		file_server
 	}
+}
+
+# the customer website (e.g. booking.example.com → <name>-web:80)
+:80 {
+	import site /srv/web
+	# test sets ROBOTS_TAG="noindex, nofollow"; production "index, follow"
+	header X-Robots-Tag "{$ROBOTS_TAG:noindex, nofollow}"
+}
+
+# the backoffice for the team (e.g. admin.booking.example.com → <name>-web:8080); never in search engines
+:8080 {
+	import site /srv/admin
+	header X-Robots-Tag "noindex, nofollow"
 }

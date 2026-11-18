@@ -5,9 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:admin": "vite --mode admin",
     "build": "tsc -b && vite build",
+    "build:admin": "tsc -b && vite build --mode admin",
+    "build:all": "npm run build && vite build --mode admin",
     "lint": "oxlint",
     "preview": "vite preview",
+    "preview:admin": "vite preview --mode admin",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",

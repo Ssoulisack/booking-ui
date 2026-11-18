@@ -23,6 +23,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { usableBranches, useMyBranches } from "@/hooks/use-auth"
 import { runsCompany, useSession } from "@/stores/session"
+import { adminUrlOf, IS_ADMIN, isAdminPath, webUrlOf } from "@/lib/site"
+
+/** A link in the menu: inside this site with the router, to the other site (website ↔ backoffice) as a full address */
+function MenuLink({ to, children }: { to: string; children: React.ReactNode }) {
+  const backoffice = isAdminPath(to) || (IS_ADMIN && to === "/account/profile")
+  if (backoffice === IS_ADMIN) return <Link to={to}>{children}</Link>
+  return <a href={backoffice ? adminUrlOf(to) : webUrlOf(to)}>{children}</a>
+}
 
 const initials = (name: string) =>
   name
@@ -80,28 +88,27 @@ export function UserMenu({ allBranches = false }: { allBranches?: boolean }) {
         <DropdownMenuSeparator />
         {runsCompany(user) && (
           <DropdownMenuItem asChild>
-            <Link to="/company">
+            <MenuLink to="/company">
               <Building2Icon />
               {t("nav.company")}
-            </Link>
+            </MenuLink>
           </DropdownMenuItem>
         )}
         {hasDashboard && (
           <DropdownMenuItem asChild>
-            <Link to="/dashboard">
+            <MenuLink to="/dashboard">
               <BriefcaseIcon />
               {t("nav.dashboard")}
-            </Link>
+            </MenuLink>
           </DropdownMenuItem>
         )}
         <DropdownMenuItem asChild>
-          <Link to="/account">
+          <MenuLink to="/account">
             <TicketIcon />
             {t("nav.myBookings")}
-          </Link>
+          </MenuLink>
         </DropdownMenuItem>
-        {/* the home sends the team to their own area, so only customers get this link */}
-        {allBranches && !runsCompany(user) && !hasDashboard && (
+        {allBranches && !IS_ADMIN && (
           <DropdownMenuItem asChild>
             <Link to="/">
               <LayoutGridIcon />
@@ -111,7 +118,7 @@ export function UserMenu({ allBranches = false }: { allBranches?: boolean }) {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/account/profile">
+          <MenuLink to="/account/profile">
             <UserRoundIcon />
             {t("nav.account")}
             {needsEmail(user) && (
@@ -120,7 +127,7 @@ export function UserMenu({ allBranches = false }: { allBranches?: boolean }) {
                 className="ml-auto size-2.5 rounded-full bg-red-500"
               />
             )}
-          </Link>
+          </MenuLink>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

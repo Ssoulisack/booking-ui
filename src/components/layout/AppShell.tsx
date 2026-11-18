@@ -60,7 +60,7 @@ interface AppShellProps {
   // the owner and admins choose Company or Branch above the menu
   areaSwitch?: boolean
   crumbs?: Crumb[]
-  // tablets and phones get the Gooey Nav at the bottom instead of the side sheet (customer pages)
+  // tablets and phones get the glass menu at the bottom instead of the side sheet (customer pages)
   gooey?: boolean
   // a customer page (My bookings, My account): the customer theme and its dark / light switch,
   // not the back office's
@@ -342,7 +342,7 @@ function NavList({
   )
 }
 
-/** The nav items as the Gooey Nav: the longest address that matches this page is the active one */
+/** The nav items as the bottom glass menu: the longest address that matches this page is the active one */
 function AccountNav({ nav: menu }: { nav: NavItem[] }) {
   const { t } = useTranslation()
   const { pathname } = useLocation()

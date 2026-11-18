@@ -24,6 +24,7 @@ import { ApiError } from "@/lib/api/client"
 import { floorName } from "@/lib/floor-plan"
 import { dayIn, money } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { LoginFirst } from "./LoginFirst"
 import { useSession } from "@/stores/session"
 
 import {
@@ -316,152 +317,167 @@ export function EventPage() {
             </div>
           </header>
 
-          {step === "tables" && (
+          {step === "tables" && needsLogin ? (
+            // accounts only: log in before choosing a day and tables, not at the end
             <>
               <EventLineup lineup={ev.lineup} day={ev.date} />
-              {ev.days.length > 1 && (
-                <section className="space-y-2">
-                  <h2 className="font-semibold">{t("public.events.days")}</h2>
-                  <div className="-mx-4 no-scrollbar flex gap-2 overflow-x-auto px-4">
-                    {ev.days.map((d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        aria-pressed={d === ev.date}
-                        onClick={() => change({ date: d, tables: undefined })}
-                        className={cn(
-                          "h-12 shrink-0 rounded-xl border px-4 text-sm font-semibold",
-                          d === ev.date
-                            ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
-                            : "border-border bg-card",
-                        )}
-                      >
-                        {dayIn(`${d}T12:00:00+00:00`, "UTC")}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {!ev.opens_at ? (
-                <p className="rounded-xl bg-card p-4 ring-1 ring-border">
-                  {t("public.events.closedThatDay")}
-                </p>
-              ) : (
-                <section className="space-y-3">
-                  <div>
-                    <h2 className="font-semibold">
-                      {t("public.events.pickTables")}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {t("public.events.pickHint")}
-                    </p>
-                  </div>
-                  {/* nothing chosen yet: the hint sits above the plan, never floating over the tables */}
-                  {picked.length === 0 && (
-                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <InfoIcon className="size-4 shrink-0" />
-                      {t("public.events.tapTable")}
-                    </p>
-                  )}
-                  {plans.isError ? (
-                    <ErrorAlert error={plans.error} />
-                  ) : !plans.data ? (
-                    <Skeleton className="aspect-[5/3] w-full rounded-xl" />
-                  ) : (
-                    <Plans
-                      areas={areas}
-                      floors={floors}
-                      floor={floor}
-                      free={free}
-                      chosen={new Set(chosen)}
-                      onFloor={(f) => {
-                        setFloorPick(f)
-                        setChosen([])
-                      }}
-                      onToggle={toggle}
-                      priceLabel={(tid) => {
-                        const p = sale.get(tid)?.price ?? 0
-                        return p > 0 && free.has(tid) ? compact(p) : undefined
-                      }}
-                      tint={(tid) => {
-                        const p = sale.get(tid)?.price ?? 0
-                        const i = prices.indexOf(p)
-                        return i < 0
-                          ? undefined
-                          : PRICE_COLORS[i % PRICE_COLORS.length]
-                      }}
-                    />
-                  )}
-                  <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                    {prices.map((p, i) => (
-                      <li key={p} className="flex items-center gap-1.5">
-                        <span
-                          className="inline-block size-3.5 rounded border-2"
-                          style={{
-                            borderColor: PRICE_COLORS[i % PRICE_COLORS.length],
-                          }}
-                        />
-                        {money(p, currency)}
-                      </li>
-                    ))}
-                    <li className="flex items-center gap-1.5">
-                      <span className="inline-block size-3.5 rounded border-2 border-dashed bg-muted" />
-                      {t("public.events.legendSold")}
-                    </li>
-                    {areas.some((a) =>
-                      a.tables.some((x) => x.walk_in_only),
-                    ) && (
-                      <li className="flex items-center gap-1.5">
-                        <span className="inline-block size-3.5 rounded border-2 border-sky-400 bg-sky-50" />
-                        {t("public.tables.legendKept")}
-                      </li>
-                    )}
-                  </ul>
-
-                  {/* what is chosen and the total, floating, only once a table is chosen */}
-                  {picked.length > 0 && (
-                    <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-30 space-y-3 rounded-xl bg-card p-4 shadow-lg ring-1 ring-border">
-                      <p className="flex items-start gap-2 font-semibold">
-                        <CheckCircle2Icon className="mt-0.5 size-5 shrink-0 text-emerald-600" />
-                        {t("public.events.summary", {
-                          tables: picked.map((x) => x.name).join(" + "),
-                          count: seats,
-                        })}
-                      </p>
-                      <p className="flex items-baseline justify-between">
-                        <span className="text-muted-foreground">
-                          {t("public.events.total")}
-                        </span>
-                        <span className="display-tight text-3xl text-[var(--brand-ink)]">
-                          {money(total, currency)}
-                        </span>
-                      </p>
-                      {/* Back as on a normal table booking: to the branch page (where the event was chosen) */}
-                      <div className="grid grid-cols-[auto_1fr] gap-2">
-                        <Button
-                          type="button"
-                          size="lg"
-                          variant="outline"
-                          className="h-12 px-5 text-base"
-                          onClick={() => navigate(`/b/${slug}`)}
-                        >
-                          <ArrowLeftIcon />
-                          {t("public.tables.back")}
-                        </Button>
-                        <Button
-                          size="lg"
-                          className="h-12 bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
-                          onClick={next}
-                        >
-                          {t("public.continue")}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </section>
-              )}
+              <LoginFirst
+                message={t(
+                  ev.accept_guests === false
+                    ? "public.events.needsLoginEvent"
+                    : "public.events.needsLogin",
+                )}
+              />
             </>
+          ) : (
+            step === "tables" && (
+              <>
+                <EventLineup lineup={ev.lineup} day={ev.date} />
+                {ev.days.length > 1 && (
+                  <section className="space-y-2">
+                    <h2 className="font-semibold">{t("public.events.days")}</h2>
+                    <div className="-mx-4 no-scrollbar flex gap-2 overflow-x-auto px-4">
+                      {ev.days.map((d) => (
+                        <button
+                          key={d}
+                          type="button"
+                          aria-pressed={d === ev.date}
+                          onClick={() => change({ date: d, tables: undefined })}
+                          className={cn(
+                            "h-12 shrink-0 rounded-xl border px-4 text-sm font-semibold",
+                            d === ev.date
+                              ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
+                              : "border-border bg-card",
+                          )}
+                        >
+                          {dayIn(`${d}T12:00:00+00:00`, "UTC")}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {!ev.opens_at ? (
+                  <p className="rounded-xl bg-card p-4 ring-1 ring-border">
+                    {t("public.events.closedThatDay")}
+                  </p>
+                ) : (
+                  <section className="space-y-3">
+                    <div>
+                      <h2 className="font-semibold">
+                        {t("public.events.pickTables")}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {t("public.events.pickHint")}
+                      </p>
+                    </div>
+                    {/* nothing chosen yet: the hint sits above the plan, never floating over the tables */}
+                    {picked.length === 0 && (
+                      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <InfoIcon className="size-4 shrink-0" />
+                        {t("public.events.tapTable")}
+                      </p>
+                    )}
+                    {plans.isError ? (
+                      <ErrorAlert error={plans.error} />
+                    ) : !plans.data ? (
+                      <Skeleton className="aspect-[5/3] w-full rounded-xl" />
+                    ) : (
+                      <Plans
+                        areas={areas}
+                        floors={floors}
+                        floor={floor}
+                        free={free}
+                        chosen={new Set(chosen)}
+                        onFloor={(f) => {
+                          setFloorPick(f)
+                          setChosen([])
+                        }}
+                        onToggle={toggle}
+                        priceLabel={(tid) => {
+                          const p = sale.get(tid)?.price ?? 0
+                          return p > 0 && free.has(tid) ? compact(p) : undefined
+                        }}
+                        tint={(tid) => {
+                          const p = sale.get(tid)?.price ?? 0
+                          const i = prices.indexOf(p)
+                          return i < 0
+                            ? undefined
+                            : PRICE_COLORS[i % PRICE_COLORS.length]
+                        }}
+                      />
+                    )}
+                    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      {prices.map((p, i) => (
+                        <li key={p} className="flex items-center gap-1.5">
+                          <span
+                            className="inline-block size-3.5 rounded border-2"
+                            style={{
+                              borderColor:
+                                PRICE_COLORS[i % PRICE_COLORS.length],
+                            }}
+                          />
+                          {money(p, currency)}
+                        </li>
+                      ))}
+                      <li className="flex items-center gap-1.5">
+                        <span className="inline-block size-3.5 rounded border-2 border-dashed bg-muted" />
+                        {t("public.events.legendSold")}
+                      </li>
+                      {areas.some((a) =>
+                        a.tables.some((x) => x.walk_in_only),
+                      ) && (
+                        <li className="flex items-center gap-1.5">
+                          <span className="inline-block size-3.5 rounded border-2 border-sky-400 bg-sky-50" />
+                          {t("public.tables.legendKept")}
+                        </li>
+                      )}
+                    </ul>
+
+                    {/* what is chosen and the total, floating, only once a table is chosen */}
+                    {picked.length > 0 && (
+                      <div className="sticky bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-30 space-y-3 rounded-xl bg-card p-4 shadow-lg ring-1 ring-border">
+                        <p className="flex items-start gap-2 font-semibold">
+                          <CheckCircle2Icon className="mt-0.5 size-5 shrink-0 text-emerald-600" />
+                          {t("public.events.summary", {
+                            tables: picked.map((x) => x.name).join(" + "),
+                            count: seats,
+                          })}
+                        </p>
+                        <p className="flex items-baseline justify-between">
+                          <span className="text-muted-foreground">
+                            {t("public.events.total")}
+                          </span>
+                          <span className="display-tight text-3xl text-[var(--brand-ink)]">
+                            {money(total, currency)}
+                          </span>
+                        </p>
+                        {/* Back as on a normal table booking: to the branch page (where the event was chosen) */}
+                        <div className="grid grid-cols-[auto_1fr] gap-2">
+                          <Button
+                            type="button"
+                            size="lg"
+                            variant="outline"
+                            className="h-12 px-5 text-base"
+                            onClick={() => navigate(`/b/${slug}`)}
+                          >
+                            <ArrowLeftIcon />
+                            {t("public.tables.back")}
+                          </Button>
+                          <Button
+                            size="lg"
+                            className="h-12 bg-[var(--brand)] text-base text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90"
+                            onClick={next}
+                          >
+                            {t("public.continue")}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+                )}
+              </>
+            )
           )}
 
           {step === "confirm" && (

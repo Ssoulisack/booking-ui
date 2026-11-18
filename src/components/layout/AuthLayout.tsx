@@ -8,6 +8,7 @@ import { CustomerTheme } from "@/components/public/booking/CustomerTheme"
 import { readBack } from "@/components/public/booking/origin"
 import { ThemeToggle } from "@/components/public/booking/ThemeToggle"
 import { LanguageToggle } from "@/components/global/LanguageToggle"
+import { IS_ADMIN, webUrlOf } from "@/lib/site"
 
 /** The company's name (and logo) at the top left of the customer-themed plain pages */
 export function CompanyLink() {
@@ -68,17 +69,26 @@ export function AuthLayout() {
         </div>
       </main>
       <footer className="flex justify-center gap-4 px-4 pb-6 text-xs text-muted-foreground">
-        <Link to="/privacy" className="underline-offset-4 hover:underline">
-          {t("legal.privacy.title")}
-        </Link>
-        <Link
-          to="/data-deletion"
-          className="underline-offset-4 hover:underline"
-        >
-          {t("legal.deletion.title")}
-        </Link>
+        {/* the legal pages live on the website */}
+        <SiteLink to="/privacy">{t("legal.privacy.title")}</SiteLink>
+        <SiteLink to="/data-deletion">{t("legal.deletion.title")}</SiteLink>
       </footer>
     </CustomerTheme>
+  )
+}
+
+function SiteLink({ to, children }: { to: string; children: string }) {
+  const className = "underline-offset-4 hover:underline"
+  if (IS_ADMIN)
+    return (
+      <a href={webUrlOf(to)} className={className}>
+        {children}
+      </a>
+    )
+  return (
+    <Link to={to} className={className}>
+      {children}
+    </Link>
   )
 }
 

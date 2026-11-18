@@ -4,6 +4,8 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useSearchParams } from "react-router"
 
+import { IS_ADMIN } from "@/lib/site"
+
 import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { FieldGroup } from "@/components/ui/field"
@@ -76,16 +78,25 @@ export function LoginPage() {
           {t("login.submit")}
         </SubmitButton>
       </form>
-      <SocialButtons next={next} />
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        {t("login.noAccount")}{" "}
-        <Link
-          to={next ? `/register?next=${encodeURIComponent(next)}` : "/register"}
-          className="font-medium text-foreground underline-offset-4 hover:underline"
-        >
-          {t("login.register")}
-        </Link>
-      </p>
+      {/* the backoffice: the team logs in with phone / email and password; new accounts come by invitation */}
+      {!IS_ADMIN && (
+        <>
+          <SocialButtons next={next} />
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            {t("login.noAccount")}{" "}
+            <Link
+              to={
+                next
+                  ? `/register?next=${encodeURIComponent(next)}`
+                  : "/register"
+              }
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              {t("login.register")}
+            </Link>
+          </p>
+        </>
+      )}
     </>
   )
 }

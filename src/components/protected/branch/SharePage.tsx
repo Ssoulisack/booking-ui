@@ -1,3 +1,4 @@
+import { webUrlOf } from "@/lib/site"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 
@@ -21,7 +22,7 @@ export function SharePage() {
   if (settings.isPending) return <Skeleton className="h-96 rounded-xl" />
   if (!settings.data) return <ErrorAlert error={settings.error} />
   const s = settings.data
-  const url = `${window.location.origin}${s.public_path}`
+  const url = webUrlOf(s.public_path)
   const isOwner = roleAtLeast(branch.role, "admin")
 
   return (

@@ -69,7 +69,7 @@ jobs:
       - if: steps.promote.outputs.done != 'true'
         run: npm test -- --passWithNoTests # the tests live in test/ which is git-ignored (local only), so CI may have none
       - if: steps.promote.outputs.done != 'true'
-        run: npm run build # tsc -b && vite build → dist
+        run: npm run build:all # tsc -b && vite build → dist (website) and dist-admin (backoffice)
         env:
           VITE_API_URL: /api/v1
       - if: steps.promote.outputs.done != 'true'

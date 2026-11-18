@@ -9,8 +9,10 @@ Frontend for the booking system (company → branches: sports courts, classes, r
 ## Commands
 
 ```bash
-npm run dev        # vite (preview stack uses :5174)
-npm run build      # tsc -b && vite build
+npm run dev        # website (customers) on :5173 (preview stack uses :5174)
+npm run dev:admin  # backoffice (team) on :5175
+npm run build      # website → dist/
+npm run build:all  # website + backoffice (dist-admin/), what CI ships
 npm run lint       # oxlint
 npm run format     # prettier --write .
 npm test           # vitest run (152 tests)
@@ -18,6 +20,10 @@ npm run test:e2e   # Playwright (phone + tablet, 33 tests)
 ```
 
 Gate for every change: `npx tsc -b`, `npm test`, and Playwright for UI-flow work. Test files live in `test/` (git-ignored, local only).
+
+## Two sites
+
+One code base, two builds (`src/lib/site.ts`): the **website** (`/`, `/b/…`, `/account`, register) and the **backoffice** (`/company`, `/dashboard`, `/invite`, login for the team), on its own subdomain (`admin.<domain>`) and port (dev :5175, Caddy :8080). Routes: `src/routes/web-routes.tsx` and `admin-routes.tsx`; a page of the other site is redirected there (`ToWebsite` / `ToBackoffice`). Links across sites use `webUrlOf()` / `adminUrlOf()`, never `window.location.origin`. Each site has its own login (separate localStorage).
 
 ## Architecture rules
 

@@ -297,26 +297,7 @@ html[lang="lo"] .display-tight {
   font-stretch: 100%;
 }
 
-/* The phone's bottom Gooey Nav fills the screen width (inside the side gutter), its items spread evenly */
-.mobile-nav .gooey-nav,
-.mobile-nav .gooey-nav__stage {
-  display: flex;
-  width: 100%;
-}
-.mobile-nav .gooey-nav__list {
-  flex: 1;
-  flex-wrap: nowrap;
-}
-.mobile-nav .gooey-nav__item {
-  flex: 1;
-  min-width: 0;
-}
-.mobile-nav .gooey-nav__link {
-  width: 100%;
-  justify-content: center;
-}
-
-/* The Gooey Nav sits above the booking bar while one is showing */
+/* The bottom glass menu sits above the booking bar while one is showing */
 html[data-booking-bar] .mobile-nav {
   bottom: calc(env(safe-area-inset-bottom) + 5.75rem);
 }

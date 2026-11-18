@@ -2,6 +2,7 @@ import type { MyBranch, User } from "@/types/auth"
 
 import { readOriginSlug } from "@/components/public/booking/origin"
 import { usableBranches } from "@/hooks/use-auth"
+import { IS_ADMIN } from "@/lib/site"
 
 /** Only same-site paths are followed after login, never another website */
 export function safeNext(next: string | null | undefined): string | null {
@@ -18,6 +19,7 @@ export function safeNext(next: string | null | undefined): string | null {
 export function afterAuthPath(next: string | null | undefined): string {
   const asked = safeNext(next)
   if (asked) return asked
+  if (IS_ADMIN) return "/"
   const slug = readOriginSlug()
   return slug ? `/b/${encodeURIComponent(slug)}` : "/"
 }

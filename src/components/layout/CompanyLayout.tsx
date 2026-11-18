@@ -1,3 +1,4 @@
+import { webUrlOf } from "@/lib/site"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, Outlet, useLocation } from "react-router"
@@ -117,7 +118,7 @@ export function CompanyHome() {
           </dl>
         )}
       </Panel>
-      <LiveStrip url={`${window.location.origin}/`} to="/company/share" />
+      <LiveStrip url={webUrlOf("/")} to="/company/share" />
       <Panel title={t("nav.branches")}>
         {branches.isPending ? (
           <Skeleton className="h-32" />

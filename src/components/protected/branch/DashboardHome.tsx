@@ -1,3 +1,4 @@
+import { webUrlOf } from "@/lib/site"
 import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query"
 import { useBranchActions } from "@/hooks/use-branch"
 import {
@@ -8,7 +9,7 @@ import {
 } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, useNavigate } from "react-router"
+import { Link } from "react-router"
 import { toast } from "sonner"
 
 import { ErrorAlert } from "@/components/global/form"
@@ -50,7 +51,6 @@ export function DashboardHome() {
   const user = useSession((s) => s.user)
   const { branch } = useDashboard()
   const canSetUp = roleAtLeast(branch.role, "manager")
-  const navigate = useNavigate()
 
   return (
     <div className="space-y-6">
@@ -77,7 +77,9 @@ export function DashboardHome() {
               icon={<StoreIcon className="size-4" />}
               doneLabel={t("overview.openPage")}
               hint={t("overview.openPageHint", { seconds: 1.2 })}
-              onHold={() => navigate(`/b/${branch.slug}`)}
+              onHold={() =>
+                window.location.assign(webUrlOf(`/b/${branch.slug}`))
+              }
             >
               {t("overview.openPageHold")}
             </HoldButton>

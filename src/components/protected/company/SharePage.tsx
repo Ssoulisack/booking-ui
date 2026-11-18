@@ -1,3 +1,4 @@
+import { webUrlOf } from "@/lib/site"
 import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +27,7 @@ export function CompanySharePage() {
         }
       >
         <ShareBooking
-          url={`${window.location.origin}/`}
+          url={webUrlOf("/")}
           name={company.data?.name ?? ""}
         />
       </Panel>

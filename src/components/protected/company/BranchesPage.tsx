@@ -1,3 +1,4 @@
+import { webUrlOf } from "@/lib/site"
 import {
   CopyIcon,
   PlusIcon,
@@ -195,7 +196,7 @@ function QrButton({ branch: b }: { branch: BranchSummary }) {
           <DialogDescription>{t("company.qrLead")}</DialogDescription>
         </DialogHeader>
         <ShareBooking
-          url={`${window.location.origin}${b.public_path}`}
+          url={webUrlOf(b.public_path)}
           name={b.name}
         />
       </DialogContent>
