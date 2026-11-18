@@ -2,6 +2,7 @@ import type {
   CutCorner,
   FloorItem,
   FloorItemKind,
+  PublicArea,
   ZoneShape,
 } from "@/types/floor-plan"
 import type { ManagedTable } from "@/types/space"
@@ -274,4 +275,37 @@ export function zoneHolds(zone: ZoneLike, table: Placed) {
     cy > 2 * cut.y &&
     cy < 2 * (cut.y + cut.h)
   )
+}
+
+/**
+ * One zone of an area as an area of its own, for a closer look: its box (one square of room around it, inside the
+ * plan), the tables it holds and the objects standing in it, moved so the box starts at 0,0.
+ */
+export function zoneArea(area: PublicArea, zone: FloorItem): PublicArea {
+  const z = footprint(zone)
+  const x0 = Math.max(0, z.x - 1)
+  const y0 = Math.max(0, z.y - 1)
+  const x1 = Math.min(area.plan_width, z.x + z.w + 1)
+  const y1 = Math.min(area.plan_height, z.y + z.h + 1)
+  const centreIn = (p: Placed) => {
+    const f = footprint(p)
+    const cx = f.x + f.w / 2
+    const cy = f.y + f.h / 2
+    return cx > x0 && cx < x1 && cy > y0 && cy < y1
+  }
+  const moved = <T extends Placed>(p: T): T => ({
+    ...p,
+    plan_x: p.plan_x - x0,
+    plan_y: p.plan_y - y0,
+  })
+  return {
+    ...area,
+    plan_width: x1 - x0,
+    plan_height: y1 - y0,
+    tables: area.tables.filter((t) => zoneHolds(zone, t)).map(moved),
+    // the zone itself (its outline and name) and what stands in it; other zones stay out
+    items: area.items
+      .filter((i) => i.id === zone.id || (i.kind !== "zone" && centreIn(i)))
+      .map(moved),
+  }
 }

@@ -1,4 +1,4 @@
-import { FootprintsIcon } from "lucide-react"
+import { FootprintsIcon, ZoomInIcon } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -7,7 +7,7 @@ import {
   itemLook,
   iconSize,
 } from "@/components/global/floor-plan/look"
-import type { PublicArea } from "@/types/floor-plan"
+import type { FloorItem, PublicArea } from "@/types/floor-plan"
 import { footprint } from "@/lib/floor-plan"
 import { ZoneOutline } from "@/components/global/floor-plan/ZoneOutline"
 import { cn } from "@/lib/utils"
@@ -66,6 +66,7 @@ export function TablePlan({
   tint,
   kept: keptIds,
   highlight,
+  onZone,
 }: {
   area: PublicArea
   free: Set<number>
@@ -82,10 +83,19 @@ export function TablePlan({
   kept?: Set<number>
   /** tables to point at (a search): a blue ring */
   highlight?: Set<number>
+  /** customers: a tap on a zone opens it on its own, bigger (tables in it are still tapped as usual) */
+  onZone?: (zone: FloorItem) => void
 }) {
   const { t } = useTranslation()
   const box = useRef<HTMLDivElement>(null)
   const [cell, setCell] = useState(0)
+  // a walk-in table shows only its icon; hover (or a tap on a phone) shows what it means in a small bubble
+  const [tip, setTip] = useState<number | null>(null)
+  useEffect(() => {
+    if (tip === null) return
+    const id = window.setTimeout(() => setTip(null), 2500)
+    return () => window.clearTimeout(id)
+  }, [tip])
   const W = area.plan_width
   const H = area.plan_height
 
@@ -122,20 +132,40 @@ export function TablePlan({
         backgroundSize: `${cell}px ${cell}px`,
       }}
     >
-      {zones.map((z) => (
-        <div
-          key={`z${z.id}`}
-          aria-hidden
-          className={cn(
-            "absolute flex text-[11px] leading-tight font-medium sm:text-xs",
-            itemLook(z),
-          )}
-          style={place(z)}
-        >
-          <ZoneOutline zone={z} />
-          <span className="relative truncate">{z.label}</span>
-        </div>
-      ))}
+      {zones.map((z) =>
+        onZone ? (
+          <button
+            key={`z${z.id}`}
+            type="button"
+            aria-label={t("public.tables.zoomZone", { zone: z.label })}
+            onClick={() => onZone(z)}
+            className={cn(
+              "absolute flex text-left text-[11px] leading-tight font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring sm:text-xs",
+              itemLook(z),
+            )}
+            style={place(z)}
+          >
+            <ZoneOutline zone={z} />
+            <span className="relative flex min-w-0 items-center gap-1">
+              <ZoomInIcon className="size-3.5 shrink-0" />
+              <span className="truncate">{z.label}</span>
+            </span>
+          </button>
+        ) : (
+          <div
+            key={`z${z.id}`}
+            aria-hidden
+            className={cn(
+              "absolute flex text-[11px] leading-tight font-medium sm:text-xs",
+              itemLook(z),
+            )}
+            style={place(z)}
+          >
+            <ZoneOutline zone={z} />
+            <span className="relative truncate">{z.label}</span>
+          </div>
+        ),
+      )}
 
       {area.tables.map((table) => {
         const isFree = free.has(table.id)
@@ -152,7 +182,9 @@ export function TablePlan({
           <button
             key={table.id}
             type="button"
-            disabled={!isFree && !staff}
+            // a walk-in table stays tappable for its bubble (a disabled button gets no hover or tap), never chosen
+            disabled={!isFree && !staff && !kept}
+            aria-disabled={kept || undefined}
             aria-pressed={staff ? undefined : isChosen}
             aria-label={
               staff
@@ -171,7 +203,9 @@ export function TablePlan({
                 ? `${table.name} · ${t(`tonight.${staff.tone}`)}${staff.detail ? ` · ${staff.detail}` : ""}`
                 : undefined
             }
-            onClick={() => onToggle(table.id)}
+            onClick={() => (kept ? setTip(table.id) : onToggle(table.id))}
+            onMouseEnter={kept ? () => setTip(table.id) : undefined}
+            onMouseLeave={kept ? () => setTip(null) : undefined}
             className={cn(
               "absolute z-10 flex flex-col items-center justify-center overflow-hidden border-2 text-center leading-tight transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring",
               table.shape === "round" ? "rounded-full" : "rounded-lg",
@@ -197,32 +231,88 @@ export function TablePlan({
                 : {}),
             }}
           >
-            <span className="max-w-full truncate px-0.5 text-[11px] font-semibold sm:text-sm">
-              {table.name}
-            </span>
-            {(kept || staff?.tone === "kept") && (
+            {kept ? (
+              // walk-in only: just the icon, centred (no number; the bubble on hover / tap names the table)
+              <FootprintsIcon
+                aria-hidden
+                className="shrink-0 opacity-80"
+                style={{
+                  width: Math.max(
+                    12,
+                    Math.min(20, Math.min(f.w, f.h) * cell * 0.5),
+                  ),
+                  height: Math.max(
+                    12,
+                    Math.min(20, Math.min(f.w, f.h) * cell * 0.5),
+                  ),
+                }}
+              />
+            ) : (
+              // a very narrow table on a phone: a smaller name, so "47" is not cut to "4…"
+              <span
+                className={cn(
+                  "max-w-full truncate font-semibold",
+                  f.w * cell < 30
+                    ? "px-0 text-[9px] tracking-tighter sm:text-xs"
+                    : "px-0.5 text-[11px] sm:text-sm",
+                )}
+              >
+                {table.name}
+              </span>
+            )}
+            {staff?.tone === "kept" && (
               <FootprintsIcon
                 aria-hidden
                 className="absolute top-0.5 right-0.5 size-3 opacity-70"
               />
             )}
             {/* small tables on a phone: just the number of seats under the name */}
-            {f.h * cell > 30 && (
+            {f.h * cell > 30 && !kept && (
               <span className="text-[10px] leading-none opacity-80 sm:text-xs">
                 {staff?.note
                   ? staff.note
-                  : kept
-                    ? t("public.tables.keptShort")
-                    : priceLabel?.(table.id)
-                      ? priceLabel(table.id)
-                      : f.w * cell >= 60
-                        ? t("public.tables.seatsShort", { count: table.seats })
-                        : table.seats}
+                  : priceLabel?.(table.id)
+                    ? priceLabel(table.id)
+                    : f.w * cell >= 60
+                      ? t("public.tables.seatsShort", { count: table.seats })
+                      : table.seats}
               </span>
             )}
           </button>
         )
       })}
+
+      {(() => {
+        const at =
+          tip === null ? undefined : area.tables.find((x) => x.id === tip)
+        if (!at) return null
+        const p = place(at)
+        // above the table, or below it when it stands at the top of the plan
+        const below = p.top < 44
+        const half = Math.min(112, W * cell * 0.45)
+        return (
+          <div
+            role="tooltip"
+            className={cn(
+              "pointer-events-none absolute z-30 w-max max-w-[min(14rem,90%)] -translate-x-1/2 rounded-lg bg-foreground px-2.5 py-1.5 text-center text-xs leading-snug text-background shadow-lg",
+              // above the table: lifted by its own height (one translate, so x and y do not add up twice)
+              !below && "-translate-y-full",
+            )}
+            style={{
+              // centred on the table, but never past the plan's edges: half the bubble's widest (14rem, or 90% of a
+              // narrow plan) plus a little room on each side
+              left: Math.min(
+                Math.max(p.left + p.width / 2, half + 4),
+                W * cell - half - 4,
+              ),
+              ...(below ? { top: p.top + p.height + 6 } : { top: p.top - 6 }),
+            }}
+          >
+            <span className="font-semibold">{at.name}</span> ·{" "}
+            {t("public.tables.keptTip")}
+          </div>
+        )
+      })()}
 
       {objects.map((item) => {
         const Icon = ITEM_ICONS[item.kind]

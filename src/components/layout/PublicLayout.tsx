@@ -1,6 +1,8 @@
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, Outlet, useParams } from "react-router"
+import { Link, Navigate, Outlet, useLocation, useParams } from "react-router"
+
+import { useSession } from "@/stores/session"
 
 import { PageError } from "@/components/global/page-state"
 import { UnsavedGuard } from "@/components/global/UnsavedGuard"
@@ -28,6 +30,8 @@ import {
 export function PublicLayout() {
   const { slug = "" } = useParams()
   const business = usePublicBranch(slug)
+  const token = useSession((s) => s.accessToken)
+  const { pathname, search, hash } = useLocation()
   const mode = usePublicTheme()
   const brand = brandStyle(business.data, mode)
   useBrandOnPage(brand)
@@ -51,6 +55,16 @@ export function PublicLayout() {
     return (
       <PageError error={business.error} onRetry={() => business.refetch()} />
     )
+  }
+  // a branch that takes bookings from accounts only: log in first, then back to this same page (?next=). A guest's
+  // private booking link and "find my booking" stay open (bookings made before the branch asked for accounts).
+  if (
+    !token &&
+    business.data.booking_mode === "account" &&
+    !/^\/b\/[^/]+\/(booking|find)(\/|$)/.test(pathname)
+  ) {
+    const here = encodeURIComponent(pathname + search + hash)
+    return <Navigate to={`/login?next=${here}`} replace />
   }
   return (
     <div style={brand} className="min-h-dvh bg-background text-foreground">

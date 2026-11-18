@@ -62,7 +62,8 @@ export function AuthLayout() {
           <ThemeToggle />
         </div>
       </header>
-      <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-10 sm:items-center sm:pt-0">
+      {/* the card in the middle of the screen, phones too */}
+      <main className="flex flex-1 items-center justify-center px-4 py-6">
         <div className="w-full max-w-sm candy-card bg-card p-5 sm:p-8">
           <BackToBranch />
           <Outlet />

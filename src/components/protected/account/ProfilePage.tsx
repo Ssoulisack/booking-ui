@@ -8,7 +8,7 @@ import { toast } from "sonner"
 
 import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { PageTitle } from "@/components/global/page-state"
-import HoldButton from "@/components/reactbits/HoldButton"
+import SlideCommit from "@/components/reactbits/SlideCommit"
 import { FieldGroup } from "@/components/ui/field"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUpdateProfile } from "@/hooks/use-auth"
@@ -21,9 +21,6 @@ import {
 import type { User } from "@/types/auth"
 import { displayPhone } from "@/lib/phone"
 import { useSession } from "@/stores/session"
-
-// how long Save is held
-const HOLD_MS = 1000
 
 /**
  * /account/profile — the person's own name, nationality, phone and email, and the customer (or employee) number
@@ -159,23 +156,23 @@ function ProfileForm({
           {t("identity.continue")}
         </SubmitButton>
       ) : (
-        // hold, not tap: no accidental changes to the person's own details
-        <HoldButton
+        // slide, not tap: no accidental changes to the person's own details
+        <SlideCommit
           className="w-full"
-          backgroundColor="var(--brand-soft)"
-          textColor="var(--brand-ink)"
-          fillColor="var(--brand)"
-          fillTextColor="var(--brand-foreground)"
-          radius={10}
-          holdTime={HOLD_MS}
-          resetAfter={1500}
-          disabled={save.isPending}
+          label={t("identity.slideToSave")}
           doneLabel={t("identity.saving")}
-          hint={t("identity.holdHint", { seconds: HOLD_MS / 1000 })}
-          onHold={() => void form.handleSubmit((v) => save.mutate(v))()}
-        >
-          {t("identity.holdToSave")}
-        </HoldButton>
+          errorLabel={t("identity.slideToSave")}
+          trackColor="var(--brand-soft)"
+          labelColor="var(--brand-ink)"
+          handleColor="var(--brand)"
+          handleTextColor="var(--brand-foreground)"
+          successColor="var(--brand)"
+          successTextColor="var(--brand-foreground)"
+          height={56}
+          holdMs={1500}
+          disabled={save.isPending}
+          onConfirm={() => void form.handleSubmit((v) => save.mutate(v))()}
+        />
       )}
     </form>
   )

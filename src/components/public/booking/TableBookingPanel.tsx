@@ -1,5 +1,6 @@
 import {
   ArrowLeftIcon,
+  Undo2Icon,
   CheckCircle2Icon,
   InfoIcon,
   LayersIcon,
@@ -14,10 +15,18 @@ import { Link, useNavigate } from "react-router"
 
 import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ApiError } from "@/lib/api/client"
-import type { PublicArea, PublicTable } from "@/types/floor-plan"
-import { checkTables, floorName } from "@/lib/floor-plan"
+import type { FloorItem, PublicArea, PublicTable } from "@/types/floor-plan"
+import { checkTables, floorName, zoneArea } from "@/lib/floor-plan"
 import { dayIn, nextDays, timeIn } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { releaseTables, useUnsaved } from "@/stores/unsaved"
@@ -391,7 +400,15 @@ export function TableBookingPanel() {
               guests={guests}
               chosen={chosen}
               check={check}
-              onBack={back}
+              // undo the last table picked (the choice keeps the order they were tapped in)
+              onUndo={() =>
+                choose({
+                  tables:
+                    chosenIds.length > 1
+                      ? chosenIds.slice(0, -1).join("-")
+                      : undefined,
+                })
+              }
               onContinue={() => {
                 releaseTables()
                 navigate(
@@ -507,6 +524,8 @@ export function Plans({
 }) {
   const { t } = useTranslation()
   const onThisFloor = areas.filter((a) => a.floor === floor)
+  // customers: a zone tapped on the plan opens on its own, bigger (the team's plans do not zoom)
+  const [zoom, setZoom] = useState<FloorItem | null>(null)
   // one area at a time: the one picked, else the one holding a chosen table, else the one with most free tables
   const [areaPick, setAreaPick] = useState<number | null>(null)
   const freeIn = (a: PublicArea) =>
@@ -600,7 +619,50 @@ export function Plans({
             setAreaPick(null)
             onFloor(f)
           }}
+          onZone={staffLook ? undefined : setZoom}
         />
+      )}
+      {area && (
+        <Dialog open={!!zoom} onOpenChange={(open) => !open && setZoom(null)}>
+          <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{zoom?.label}</DialogTitle>
+              <DialogDescription>
+                {t("public.tables.zoomLead", { area: area.name })}
+              </DialogDescription>
+            </DialogHeader>
+            {zoom && (
+              <TablePlan
+                area={zoneArea(area, zoom)}
+                free={free}
+                chosen={chosen}
+                onToggle={onToggle}
+                priceLabel={priceLabel}
+                tint={tint}
+                kept={kept}
+                highlight={highlight}
+                onStairs={(f) => {
+                  setZoom(null)
+                  setAreaPick(null)
+                  onFloor(f)
+                }}
+              />
+            )}
+            <DialogFooter className="items-center gap-3 sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                {t("public.tables.zoomChosen", { count: chosen.size })}
+              </p>
+              <Button
+                type="button"
+                size="lg"
+                className="h-11 w-full bg-[var(--brand)] text-[var(--brand-foreground)] hover:bg-[var(--brand)]/90 sm:w-auto"
+                onClick={() => setZoom(null)}
+              >
+                {t("public.tables.zoomDone")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )
@@ -638,10 +700,10 @@ function ChoiceBar({
   guests,
   chosen,
   check,
-  onBack,
+  onUndo,
   onContinue,
 }: {
-  onBack: () => void
+  onUndo: () => void
   guests: number
   chosen: Array<PublicTable & { sport_id: number }>
   check: ReturnType<typeof checkTables> | null
@@ -678,7 +740,7 @@ function ChoiceBar({
           )}
         </div>
       </div>
-      {/* nothing chosen yet: only the hint (Back is at the top of the step) */}
+      {/* Undo takes back the last table picked (Back to the day and time is at the top of the step) */}
       {chosen.length > 0 && (
         <div className="grid grid-cols-[auto_1fr] gap-2">
           <Button
@@ -686,10 +748,10 @@ function ChoiceBar({
             size="lg"
             variant="outline"
             className="h-12 px-5 text-base"
-            onClick={onBack}
+            onClick={onUndo}
           >
-            <ArrowLeftIcon />
-            {t("public.tables.back")}
+            <Undo2Icon />
+            {t("public.tables.undo")}
           </Button>
           <Button
             size="lg"

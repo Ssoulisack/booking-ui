@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ErrorAlert } from "@/components/global/form"
-import HoldButton from "@/components/reactbits/HoldButton"
+import SlideCommit from "@/components/reactbits/SlideCommit"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -16,9 +16,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-
-// long enough not to happen by accident, short enough not to annoy
-const HOLD_MS = 1500
 
 /** "Cancel booking" with a confirm step (hold to cancel) and an optional reason */
 export function CancelDialog({
@@ -66,24 +63,24 @@ export function CancelDialog({
           <AlertDialogCancel className="h-11">
             {t("booking.keep")}
           </AlertDialogCancel>
-          {/* hold, not tap: a cancellation cannot be undone. Not AlertDialogAction, which would
+          {/* slide, not tap: a cancellation cannot be undone. Not AlertDialogAction, which would
               close the dialog before the answer arrives; on an error it resets so they can retry */}
-          <HoldButton
+          <SlideCommit
             className="w-full sm:w-auto"
-            backgroundColor="#fee2e2"
-            textColor="#991b1b"
-            fillColor="#dc2626"
-            fillTextColor="#ffffff"
-            radius={10}
-            holdTime={HOLD_MS}
-            resetAfter={1500}
-            disabled={pending}
+            label={t("booking.slideToCancel")}
             doneLabel={t("booking.cancelling")}
-            hint={t("booking.holdHint", { seconds: HOLD_MS / 1000 })}
-            onHold={() => onConfirm(reason.trim())}
-          >
-            {t("booking.holdToCancel")}
-          </HoldButton>
+            errorLabel={t("booking.slideToCancel")}
+            trackColor="#fee2e2"
+            labelColor="#991b1b"
+            handleColor="#dc2626"
+            handleTextColor="#ffffff"
+            successColor="#dc2626"
+            successTextColor="#ffffff"
+            height={56}
+            holdMs={1500}
+            disabled={pending}
+            onConfirm={() => onConfirm(reason.trim())}
+          />
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

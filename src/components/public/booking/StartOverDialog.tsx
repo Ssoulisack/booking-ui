@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 
 import { ErrorAlert } from "@/components/global/form"
-import HoldButton from "@/components/reactbits/HoldButton"
+import SlideCommit from "@/components/reactbits/SlideCommit"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -14,12 +14,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 
-// long enough not to happen by accident, short enough not to annoy
-const HOLD_MS = 1500
-
 /**
  * "Wrong bank? Start over": the way to pay is final once a QR is made, so a customer who chose the wrong bank
- * cancels this unpaid booking and books again (the same tables are chosen for them). Hold to confirm: it
+ * cancels this unpaid booking and books again (the same tables are chosen for them). Slide to confirm: it
  * releases the tables.
  */
 export function StartOverDialog({
@@ -52,24 +49,24 @@ export function StartOverDialog({
           <AlertDialogCancel className="h-11 w-full">
             {t("booking.keep")}
           </AlertDialogCancel>
-          {/* hold, not tap: the tables are released. Not AlertDialogAction, which would close the dialog
+          {/* slide, not tap: the tables are released. Not AlertDialogAction, which would close the dialog
               before the answer arrives; on an error it resets so they can retry */}
-          <HoldButton
+          <SlideCommit
             className="w-full"
-            backgroundColor="#fee2e2"
-            textColor="#991b1b"
-            fillColor="#dc2626"
-            fillTextColor="#ffffff"
-            radius={10}
-            holdTime={HOLD_MS}
-            resetAfter={1500}
-            disabled={pending}
+            label={t("payOnline.startOverSlide")}
             doneLabel={t("booking.cancelling")}
-            hint={t("booking.holdHint", { seconds: HOLD_MS / 1000 })}
-            onHold={onConfirm}
-          >
-            {t("payOnline.startOverHold")}
-          </HoldButton>
+            errorLabel={t("payOnline.startOverSlide")}
+            trackColor="#fee2e2"
+            labelColor="#991b1b"
+            handleColor="#dc2626"
+            handleTextColor="#ffffff"
+            successColor="#dc2626"
+            successTextColor="#ffffff"
+            height={56}
+            holdMs={1500}
+            disabled={pending}
+            onConfirm={onConfirm}
+          />
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
