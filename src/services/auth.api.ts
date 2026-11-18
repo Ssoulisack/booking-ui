@@ -6,6 +6,8 @@ import type {
   InvitationInfo,
   LoginInput,
   MyBranch,
+  PhoneConfig,
+  PhonePurpose,
   ProfileInput,
   RegisterInput,
   User,
@@ -28,6 +30,24 @@ export const authService = {
     apiMessage(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
       method: "POST",
       body: { email },
+    }),
+  phoneConfig: () => api<PhoneConfig>(API_ENDPOINTS.AUTH.PHONE_CONFIG),
+  /** texts a 6-digit code to the phone (each one costs money: one a minute, 3 per 15 minutes) */
+  sendPhoneCode: (phone: string, purpose: PhonePurpose) =>
+    apiMessage(API_ENDPOINTS.AUTH.PHONE_CODE, {
+      method: "POST",
+      body: { phone, purpose },
+    }),
+  /** is the reset code right (it is not used up: the password step sends it again) */
+  checkResetCode: (phone: string, code: string) =>
+    apiMessage(API_ENDPOINTS.AUTH.RESET_PASSWORD_PHONE_CHECK, {
+      method: "POST",
+      body: { phone, code },
+    }),
+  resetPasswordByPhone: (phone: string, code: string, password: string) =>
+    apiMessage(API_ENDPOINTS.AUTH.RESET_PASSWORD_PHONE, {
+      method: "POST",
+      body: { phone, code, password },
     }),
   resetPassword: (token: string, password: string) =>
     apiMessage(API_ENDPOINTS.AUTH.RESET_PASSWORD, {

@@ -100,7 +100,8 @@ export interface CreateBookingInput {
   package_id?: number
   /** add the space's sport light for the time after its start (not with a package) */
   with_light?: boolean
-  guest?: { name: string; phone: string; email?: string }
+  /** code: the SMS code (purpose "booking"), while SMS codes are on */
+  guest?: { name: string; phone: string; email?: string; code?: string }
   notes?: string
 }
 

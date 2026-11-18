@@ -2,7 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { authService } from "@/services/auth.api"
 import { useSession } from "@/stores/session"
-import type { AcceptInput, AuthResponse, MyBranch, User } from "@/types/auth"
+import type {
+  AcceptInput,
+  AuthResponse,
+  MyBranch,
+  PhonePurpose,
+  User,
+} from "@/types/auth"
 
 export const authKeys = {
   me: ["me"] as const,
@@ -80,6 +86,50 @@ export function useRegister() {
   return useMutation({
     mutationFn: authService.register,
     onSuccess: (auth) => useSession.getState().signIn(auth),
+  })
+}
+
+/** Are SMS codes on (sms.enabled on the server): the code fields show only then */
+export function usePhoneConfig() {
+  return useQuery({
+    queryKey: ["auth", "phone"],
+    queryFn: authService.phoneConfig,
+    staleTime: Infinity,
+    retry: false,
+  })
+}
+
+/** SMS codes are on: the code fields show only then */
+export function useSmsOn(): boolean {
+  return usePhoneConfig().data?.enabled === true
+}
+
+export function useSendPhoneCode(options?: { onSuccess?: () => void }) {
+  return useMutation({
+    mutationFn: ({
+      phone,
+      purpose,
+    }: {
+      phone: string
+      purpose: PhonePurpose
+    }) => authService.sendPhoneCode(phone, purpose),
+    onSuccess: () => options?.onSuccess?.(),
+  })
+}
+
+export function useCheckResetCode(options?: { onSuccess?: () => void }) {
+  return useMutation({
+    mutationFn: (p: { phone: string; code: string }) =>
+      authService.checkResetCode(p.phone, p.code),
+    onSuccess: () => options?.onSuccess?.(),
+  })
+}
+
+export function useResetPasswordByPhone(options?: { onSuccess?: () => void }) {
+  return useMutation({
+    mutationFn: (p: { phone: string; code: string; password: string }) =>
+      authService.resetPasswordByPhone(p.phone, p.code, p.password),
+    onSuccess: () => options?.onSuccess?.(),
   })
 }
 

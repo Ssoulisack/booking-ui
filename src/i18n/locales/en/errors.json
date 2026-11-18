@@ -317,5 +317,10 @@
   "LIGHT_NOT_WITH_PACKAGE": "Sport light cannot be added when paying with a package. Add it at the desk.",
   "INVALID_LIGHT_FROM": "Enter the time the light starts, like 17:00.",
   "INVALID_LIGHT_PRICE": "The light price cannot be below 0.",
-  "INVALID_SETUP_STEP": "That setup step does not exist."
+  "INVALID_SETUP_STEP": "That setup step does not exist.",
+  "SMS_OFF": "SMS codes are not available right now.",
+  "INVALID_PURPOSE": "This code request is not valid.",
+  "SMS_SEND_FAILED": "The SMS could not be sent. Please try again later.",
+  "CODE_SENT_RECENTLY": "A code was just sent. Wait a minute before asking for another.",
+  "PHONE_CODE_REQUIRED": "Type the 6-digit code from the SMS."
 }

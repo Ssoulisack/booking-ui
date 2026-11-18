@@ -70,6 +70,16 @@ export interface RegisterInput {
   password: string
   phone: string
   email?: string
+  /** the SMS code (purpose "register"), while SMS codes are on */
+  phone_code?: string
+}
+
+/** What an SMS code is for: one sent for one purpose does not work for another */
+export type PhonePurpose = "register" | "reset" | "booking"
+
+/** GET /auth/phone/config: are SMS codes on (the code fields show only then) */
+export interface PhoneConfig {
+  enabled: boolean
 }
 
 export interface ProfileInput {

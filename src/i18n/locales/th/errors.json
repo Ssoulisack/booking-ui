@@ -317,5 +317,10 @@
   "LIGHT_NOT_WITH_PACKAGE": "เพิ่มไฟสนามไม่ได้เมื่อจ่ายด้วยแพ็กเกจ เพิ่มที่เคาน์เตอร์",
   "INVALID_LIGHT_FROM": "ใส่เวลาไฟเริ่ม เช่น 17:00",
   "INVALID_LIGHT_PRICE": "ราคาไฟต้องไม่ต่ำกว่า 0",
-  "INVALID_SETUP_STEP": "ไม่มีขั้นตอนตั้งค่านี้"
+  "INVALID_SETUP_STEP": "ไม่มีขั้นตอนตั้งค่านี้",
+  "SMS_OFF": "ตอนนี้ส่งรหัส SMS ไม่ได้",
+  "INVALID_PURPOSE": "คำขอรหัสนี้ไม่ถูกต้อง",
+  "SMS_SEND_FAILED": "ส่ง SMS ไม่ได้ กรุณาลองใหม่ภายหลัง",
+  "CODE_SENT_RECENTLY": "เพิ่งส่งรหัสไป รอ 1 นาทีก่อนขอใหม่",
+  "PHONE_CODE_REQUIRED": "ใส่รหัส 6 หลักจาก SMS"
 }

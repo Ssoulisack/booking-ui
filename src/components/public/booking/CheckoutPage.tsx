@@ -22,7 +22,7 @@ import {
 import { z } from "zod"
 
 import { ErrorAlert, TextField } from "@/components/global/form"
-import HoldButton from "@/components/reactbits/HoldButton"
+import SlideCommit from "@/components/reactbits/SlideCommit"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -58,6 +58,8 @@ import {
   useResources,
   useTableAvailability,
 } from "@/hooks/use-public"
+import { PhoneCodeField } from "@/components/global/PhoneCodeField"
+import { useSmsOn } from "@/hooks/use-auth"
 import { usePublic } from "./context"
 import { dayBrandStyle } from "./day-colors"
 import { readSelection, selectionQuery, tableIdsOf } from "./selection"
@@ -76,9 +78,6 @@ const guestSchema = z.object({
   notes: z.string().max(500, "validation.tooLong"),
 })
 type GuestValues = z.infer<typeof guestSchema>
-
-// how long Confirm is held
-const HOLD_MS = 1000
 
 /** /b/:slug/book?… — check the choice, say who is booking, confirm */
 export function CheckoutPage() {
@@ -139,6 +138,10 @@ export function CheckoutPage() {
     defaultValues: { name: "", phone: "", email: "", notes: "" },
   })
   const { errors } = form.formState
+  // SMS codes on: a guest proves the phone with the code texted to it
+  const smsOn = useSmsOn()
+  const [smsCode, setSmsCode] = useState("")
+  const [smsError, setSmsError] = useState<string>()
   // a guest whose phone already has an account logs in instead (where customers can: guests and accounts both)
   const guestPhone = useWatch({ control: form.control, name: "phone" })
   const hasAccount = usePhoneHasAccount(
@@ -293,10 +296,15 @@ export function CheckoutPage() {
     if (usePackage) body.package_id = usePackage.id
     if (lit) body.with_light = true
     if (guest) {
+      if (smsOn && smsCode.length !== 6) {
+        setSmsError("smsCode.required")
+        return
+      }
       body.guest = {
         name: guest.name,
         phone: guest.phone,
         ...(guest.email ? { email: guest.email } : {}),
+        ...(smsOn ? { code: smsCode } : {}),
       }
       body.notes = guest.notes || undefined
     }
@@ -321,7 +329,7 @@ export function CheckoutPage() {
       "TABLE_NOT_AVAILABLE",
     ].includes(create.error.code)
 
-  // hold, not tap: a booking is only made on purpose (the page still sparks wherever it is touched)
+  // slide, not tap: a booking is only made on purpose (the page still sparks wherever it is touched)
   // Back just above Confirm: changing the choice is one tap away from the last button
   const confirmButton = (onConfirm: () => void) => (
     <div className="space-y-3">
@@ -336,23 +344,22 @@ export function CheckoutPage() {
           {t(isTable ? "public.tables.changeTable" : "public.changeChoice")}
         </Link>
       </Button>
-      <HoldButton
+      <SlideCommit
         className="w-full"
-        backgroundColor="var(--brand-soft)"
-        textColor="var(--brand-ink)"
-        fillColor="var(--brand)"
-        fillTextColor="var(--brand-foreground)"
-        radius={10}
-        holdTime={HOLD_MS}
-        // short: a refused answer (missing details, slot taken) lets them try again at once
-        resetAfter={600}
-        disabled={create.isPending || hasAccount === true}
+        label={t("public.slideToConfirm")}
         doneLabel={t("public.confirming")}
-        hint={t("public.confirmHint", { seconds: HOLD_MS / 1000 })}
-        onHold={onConfirm}
-      >
-        {t("public.holdToConfirm")}
-      </HoldButton>
+        errorLabel={t("public.slideToConfirm")}
+        trackColor="var(--brand-soft)"
+        labelColor="var(--brand-ink)"
+        handleColor="var(--brand)"
+        handleTextColor="var(--brand-foreground)"
+        successColor="var(--brand)"
+        successTextColor="var(--brand-foreground)"
+        height={56}
+        holdMs={600}
+        disabled={create.isPending || hasAccount === true}
+        onConfirm={onConfirm}
+      />
     </div>
   )
 
@@ -658,6 +665,18 @@ export function CheckoutPage() {
                   {t("actions.logIn")}
                 </Button>
               </div>
+            )}
+            {!hasAccount && (
+              <PhoneCodeField
+                phone={guestPhone ?? ""}
+                purpose="booking"
+                value={smsCode}
+                onChange={(v) => {
+                  setSmsCode(v)
+                  setSmsError(undefined)
+                }}
+                error={smsError}
+              />
             )}
             <div>
               <TextField

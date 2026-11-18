@@ -1,11 +1,14 @@
 import {
   ArrowLeftIcon,
+  Undo2Icon,
   CheckCircle2Icon,
   InfoIcon,
   MapPinIcon,
   UsersIcon,
 } from "lucide-react"
 import { isLaoPhone } from "@/lib/phone"
+import { PhoneCodeField } from "@/components/global/PhoneCodeField"
+import { useSmsOn } from "@/hooks/use-auth"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { contactOf } from "@/lib/contact"
@@ -13,7 +16,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router"
 import { releaseTables, useUnsaved } from "@/stores/unsaved"
 
 import { ErrorAlert } from "@/components/global/form"
-import HoldButton from "@/components/reactbits/HoldButton"
+import SlideCommit from "@/components/reactbits/SlideCommit"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Stepper } from "@/components/global/Stepper"
@@ -50,9 +53,6 @@ const PRICE_COLORS = [
   "#8b5cf6",
   "#64748b",
 ]
-
-// how long Confirm is held (the same as a normal booking)
-const HOLD_MS = 1000
 
 /** 1500000 → "1.5M", 250000 → "250k" */
 function compact(n: number) {
@@ -119,6 +119,9 @@ export function EventPage() {
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
   const [notes, setNotes] = useState("")
+  // SMS codes on: a guest proves the phone with the code texted to it
+  const smsOn = useSmsOn()
+  const [smsCode, setSmsCode] = useState("")
   const [touched, setTouched] = useState(false)
 
   const mode = business.booking_mode
@@ -203,7 +206,11 @@ export function EventPage() {
     toTop()
   }
 
-  const details = asCustomer || (name.trim() !== "" && isLaoPhone(phone))
+  const details =
+    asCustomer ||
+    (name.trim() !== "" &&
+      isLaoPhone(phone) &&
+      (!smsOn || smsCode.length === 6))
   // the team must be able to call the customer: an account buys event tables only with a phone number saved
   const needsPhone = asCustomer && !needsLogin && !user?.phone
   const canBuy =
@@ -229,6 +236,7 @@ export function EventPage() {
                 name: name.trim(),
                 phone: phone.trim(),
                 ...(email.trim() ? { email: email.trim() } : {}),
+                ...(smsOn ? { code: smsCode } : {}),
               },
             }),
         notes: notes.trim() || undefined,
@@ -452,17 +460,17 @@ export function EventPage() {
                             {money(total, currency)}
                           </span>
                         </p>
-                        {/* Back as on a normal table booking: to the branch page (where the event was chosen) */}
+                        {/* Undo as on a normal table booking: takes back the last table picked */}
                         <div className="grid grid-cols-[auto_1fr] gap-2">
                           <Button
                             type="button"
                             size="lg"
                             variant="outline"
                             className="h-12 px-5 text-base"
-                            onClick={() => navigate(`/b/${slug}`)}
+                            onClick={() => setChosen(chosen.slice(0, -1))}
                           >
-                            <ArrowLeftIcon />
-                            {t("public.tables.back")}
+                            <Undo2Icon />
+                            {t("public.tables.undo")}
                           </Button>
                           <Button
                             size="lg"
@@ -591,6 +599,17 @@ export function EventPage() {
                       className={input}
                     />
                   </div>
+                  <PhoneCodeField
+                    phone={phone}
+                    purpose="booking"
+                    value={smsCode}
+                    onChange={setSmsCode}
+                    error={
+                      touched && smsCode.length !== 6
+                        ? "smsCode.required"
+                        : undefined
+                    }
+                  />
                   <div className="space-y-1.5">
                     <Label htmlFor="ev-email">
                       {t("public.emailOptional")}
@@ -659,23 +678,23 @@ export function EventPage() {
                   <ArrowLeftIcon />
                   {t("public.events.changeTables")}
                 </Button>
-                {/* hold, not tap: a booking is only made on purpose */}
-                <HoldButton
+                {/* slide, not tap: a booking is only made on purpose */}
+                <SlideCommit
                   className="w-full"
-                  backgroundColor="var(--brand-soft)"
-                  textColor="var(--brand-ink)"
-                  fillColor="var(--brand)"
-                  fillTextColor="var(--brand-foreground)"
-                  radius={10}
-                  holdTime={HOLD_MS}
-                  resetAfter={600}
-                  disabled={buy.isPending || needsLogin || needsPhone}
+                  label={t("public.slideToConfirm")}
                   doneLabel={t("public.confirming")}
-                  hint={t("public.confirmHint", { seconds: HOLD_MS / 1000 })}
-                  onHold={submit}
-                >
-                  {t("public.holdToConfirm")}
-                </HoldButton>
+                  errorLabel={t("public.slideToConfirm")}
+                  trackColor="var(--brand-soft)"
+                  labelColor="var(--brand-ink)"
+                  handleColor="var(--brand)"
+                  handleTextColor="var(--brand-foreground)"
+                  successColor="var(--brand)"
+                  successTextColor="var(--brand-foreground)"
+                  height={56}
+                  holdMs={600}
+                  disabled={buy.isPending || needsLogin || needsPhone}
+                  onConfirm={submit}
+                />
               </div>
             </section>
           )}

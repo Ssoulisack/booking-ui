@@ -1,9 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useState } from "react"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useSearchParams } from "react-router"
 
 import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
+import { PhoneCodeField } from "@/components/global/PhoneCodeField"
+import { useSmsOn } from "@/hooks/use-auth"
 import { FieldGroup } from "@/components/ui/field"
 import { AuthHeading } from "@/components/layout/AuthLayout"
 
@@ -31,20 +34,30 @@ export function RegisterPage() {
     },
   })
   const { errors } = form.formState
+  const phone = useWatch({ control: form.control, name: "phone" }) ?? ""
+  // SMS codes on: the phone is proved with the code texted to it
+  const smsOn = useSmsOn()
+  const [code, setCode] = useState("")
+  const [codeError, setCodeError] = useState<string>()
 
   // "confirm" is only checked here: the server gets the password once
-  const onSubmit = form.handleSubmit(({ confirm: _confirm, ...values }) =>
+  const onSubmit = form.handleSubmit(({ confirm: _confirm, ...values }) => {
+    if (smsOn && code.length !== 6) {
+      setCodeError("smsCode.required")
+      return
+    }
     register.mutate(
       {
         ...values,
         phone: values.phone,
         email: values.email || undefined,
+        ...(smsOn ? { phone_code: code } : {}),
       },
       {
         onSuccess: () => navigate(afterAuthPath(next), { replace: true }),
       },
-    ),
-  )
+    )
+  })
 
   return (
     <>
@@ -65,6 +78,16 @@ export function RegisterPage() {
             register={form.register}
             errors={errors}
             requirePhone
+          />
+          <PhoneCodeField
+            phone={phone}
+            purpose="register"
+            value={code}
+            onChange={(v) => {
+              setCode(v)
+              setCodeError(undefined)
+            }}
+            error={codeError}
           />
           <TextField
             label={t("fields.password")}

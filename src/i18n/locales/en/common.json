@@ -293,7 +293,8 @@
     "holdHint": "Press and hold for {{seconds}} seconds to cancel the booking",
     "tooLateToCancelNoPhone": "It is too late to cancel online. Please contact the branch.",
     "package": "Package",
-    "cancelPackageNote": "Your visit goes back to your package."
+    "cancelPackageNote": "Your visit goes back to your package.",
+    "slideToCancel": "Slide to cancel"
   },
   "public": {
     "notFoundTitle": "This page is not available",
@@ -514,7 +515,14 @@
       "arriveByTitle": "Please arrive by {{time}}",
       "arriveByLead": "If you are not there by then, your table is given to other guests. Running late? Call us.",
       "areas": "Areas",
-      "freeCount": "{{count}} free"
+      "freeCount": "{{count}} free",
+      "zoomZone": "See {{zone}} up close",
+      "zoomLead": "Only this zone of {{area}}, bigger. Tap a free table to choose it.",
+      "zoomChosen_one": "{{count}} table chosen",
+      "zoomChosen_other": "{{count}} tables chosen",
+      "zoomDone": "Done",
+      "keptTip": "Kept for walk-in guests, not bookable online.",
+      "undo": "Undo"
     },
     "find": {
       "link": "Find my booking",
@@ -653,7 +661,8 @@
       "hint": "From {{from}} · {{time}} with light",
       "line": "Sport light",
       "included": "incl. sport light {{amount}}"
-    }
+    },
+    "slideToConfirm": "Slide to confirm"
   },
   "weekday": {
     "0": "Sunday",
@@ -1591,7 +1600,8 @@
     "save": "Save",
     "continue": "Continue",
     "saved": "Saved.",
-    "employeeNo": "Your employee number"
+    "employeeNo": "Your employee number",
+    "slideToSave": "Slide to save"
   },
   "places": {
     "searchPlaceholder": "Name or address",
@@ -2294,7 +2304,8 @@
     "saveQr": "Save QR image",
     "saveQrHint": "Paying on this phone? Save the QR, open your bank app and choose “scan from gallery”.",
     "payingWith": "You are paying with",
-    "leadPackage": "Pay {{total}} in your bank app. Your package starts once the payment arrives."
+    "leadPackage": "Pay {{total}} in your bank app. Your package starts once the payment arrives.",
+    "startOverSlide": "Slide to start over"
   },
   "payStatus": {
     "title": "Online payments",
@@ -2722,5 +2733,33 @@
     "toWebsite": "Go to the website",
     "otherAccount": "Log in with another account",
     "back": "Back to work"
+  },
+  "smsCode": {
+    "label": "SMS code",
+    "send": "Send code",
+    "resend": "Send again",
+    "again": "Again in {{seconds}}s",
+    "hint": "Tap Send code: we text a 6-digit code to this phone.",
+    "phoneFirst": "Type your phone number first.",
+    "sentTo": "Code sent to {{phone}}. It works for 10 minutes.",
+    "sentToIfAccount": "If {{phone}} has an account, a code is on its way. It works for 10 minutes.",
+    "required": "Type the 6-digit code from the SMS."
+  },
+  "forgotPhone": {
+    "subtitle": "Enter your phone number. We text you a code, then you choose a new password.",
+    "byPhone": "By phone",
+    "byEmail": "By email",
+    "done": "Password changed. Log in with the new one.",
+    "codeTitle": "Type the code",
+    "confirm": "Confirm code",
+    "changePhone": "Change number",
+    "followLink": "Open the email and tap the link to choose a new password."
+  },
+  "forgotSteps": {
+    "of": "Step {{step}} of {{count}}",
+    "choose": "Phone or email",
+    "receive": "Get the code",
+    "confirm": "Confirm",
+    "password": "New password"
   }
 }
