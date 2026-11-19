@@ -49,10 +49,10 @@
     "missingTitle": "No email on your account.",
     "missing": "Add your email in the form below, save, then verify it with the code we send. Without a verified email you cannot reset your password yourself if you forget it: you would have to ask the branch.",
     "remind": "Your email is not verified yet. Verify it so you can reset your password yourself if you forget it.",
-    "lead": "We sent a 6-digit code to your email. Enter it here, or verify later in My account.",
+    "lead": "We sent a 6-digit code to your email. Enter it here, or verify later in My account. Not in your inbox? Check your Spam or Junk folder.",
     "notYet": "Email not verified yet.",
     "why": "Verify {{email}} with a code we send there. Until it is verified you cannot reset your password yourself: you would have to ask the branch.",
-    "sentTo": "We sent a 6-digit code to {{email}}. Check your inbox (and spam).",
+    "sentTo": "We sent a 6-digit code to {{email}}. Not in your inbox? Check your Spam or Junk folder.",
     "code": "6-digit code",
     "verify": "Verify",
     "send": "Send code",
@@ -399,7 +399,7 @@
     "haveAccount": "Have an account? Log in",
     "phone": "Phone",
     "emailOptional": "Email (optional)",
-    "emailWhy": "Recommended: we email you when the team confirms or cancels your booking.",
+    "emailWhy": "Recommended: we email you when the team confirms or cancels your booking. Not in your inbox? Check your Spam or Junk folder.",
     "notes": "Note for the branch (optional)",
     "guestLinkNote": "After booking you get a private link to see or cancel it: keep it (or find your booking later with its code and your phone).",
     "confirm": "Confirm booking",
@@ -2772,5 +2772,6 @@
     "detailsLead": "Almost done: your name and a password.",
     "phoneProved": "Phone {{phone}} checked",
     "change": "Change"
-  }
+  },
+  "emailSpam": "Not in your inbox? Check your Spam or Junk folder."
 }

@@ -53,6 +53,10 @@ export function ForgotPasswordPage() {
         <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
           {t("forgotPhone.followLink")} {t("forgot.verifiedOnly")}
         </p>
+        {/* a new sending domain can land in spam: say where else to look */}
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-950 ring-1 ring-amber-200 dark:bg-amber-400/15 dark:text-amber-100 dark:ring-amber-400/30">
+          {t("emailSpam")}
+        </p>
         <div className="mt-3">
           <ContactAdmin />
         </div>
