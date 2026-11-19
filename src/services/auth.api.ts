@@ -38,11 +38,11 @@ export const authService = {
       method: "POST",
       body: { phone, purpose },
     }),
-  /** is the reset code right (it is not used up: the password step sends it again) */
-  checkResetCode: (phone: string, code: string) =>
-    apiMessage(API_ENDPOINTS.AUTH.RESET_PASSWORD_PHONE_CHECK, {
+  /** is the code right (register or reset; it is not used up: the next step sends it again) */
+  checkPhoneCode: (phone: string, purpose: PhonePurpose, code: string) =>
+    apiMessage(API_ENDPOINTS.AUTH.PHONE_CHECK, {
       method: "POST",
-      body: { phone, code },
+      body: { phone, purpose, code },
     }),
   resetPasswordByPhone: (phone: string, code: string, password: string) =>
     apiMessage(API_ENDPOINTS.AUTH.RESET_PASSWORD_PHONE, {

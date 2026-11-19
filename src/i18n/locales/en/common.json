@@ -62,7 +62,9 @@
     "done": "Your email is verified.",
     "later": "Verify later",
     "close": "Close",
-    "badge": "Email not verified"
+    "badge": "Email not verified",
+    "dialogTitle": "Verify your email",
+    "dialogLead": "We email you a 6-digit code. Type it here, then you can reset your password yourself if you ever forget it."
   },
   "slipCheck": {
     "staff": "Check slip",
@@ -2761,5 +2763,14 @@
     "receive": "Get the code",
     "confirm": "Confirm",
     "password": "New password"
+  },
+  "registerSteps": {
+    "phone": "Phone",
+    "code": "Code",
+    "details": "Your details",
+    "phoneLead": "Start with your phone number. We text you a code to check it.",
+    "detailsLead": "Almost done: your name and a password.",
+    "phoneProved": "Phone {{phone}} checked",
+    "change": "Change"
   }
 }

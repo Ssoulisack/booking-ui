@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { MessageSquareIcon } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router"
@@ -8,23 +7,15 @@ import { toast } from "sonner"
 
 import { ErrorAlert, SubmitButton, TextField } from "@/components/global/form"
 import { AuthHeading } from "@/components/layout/AuthLayout"
-import { Button } from "@/components/ui/button"
 import { FieldGroup } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Spinner } from "@/components/ui/spinner"
-import {
-  useCheckResetCode,
-  useResetPasswordByPhone,
-  useSendPhoneCode,
-} from "@/hooks/use-auth"
+import { useResetPasswordByPhone, useSendPhoneCode } from "@/hooks/use-auth"
 import { displayPhone, isLaoPhone } from "@/lib/phone"
 
 import { ForgotSteps } from "./ForgotSteps"
+import { PhoneCodeStep } from "./PhoneCodeStep"
 import { resetSchema, type ResetValues } from "./schemas"
-
-// the server sends at most one code a minute per phone
-const COOLDOWN = 60
 
 /**
  * Forgot password by phone, step by step: the phone (step 1, with the choice above) → the SMS code arrives and is
@@ -38,22 +29,7 @@ export function ForgotByPhone({ choice }: { choice: React.ReactNode }) {
   const [phone, setPhone] = useState("")
   const [phoneError, setPhoneError] = useState<string>()
   const [code, setCode] = useState("")
-  const [wait, setWait] = useState(0)
-
-  useEffect(() => {
-    if (wait <= 0) return
-    const id = window.setTimeout(() => setWait((w) => w - 1), 1000)
-    return () => window.clearTimeout(id)
-  }, [wait])
-
-  const send = useSendPhoneCode({
-    onSuccess: () => {
-      setWait(COOLDOWN)
-      setCode("")
-      setStep("code")
-    },
-  })
-  const check = useCheckResetCode({ onSuccess: () => setStep("password") })
+  const send = useSendPhoneCode({ onSuccess: () => setStep("code") })
   const reset = useResetPasswordByPhone({
     onSuccess: () => {
       toast.success(t("forgotPhone.done"))
@@ -120,58 +96,18 @@ export function ForgotByPhone({ choice }: { choice: React.ReactNode }) {
     return (
       <>
         <ForgotSteps step={3} />
-        <MessageSquareIcon className="mb-4 size-10 text-[var(--primary-ink)]" />
-        <AuthHeading
-          title={t("forgotPhone.codeTitle")}
+        <PhoneCodeStep
+          phone={phone.trim()}
+          purpose="reset"
           subtitle={t("smsCode.sentToIfAccount", {
             phone: displayPhone(phone.trim()),
           })}
-        />
-        <form
-          noValidate
-          className="space-y-4"
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (code.length === 6) check.mutate({ phone: phone.trim(), code })
+          onConfirmed={(right) => {
+            setCode(right)
+            setStep("password")
           }}
-        >
-          <ErrorAlert error={check.error ?? send.error} />
-          <Input
-            aria-label={t("smsCode.label")}
-            placeholder="000000"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            autoFocus
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            className="h-14 text-center text-2xl tracking-[0.5em] tabular-nums"
-          />
-          <SubmitButton pending={check.isPending}>
-            {t("forgotPhone.confirm")}
-          </SubmitButton>
-        </form>
-        <div className="mt-4 flex items-center justify-between gap-2 text-sm">
-          <button
-            type="button"
-            className="min-h-11 font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-            onClick={() => setStep("phone")}
-          >
-            {t("forgotPhone.changePhone")}
-          </button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11"
-            disabled={send.isPending || wait > 0}
-            onClick={sendCode}
-          >
-            {send.isPending && <Spinner />}
-            {wait > 0
-              ? t("smsCode.again", { seconds: wait })
-              : t("smsCode.resend")}
-          </Button>
-        </div>
+          onChangePhone={() => setStep("phone")}
+        />
       </>
     )
 

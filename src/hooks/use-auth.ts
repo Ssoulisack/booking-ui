@@ -117,10 +117,10 @@ export function useSendPhoneCode(options?: { onSuccess?: () => void }) {
   })
 }
 
-export function useCheckResetCode(options?: { onSuccess?: () => void }) {
+export function useCheckPhoneCode(options?: { onSuccess?: () => void }) {
   return useMutation({
-    mutationFn: (p: { phone: string; code: string }) =>
-      authService.checkResetCode(p.phone, p.code),
+    mutationFn: (p: { phone: string; purpose: PhonePurpose; code: string }) =>
+      authService.checkPhoneCode(p.phone, p.purpose, p.code),
     onSuccess: () => options?.onSuccess?.(),
   })
 }

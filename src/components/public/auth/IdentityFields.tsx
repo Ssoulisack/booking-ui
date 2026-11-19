@@ -17,10 +17,13 @@ export function IdentityFields<T extends IdentityValues>({
   register,
   errors,
   requirePhone = false,
+  showPhone = true,
 }: {
   register: UseFormRegister<T>
   errors: FieldErrors<T>
   requirePhone?: boolean
+  /** false: the phone is already proved (register with an SMS code) and shown elsewhere */
+  showPhone?: boolean
 }) {
   const { t } = useTranslation()
   // the form's own type is wider than IdentityValues; these two fields always exist in it
@@ -29,22 +32,26 @@ export function IdentityFields<T extends IdentityValues>({
 
   return (
     <>
-      <div>
-        <TextField
-          label={
-            requirePhone ? t("identity.phoneLao") : t("identity.phoneOptional")
-          }
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="2055551234"
-          registration={reg("phone")}
-          error={err.phone}
-        />
-        <FieldDescription className="mt-1.5">
-          {t("identity.phoneLaoHint")}
-        </FieldDescription>
-      </div>
+      {showPhone && (
+        <div>
+          <TextField
+            label={
+              requirePhone
+                ? t("identity.phoneLao")
+                : t("identity.phoneOptional")
+            }
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="2055551234"
+            registration={reg("phone")}
+            error={err.phone}
+          />
+          <FieldDescription className="mt-1.5">
+            {t("identity.phoneLaoHint")}
+          </FieldDescription>
+        </div>
+      )}
       <div>
         <TextField
           label={t("identity.emailOptional")}
