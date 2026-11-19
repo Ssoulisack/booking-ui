@@ -1,11 +1,13 @@
 import {
-  ArrowLeftIcon,
+  ArrowRightIcon,
   CalendarCheckIcon,
-  ChevronRightIcon,
+  LayoutGridIcon,
   MailIcon,
   MapPinIcon,
   PhoneIcon,
   SearchIcon,
+  TrophyIcon,
+  UtensilsIcon,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -242,33 +244,16 @@ function Hero({
 }
 
 /** A group on the home page: a sport (branches that have it) or "restaurant" */
-type GroupKey = SportType | "restaurant"
+type Tab = "all" | "sport" | "restaurant"
 
-/** The branches grouped by what they offer: one group per sport, and the restaurants; a branch with
- * several sports is in each of them. A sport branch with no known sport yet goes under "other". */
-function groupBranches(branches: DirectoryBranch[]) {
-  const groups = new Map<GroupKey, DirectoryBranch[]>()
-  const add = (key: GroupKey, b: DirectoryBranch) =>
-    groups.set(key, [...(groups.get(key) ?? []), b])
-  for (const b of branches) {
-    if (b.type === "restaurant") {
-      add("restaurant", b)
-      continue
-    }
-    const types = placeTypes(b.sports)
-    if (types.length === 0) add("other", b)
-    for (const type of types) add(type, b)
-  }
-  // the sports in the usual order, "other" and the restaurants last
-  const order = (k: GroupKey) =>
-    k === "restaurant" ? 1000 : k === "other" ? 999 : SPORT_TYPES.indexOf(k)
-  return [...groups.entries()].sort(([a], [b]) => order(a) - order(b))
-}
+/** A branch's kind for the tabs: a restaurant, else a sport place */
+const kindOf = (b: DirectoryBranch): Exclude<Tab, "all"> =>
+  b.type === "restaurant" ? "restaurant" : "sport"
 
 /**
- * The branches, grouped: first a tile per sport (and Restaurant), then the branches of the tile
- * tapped (?sport=… in the address, so Back returns to the tiles). One group only: its branches
- * straight away. With many branches in a group, a search and a province picker above them.
+ * The branches: tabs All · Sport · Restaurant (only when the company has both kinds), sport chips inside Sport (when
+ * there are several sports), and with many branches a search and a province picker. What is chosen sits in the address
+ * (?type=sport&sport=football), so Back and a shared link keep it.
  */
 function BranchList({
   branches,
@@ -283,30 +268,48 @@ function BranchList({
   const province = params.get("province") ?? ""
   const [search, setSearch] = useState(keyword)
 
-  const groups = useMemo(() => groupBranches(branches), [branches])
-  const grouped = groups.length > 1
-  const wanted = params.get("sport") ?? ""
-  const group = groups.find(([key]) => key === wanted)
-  const label = (key: GroupKey) =>
-    key === "restaurant"
-      ? t("company.types.restaurant")
-      : t(`sportTypes.${key}`)
+  const counts = useMemo(
+    () => ({
+      all: branches.length,
+      sport: branches.filter((b) => kindOf(b) === "sport").length,
+      restaurant: branches.filter((b) => kindOf(b) === "restaurant").length,
+    }),
+    [branches],
+  )
+  const tabbed = counts.sport > 0 && counts.restaurant > 0
+  const asked = params.get("type")
+  const tab: Tab =
+    tabbed && (asked === "sport" || asked === "restaurant") ? asked : "all"
+  const inTab =
+    tab === "all" ? branches : branches.filter((b) => kindOf(b) === tab)
 
-  const set = (key: string, value: string) => {
+  // the sports offered in the Sport tab (or everywhere, when there are no restaurants)
+  const sportsHere = useMemo(() => {
+    const have = new Set(
+      branches
+        .filter((b) => kindOf(b) === "sport")
+        .flatMap((b) => placeTypes(b.sports)),
+    )
+    return SPORT_TYPES.filter((x) => x !== "other" && have.has(x))
+  }, [branches])
+  const showChips =
+    (tab === "sport" || (!tabbed && counts.sport > 0)) && sportsHere.length > 1
+  const sportAsked = params.get("sport") as SportType | null
+  const sport =
+    showChips && sportAsked && sportsHere.includes(sportAsked)
+      ? sportAsked
+      : null
+  const inSport = sport
+    ? inTab.filter((b) => placeTypes(b.sports).includes(sport))
+    : inTab
+
+  const set = (changes: Record<string, string>, push = false) => {
     const next = new URLSearchParams(params)
-    if (value) next.set(key, value)
-    else next.delete(key)
-    setParams(next, { replace: true })
-  }
-  // choosing a group is a step: the phone's Back button comes back to the tiles
-  const open = (key: GroupKey | "") => {
-    const next = new URLSearchParams()
-    if (key) next.set("sport", key)
-    setSearch("")
-    setParams(next)
-    document
-      .getElementById("branches")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" })
+    for (const [k, v] of Object.entries(changes)) {
+      if (v) next.set(k, v)
+      else next.delete(k)
+    }
+    setParams(next, { replace: !push })
   }
 
   if (branches.length === 0) {
@@ -317,49 +320,10 @@ function BranchList({
     )
   }
 
-  if (grouped && !group) {
-    return (
-      <div className="space-y-3">
-        <p className="text-muted-foreground">{t("home.chooseSport")}</p>
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {groups.map(([key, list]) => {
-            const cover = list.find((b) => b.cover_url)?.cover_url
-            return (
-              <li key={key}>
-                <button
-                  type="button"
-                  onClick={() => open(key)}
-                  className="group relative flex h-32 w-full flex-col justify-end overflow-hidden candy-card bg-[var(--brand-hero)] p-3 text-left text-[var(--brand-hero-foreground)] transition-transform hover:-translate-y-0.5 focus-visible:outline-3 focus-visible:outline-ring/50 active:translate-y-0"
-                >
-                  {cover && (
-                    <img
-                      src={cover}
-                      alt=""
-                      loading="lazy"
-                      className="absolute inset-0 size-full object-cover opacity-45"
-                    />
-                  )}
-                  <span className="relative display-tight text-xl leading-tight">
-                    {label(key)}
-                  </span>
-                  <span className="relative flex items-center justify-between gap-1 text-sm opacity-90">
-                    {t("home.count", { count: list.length })}
-                    <ChevronRightIcon className="size-4" />
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
-    )
-  }
-
-  const inGroup = group ? group[1] : branches
-  const many = inGroup.length >= MANY
-  const provinces = [...new Set(inGroup.map((b) => b.province).filter(Boolean))]
+  const many = inSport.length >= MANY
+  const provinces = [...new Set(inSport.map((b) => b.province).filter(Boolean))]
   const shown = many
-    ? inGroup.filter((b) => {
+    ? inSport.filter((b) => {
         const words = keyword.toLowerCase()
         const where = [
           b.name,
@@ -373,26 +337,78 @@ function BranchList({
           (!province || b.province === province)
         )
       })
-    : inGroup
+    : inSport
 
   return (
     <div className="space-y-5">
-      {group && grouped && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <Button
-            variant="ghost"
-            className="-ml-3 h-11"
-            onClick={() => open("")}
-          >
-            <ArrowLeftIcon />
-            {t("places.allSports")}
-          </Button>
-          <h3 className="display-tight text-2xl">{label(group[0])}</h3>
-          <span className="text-sm text-muted-foreground">
-            {t("home.count", { count: inGroup.length })}
-          </span>
+      {tabbed && (
+        <div
+          role="tablist"
+          aria-label={t("home.tabs.label")}
+          className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1"
+        >
+          {(["all", "sport", "restaurant"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              aria-selected={tab === k}
+              onClick={() => {
+                setSearch("")
+                set(
+                  {
+                    type: k === "all" ? "" : k,
+                    sport: "",
+                    q: "",
+                    province: "",
+                  },
+                  true,
+                )
+              }}
+              className={cn(
+                "flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition-colors",
+                tab === k
+                  ? "bg-card text-foreground shadow-sm ring-1 ring-border"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {k === "sport" ? (
+                <TrophyIcon className="size-4" />
+              ) : k === "restaurant" ? (
+                <UtensilsIcon className="size-4" />
+              ) : (
+                <LayoutGridIcon className="size-4" />
+              )}
+              {t(`home.tabs.${k}`)}
+              <span className="text-xs font-normal text-muted-foreground tabular-nums">
+                {counts[k]}
+              </span>
+            </button>
+          ))}
         </div>
       )}
+
+      {showChips && (
+        <div className="-mx-4 no-scrollbar flex gap-2 overflow-x-auto px-4">
+          {[null, ...sportsHere].map((x) => (
+            <button
+              key={x ?? "all"}
+              type="button"
+              aria-pressed={sport === x}
+              onClick={() => set({ sport: x ?? "" })}
+              className={cn(
+                "h-10 shrink-0 rounded-full border px-4 text-sm font-medium transition-colors",
+                sport === x
+                  ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
+                  : "border-border bg-card hover:border-foreground/30",
+              )}
+            >
+              {x ? t(`sportTypes.${x}`) : t("places.allSports")}
+            </button>
+          ))}
+        </div>
+      )}
+
       {many && (
         <div className="space-y-3">
           <form
@@ -400,7 +416,7 @@ function BranchList({
             className="relative"
             onSubmit={(e) => {
               e.preventDefault()
-              set("q", search.trim())
+              set({ q: search.trim() })
             }}
           >
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" />
@@ -411,7 +427,7 @@ function BranchList({
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
-                set("q", e.target.value.trim())
+                set({ q: e.target.value.trim() })
               }}
               className="h-12 bg-card pl-10 text-base"
             />
@@ -423,7 +439,7 @@ function BranchList({
                 <select
                   aria-label={t("places.province")}
                   value={province}
-                  onChange={(e) => set("province", e.target.value)}
+                  onChange={(e) => set({ province: e.target.value })}
                   className="h-11 rounded-lg border border-input bg-card px-3 text-base"
                 >
                   <option value="">{t("places.allProvinces")}</option>
@@ -450,9 +466,7 @@ function BranchList({
             className="h-11"
             onClick={() => {
               setSearch("")
-              const next = new URLSearchParams()
-              if (group) next.set("sport", group[0])
-              setParams(next, { replace: true })
+              set({ q: "", province: "", sport: "" })
             }}
           >
             {t("home.showAll")}
@@ -471,6 +485,11 @@ function BranchList({
   )
 }
 
+/**
+ * A branch: its photo (or a soft colour with an icon: sky for sport, peach for restaurants), what kind it is on the
+ * photo, then the name, the sports, where it is and the price. Light mode: a white card with a soft edge and shadow;
+ * dark mode: the dark card.
+ */
 function BranchCard({
   branch: b,
   company,
@@ -480,6 +499,8 @@ function BranchCard({
 }) {
   const { t } = useTranslation()
   const types = placeTypes(b.sports)
+  const restaurant = kindOf(b) === "restaurant"
+  const KindIcon = restaurant ? UtensilsIcon : TrophyIcon
   const where = [b.province && t(`provinces.${b.province}`), b.address]
     .filter(Boolean)
     .join(" · ")
@@ -487,40 +508,64 @@ function BranchCard({
   return (
     <Link
       to={`/b/${b.slug}`}
-      className="group block overflow-hidden candy-card bg-card transition-transform hover:-translate-y-0.5 focus-visible:outline-3 focus-visible:outline-ring/50 active:translate-y-0"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-[0_1px_2px_rgb(16_24_40/0.06),0_8px_24px_-12px_rgb(16_24_40/0.18)] ring-1 ring-black/[0.06] transition duration-200 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgb(16_24_40/0.06),0_18px_40px_-16px_rgb(16_24_40/0.28)] focus-visible:outline-3 focus-visible:outline-ring/50 active:translate-y-0 dark:shadow-none dark:ring-white/10"
     >
-      <div className="relative h-28 bg-[var(--brand-hero)]">
-        {b.cover_url && (
-          <img
-            src={b.cover_url}
-            alt=""
-            loading="lazy"
-            className="size-full object-cover"
-          />
-        )}
-        {company.logo_url && (
-          <span className="absolute -bottom-6 left-4 rounded-xl ring-4 ring-card">
-            <BrandMark
-              name={company.name}
-              logo={company.logo_url}
-              className="size-14"
-            />
-          </span>
-        )}
-      </div>
       <div
         className={cn(
-          "space-y-2 px-4 pb-4",
-          company.logo_url ? "pt-8" : "pt-4",
+          "relative aspect-[16/9] overflow-hidden",
+          !b.cover_url &&
+            (restaurant
+              ? "bg-gradient-to-br from-orange-100 via-rose-50 to-amber-100 dark:from-orange-400/15 dark:via-rose-400/10 dark:to-amber-400/15"
+              : "bg-gradient-to-br from-sky-100 via-emerald-50 to-teal-100 dark:from-sky-400/15 dark:via-emerald-400/10 dark:to-teal-400/15"),
         )}
       >
-        <h3 className="display-tight text-xl leading-tight">{b.name}</h3>
+        {b.cover_url ? (
+          <>
+            <img
+              src={b.cover_url}
+              alt=""
+              loading="lazy"
+              className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/25 to-transparent"
+            />
+          </>
+        ) : (
+          <span className="absolute inset-0 grid place-items-center">
+            {company.logo_url ? (
+              <BrandMark
+                name={company.name}
+                logo={company.logo_url}
+                className="size-16 shadow-sm"
+              />
+            ) : (
+              <KindIcon
+                className={cn(
+                  "size-12 opacity-60",
+                  restaurant
+                    ? "text-orange-500 dark:text-orange-300"
+                    : "text-sky-600 dark:text-sky-300",
+                )}
+              />
+            )}
+          </span>
+        )}
+        <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-sm backdrop-blur dark:bg-black/60 dark:text-white">
+          <KindIcon className="size-3.5" />
+          {t(restaurant ? "home.tabs.restaurant" : "home.tabs.sport")}
+        </span>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <h3 className="text-lg leading-snug font-semibold">{b.name}</h3>
         {types.length > 0 && (
           <p className="flex flex-wrap gap-1.5">
             {types.map((type) => (
               <span
                 key={type}
-                className="rounded-full bg-[var(--brand-soft)] px-2.5 py-0.5 text-xs font-medium text-[var(--brand-ink)]"
+                className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground/80"
               >
                 {t(`sportTypes.${type}`)}
               </span>
@@ -533,14 +578,17 @@ function BranchCard({
             <span className="line-clamp-2">{where}</span>
           </p>
         )}
-        <p className="flex items-center justify-between gap-2 pt-1">
+        <p className="mt-auto flex items-center justify-between gap-2 border-t border-border/70 pt-3">
           <span className="text-sm">
-            {b.from_price != null &&
-              t("places.from", { price: money(b.from_price, b.currency) })}
+            {b.from_price != null && (
+              <span className="font-semibold">
+                {t("places.from", { price: money(b.from_price, b.currency) })}
+              </span>
+            )}
           </span>
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand-ink)]">
-            <CalendarCheckIcon className="size-4" />
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--brand-ink)]">
             {t("places.book")}
+            <ArrowRightIcon className="size-4 transition-transform group-hover:translate-x-0.5" />
           </span>
         </p>
       </div>

@@ -1786,7 +1786,13 @@
     "noMatch": "No branch matches. Try another sport or province.",
     "showAll": "Show all branches",
     "noBranches": "No branch is open for online booking yet. Please check back soon.",
-    "contactTitle": "Contact us"
+    "contactTitle": "Contact us",
+    "tabs": {
+      "label": "Kind of place",
+      "all": "All",
+      "sport": "Sport",
+      "restaurant": "Restaurant"
+    }
   },
   "legal": {
     "updated": "Last updated: 26 October 2026",
