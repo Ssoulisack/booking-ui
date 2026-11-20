@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils"
 
 import { packageKeys } from "@/hooks/use-account"
 import { publicKeys, usePaymentOptions } from "@/hooks/use-public"
+import { releasePayment, useUnsaved } from "@/stores/unsaved"
 import { saveImage } from "./save-image"
 import { StartOverDialog } from "./StartOverDialog"
 
@@ -131,6 +132,7 @@ export function PayOnline({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["public", slug] })
       void queryClient.invalidateQueries({ queryKey: publicKeys.myBookings })
+      releasePayment()
       if (startOverUrl) void navigate(startOverUrl)
     },
   })
@@ -144,6 +146,8 @@ export function PayOnline({
   )
   const current = check.data ?? started
   const paid = current?.status === "paid"
+  // a QR is open and not paid yet: leaving the page asks first
+  useUnsaved(current?.status === "pending", "payment")
 
   useEffect(() => {
     if (!paid) return

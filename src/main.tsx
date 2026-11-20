@@ -7,8 +7,12 @@ import { RouterProvider } from "react-router"
 
 import { AppProviders } from "@/components/provider/app-providers"
 import { queryClient } from "@/lib/query-client"
+import { watchStaleBuild } from "@/lib/stale-build"
 import { router } from "@/routes/router"
 import { useSession } from "@/stores/session"
+
+// a tab still on the previous build reloads instead of failing to open a page
+watchStaleBuild()
 
 // A different person (or nobody) is logged in: drop everything cached for the previous one
 useSession.subscribe((state, prev) => {

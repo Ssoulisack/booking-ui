@@ -4,9 +4,10 @@ import { create } from "zustand"
 /**
  * "changes": a form with edits not saved yet. "booking": a time the customer picked but has not
  * booked. "tables": tables chosen on a restaurant's table step (going back a step clears them).
+ * "payment": something the customer must still pay (event tables, a package) or a QR payment that is open.
  * See UnsavedGuard.
  */
-export type UnsavedKind = "changes" | "booking" | "tables"
+export type UnsavedKind = "changes" | "booking" | "tables" | "payment"
 
 interface UnsavedState {
   entries: Array<{ id: string; kind: UnsavedKind }>
@@ -47,3 +48,7 @@ export const releaseBooking = () =>
 
 /** The customer pressed Continue on the table step: their tables go on to the Confirm page */
 export const releaseTables = () => useUnsavedStore.getState().release("tables")
+
+/** A way out of the payment on purpose (Start over): it does not ask "leave without paying?" */
+export const releasePayment = () =>
+  useUnsavedStore.getState().release("payment")

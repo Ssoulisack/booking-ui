@@ -3,11 +3,21 @@ import {
   ImagePlusIcon,
   MessageCircleIcon,
   SendIcon,
+  TriangleAlertIcon,
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ErrorAlert } from "@/components/global/form"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { shrinkImage } from "@/lib/shrink-image"
@@ -52,6 +62,8 @@ export function SlipSender({
   const [preview, setPreview] = useState("")
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState<unknown>(null)
+  // the WhatsApp reminder is open
+  const [asking, setAsking] = useState(false)
   const pick = useRef<HTMLInputElement>(null)
   const sent = !!sentAt
 
@@ -164,28 +176,61 @@ export function SlipSender({
 
       {whatsappNumber && (
         <Button
-          asChild
+          type="button"
           size="lg"
           variant={sent || telegram ? "outline" : "default"}
           className="h-12 w-full text-base"
+          onClick={() => setAsking(true)}
         >
-          <a
-            href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`}
-            target="_blank"
-            rel="noreferrer"
-            onClick={() => {
-              // opening WhatsApp tells the team a slip is coming, once
-              if (!sent && !pending)
-                void onSend({ via: "whatsapp" }).catch(() => {})
-            }}
-          >
-            <MessageCircleIcon />
-            {sent && sentVia === "whatsapp"
-              ? t("slip.whatsappAgain")
-              : t("slip.whatsapp")}
-          </a>
+          <MessageCircleIcon />
+          {sent && sentVia === "whatsapp"
+            ? t("slip.whatsappAgain")
+            : t("slip.whatsapp")}
         </Button>
       )}
+
+      {/* before WhatsApp opens: the photo of the slip must go into the chat, a message alone is refused */}
+      <AlertDialog open={asking} onOpenChange={setAsking}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("slip.waTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("slip.waLead")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <p
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm font-medium text-destructive"
+          >
+            <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
+            {t("slip.waWarning")}
+          </p>
+          {telegram && !sent && (
+            <p className="text-sm text-muted-foreground">
+              {t("slip.waOrUpload")}
+            </p>
+          )}
+          <AlertDialogFooter className="grid grid-cols-2 gap-2 sm:flex sm:justify-between">
+            <AlertDialogCancel className="h-11 lg:h-9">
+              {t("actions.back")}
+            </AlertDialogCancel>
+            <Button asChild className="h-11 lg:h-9">
+              <a
+                href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => {
+                  setAsking(false)
+                  // opening WhatsApp tells the team a slip is coming, once
+                  if (!sent && !pending)
+                    void onSend({ via: "whatsapp" }).catch(() => {})
+                }}
+              >
+                <MessageCircleIcon />
+                {t("slip.waOpen")}
+              </a>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {!telegram && !whatsappNumber && markOnly && !sent && (
         <Button

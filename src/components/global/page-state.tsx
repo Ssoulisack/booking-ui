@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useRouteError } from "react-router"
 
 import { ErrorAlert } from "@/components/global/form"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { isStaleBuildError, reloadIfStaleBuild } from "@/lib/stale-build"
 
 /** Full-area loading state while a page's first data arrives */
 export function PageLoader() {
@@ -64,7 +66,16 @@ export function NotFound() {
 export function CrashScreen() {
   const { t } = useTranslation()
   const error = useRouteError()
-  console.error(error)
+  // a page file of the previous build (after a deploy): reload once to get the new one, without showing this screen
+  const stale = isStaleBuildError(error)
+  const [gaveUp, setGaveUp] = useState(false)
+  useEffect(() => {
+    if (!stale || !reloadIfStaleBuild(error)) {
+      console.error(error)
+      setGaveUp(true)
+    }
+  }, [stale, error])
+  if (!gaveUp) return <PageLoader />
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
       <PageTitle title={t("crash.title")} lead={t("crash.lead")} />

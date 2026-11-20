@@ -421,9 +421,10 @@ function Details({ booking: b }: { booking: Booking }) {
                   ? t("desk.confirmUnpaidYes")
                   : t("desk.confirmPaidYes")
               }
-              // an event table the customer never sent a slip for: the team must be sure the money is really there
+              // an event table the customer never sent a slip for (pending or already confirmed): the team must be
+              // sure the money is really there
               warning={
-                confirming !== "unpaid" && waitingForMoney && !b.slip_sent_at
+                confirming !== "unpaid" && isEvent && !b.slip_sent_at
                   ? t("desk.confirmPaidNoSlip")
                   : undefined
               }

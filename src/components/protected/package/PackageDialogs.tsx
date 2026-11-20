@@ -157,6 +157,15 @@ export function MarkPaidDialog({
       }}
     >
       <MethodPicker name="mp-method" value={method} onChange={setMethod} />
+      {/* a transfer or QR the customer never sent a slip for: the team must check the money is really there */}
+      {method !== "cash" && !pkg.slip_sent_at && (
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm font-medium text-destructive"
+        >
+          {t("packages.markPaidNoSlip")}
+        </p>
+      )}
     </FormDialog>
   )
 }

@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query"
+import { useUnsaved } from "@/stores/unsaved"
 import { useSendPackageSlip } from "@/hooks/use-checkout"
 import { CheckCircle2Icon, DownloadIcon } from "lucide-react"
 import { useState } from "react"
@@ -39,6 +40,14 @@ export function PackagePay({
       if (updated.slip_sent_at) toast.success(t("slip.sentToast"))
     },
   })
+
+  // the package waits for payment until it is paid or a slip is sent: leaving the page asks first
+  useUnsaved(
+    pkg.status !== "cancelled" &&
+      pkg.payment_status !== "paid" &&
+      !(pkg.slip_sent_at ?? slip.data?.slip_sent_at),
+    "payment",
+  )
 
   if (pkg.status === "cancelled")
     return (

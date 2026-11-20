@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query"
+import { useUnsaved } from "@/stores/unsaved"
 import { useSendBookingSlip } from "@/hooks/use-checkout"
 import { useEffect, useState } from "react"
 import { CheckCircle2Icon, ClockIcon, DownloadIcon } from "lucide-react"
@@ -96,6 +97,15 @@ export function EventPayPanel({
         toast.success(t("public.events.pay.slipDone"))
       },
     },
+  )
+
+  // the tables are held until the customer pays or sends the slip: leaving the page asks first
+  useUnsaved(
+    booking.status !== "cancelled" &&
+      booking.payment_status !== "paid" &&
+      !paidOnline &&
+      !(booking.slip_sent_at ?? slip.data?.slip_sent_at),
+    "payment",
   )
 
   if (booking.status === "cancelled")

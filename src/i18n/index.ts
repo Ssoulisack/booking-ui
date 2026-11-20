@@ -13,9 +13,21 @@ export type Language = (typeof LANGUAGES)[number]
 
 const STORAGE_KEY = "booking.lang"
 
+// a visitor who never picked a language: the website starts in Lao (the customers are in Laos); the backoffice
+// keeps English. On a business's page its own language setting comes next (applyBusinessLanguage).
+const DEFAULT_LANGUAGE: Language =
+  import.meta.env.MODE === "admin" ? "en" : "lo"
+
 function savedLanguage(): Language {
-  const saved = localStorage.getItem(STORAGE_KEY)
-  return LANGUAGES.includes(saved as Language) ? (saved as Language) : "en"
+  let saved: string | null = null
+  try {
+    saved = localStorage.getItem(STORAGE_KEY)
+  } catch {
+    // storage blocked (private mode): the default
+  }
+  return LANGUAGES.includes(saved as Language)
+    ? (saved as Language)
+    : DEFAULT_LANGUAGE
 }
 
 // Lao and Thai have no singular/plural, so their files only have the `_other` form of a plural key. Anything
@@ -49,7 +61,7 @@ export function chooseLanguage(lng: Language) {
 /** On a public page: use the business's language unless the visitor picked one */
 export function applyBusinessLanguage(lng: string) {
   if (localStorage.getItem(STORAGE_KEY)) return
-  const supported = LANGUAGES.includes(lng as Language) ? lng : "en"
+  const supported = LANGUAGES.includes(lng as Language) ? lng : DEFAULT_LANGUAGE
   if (i18n.language !== supported) void i18n.changeLanguage(supported)
 }
 

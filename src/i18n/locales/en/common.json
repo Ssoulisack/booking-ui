@@ -709,7 +709,11 @@
     "tabTitle": "This tab has changes that are not saved",
     "tabLead": "If you open another tab now, they will be lost.",
     "tabKeep": "Keep editing",
-    "tabLeave": "Leave"
+    "tabLeave": "Leave",
+    "paymentTitle": "Leave without paying?",
+    "paymentLead": "This is not paid yet. If you leave now it stays unpaid, and a booking that is not paid in time is released. You can come back and pay later.",
+    "paymentStay": "Stay and pay",
+    "paymentLeave": "Leave"
   },
   "media": {
     "lead": "Every picture uploaded here. Upload new ones, see where each is used, and delete the ones nothing uses.",
@@ -2408,7 +2412,12 @@
     "mark": "I sent the slip",
     "sent": "Thank you. The team will check your payment.",
     "sentPicture": "Slip sent. The team will check it and confirm your payment.",
-    "sentToast": "Slip sent"
+    "sentToast": "Slip sent",
+    "waTitle": "Send your payment slip on WhatsApp",
+    "waLead": "WhatsApp opens with your booking code and the amount already written. In the chat, attach the photo of your payment slip and send it, so the staff can check and confirm your payment.",
+    "waWarning": "You must attach the slip photo. A message without the slip photo cannot be checked, and the staff will reject the payment.",
+    "waOrUpload": "Or go back and send the slip photo here instead.",
+    "waOpen": "Open WhatsApp"
   },
   "packages": {
     "title": "Packages",
@@ -2524,6 +2533,7 @@
     "howPaid": "How was it paid?",
     "markPaidTitle": "{{code}} paid",
     "markPaidLead": "{{price}} received. The package starts today.",
+    "markPaidNoSlip": "Careful: the customer has NOT sent a payment slip. Only mark it paid if the money is really in your account.",
     "paidDone": "Marked paid. The package is ready to use.",
     "sellLead": "Sell a package to a customer who has an account.",
     "sellSubmit": "Sell",

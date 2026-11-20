@@ -34,6 +34,10 @@ export function UnsavedGuard() {
   const booking = useUnsavedStore(
     (s) => s.entries.length > 0 && s.entries.every((e) => e.kind === "booking"),
   )
+  // something not paid yet: these words win over the others (money matters most)
+  const payment = useUnsavedStore((s) =>
+    s.entries.some((e) => e.kind === "payment"),
+  )
   const tables = useUnsavedStore(
     (s) => s.entries.length > 0 && s.entries.every((e) => e.kind === "tables"),
   )
@@ -56,33 +60,40 @@ export function UnsavedGuard() {
     blocker.state === "blocked" &&
     blocker.location.pathname === window.location.pathname
   // the words follow what would be lost
-  const words = tables
+  const words = payment
     ? {
-        title: "unsaved.tablesTitle",
-        lead: "unsaved.tablesLead",
-        stay: "unsaved.tablesStay",
-        leave: "unsaved.tablesLeave",
+        title: "unsaved.paymentTitle",
+        lead: "unsaved.paymentLead",
+        stay: "unsaved.paymentStay",
+        leave: "unsaved.paymentLeave",
       }
-    : booking && stepBack
+    : tables
       ? {
-          title: "unsaved.timeTitle",
-          lead: "unsaved.timeLead",
-          stay: "unsaved.timeStay",
-          leave: "unsaved.timeLeave",
+          title: "unsaved.tablesTitle",
+          lead: "unsaved.tablesLead",
+          stay: "unsaved.tablesStay",
+          leave: "unsaved.tablesLeave",
         }
-      : booking
+      : booking && stepBack
         ? {
-            title: "unsaved.bookingTitle",
-            lead: "unsaved.bookingLead",
-            stay: "unsaved.bookingStay",
-            leave: "unsaved.bookingLeave",
+            title: "unsaved.timeTitle",
+            lead: "unsaved.timeLead",
+            stay: "unsaved.timeStay",
+            leave: "unsaved.timeLeave",
           }
-        : {
-            title: "unsaved.title",
-            lead: "unsaved.lead",
-            stay: "unsaved.stay",
-            leave: "unsaved.leave",
-          }
+        : booking
+          ? {
+              title: "unsaved.bookingTitle",
+              lead: "unsaved.bookingLead",
+              stay: "unsaved.bookingStay",
+              leave: "unsaved.bookingLeave",
+            }
+          : {
+              title: "unsaved.title",
+              lead: "unsaved.lead",
+              stay: "unsaved.stay",
+              leave: "unsaved.leave",
+            }
 
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => {
