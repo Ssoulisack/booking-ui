@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { type UseMutationResult } from "@tanstack/react-query"
 import { MailOpenIcon } from "lucide-react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { Trans, useTranslation } from "react-i18next"
 import { Link, useNavigate, useParams } from "react-router"
@@ -15,9 +16,13 @@ import { AuthHeading } from "@/components/layout/AuthLayout"
 import { useCurrentBranch } from "@/stores/branch"
 import { useSession } from "@/stores/session"
 
-import { useAcceptInvitation, useInvitation } from "@/hooks/use-auth"
+import { useAcceptInvitation, useInvitation, useSmsOn } from "@/hooks/use-auth"
+import { displayPhone } from "@/lib/phone"
 import { type AcceptInput } from "@/types/auth"
+import { AuthSteps } from "./AuthSteps"
 import { homePath } from "./landing"
+import { PhoneCodeStep } from "./PhoneCodeStep"
+import { PhoneStep, ProvedPhone } from "./PhoneStep"
 import { acceptNewSchema, type AcceptNewValues } from "./schemas"
 
 /** Opened from the invite email: /invite/{token} */
@@ -156,6 +161,16 @@ function InviteAction({
   return <NewAccountForm company={info.company_name} accept={accept} />
 }
 
+const STEPS = [
+  "registerSteps.phone",
+  "registerSteps.code",
+  "registerSteps.details",
+]
+
+/**
+ * A new account for the invited email. The phone is required; with SMS codes on it goes step by step like register:
+ * 1 the phone → 2 the code texted to it (checked at once) → 3 name and password. With SMS codes off: one form.
+ */
 function NewAccountForm({
   company,
   accept,
@@ -164,16 +179,94 @@ function NewAccountForm({
   accept: UseMutationResult<AuthResponse, Error, AcceptInput>
 }) {
   const { t } = useTranslation()
+  const smsOn = useSmsOn()
+  const [step, setStep] = useState<"phone" | "code" | "details">("phone")
+  const [phone, setPhone] = useState("")
+  const [code, setCode] = useState("")
+
+  if (!smsOn) return <AccountDetails company={company} accept={accept} />
+
+  if (step === "code")
+    return (
+      <>
+        <AuthSteps step={2} labels={STEPS} />
+        <PhoneCodeStep
+          phone={phone.trim()}
+          purpose="register"
+          subtitle={t("smsCode.sentTo", { phone: displayPhone(phone.trim()) })}
+          onConfirmed={(right) => {
+            setCode(right)
+            setStep("details")
+          }}
+          onChangePhone={() => setStep("phone")}
+        />
+      </>
+    )
+
+  if (step === "details")
+    return (
+      <>
+        <AuthSteps step={3} labels={STEPS} />
+        <AccountDetails
+          company={company}
+          accept={accept}
+          proved={{
+            phone: phone.trim(),
+            code,
+            onChange: () => {
+              setCode("")
+              setStep("phone")
+            },
+          }}
+        />
+      </>
+    )
+
+  return (
+    <div className="space-y-4">
+      <AuthSteps step={1} labels={STEPS} />
+      <p className="text-sm text-muted-foreground">
+        {t("registerSteps.phoneLead")}
+      </p>
+      <PhoneStep
+        phone={phone}
+        onPhone={setPhone}
+        onSent={() => setStep("code")}
+      />
+    </div>
+  )
+}
+
+/** Name and password (and the phone, unless it was already proved with an SMS code: then it is shown, with Change) */
+function AccountDetails({
+  company,
+  accept,
+  proved,
+}: {
+  company: string
+  accept: UseMutationResult<AuthResponse, Error, AcceptInput>
+  proved?: { phone: string; code: string; onChange: () => void }
+}) {
+  const { t } = useTranslation()
   const form = useForm<AcceptNewValues>({
     resolver: zodResolver(acceptNewSchema),
-    defaultValues: { name: "", phone: "", password: "", confirm: "" },
+    defaultValues: {
+      name: "",
+      phone: proved?.phone ?? "",
+      password: "",
+      confirm: "",
+    },
   })
   const { errors } = form.formState
 
   return (
     <form
       onSubmit={form.handleSubmit(({ name, phone, password }) =>
-        accept.mutate({ name, phone, password }),
+        accept.mutate(
+          proved
+            ? { name, password, phone: proved.phone, phone_code: proved.code }
+            : { name, phone, password },
+        ),
       )}
       noValidate
       className="space-y-5"
@@ -182,6 +275,9 @@ function NewAccountForm({
         {t("invite.createAccount")}
       </p>
       <ErrorAlert error={accept.error} />
+      {proved && (
+        <ProvedPhone phone={proved.phone} onChange={proved.onChange} />
+      )}
       <FieldGroup>
         <TextField
           label={t("fields.name")}
@@ -189,14 +285,16 @@ function NewAccountForm({
           registration={form.register("name")}
           error={errors.name}
         />
-        <TextField
-          label={t("fields.phone")}
-          type="tel"
-          autoComplete="tel"
-          inputMode="tel"
-          registration={form.register("phone")}
-          error={errors.phone}
-        />
+        {!proved && (
+          <TextField
+            label={t("identity.phoneLao")}
+            type="tel"
+            autoComplete="tel"
+            inputMode="tel"
+            registration={form.register("phone")}
+            error={errors.phone}
+          />
+        )}
         <TextField
           label={t("fields.password")}
           type="password"

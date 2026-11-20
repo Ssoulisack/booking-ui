@@ -10,7 +10,6 @@ const email = z
   .email("validation.email")
 const password = z.string().min(8, "validation.passwordMin")
 const name = z.string().trim().min(1, "validation.required")
-const phone = z.string().trim().optional()
 
 export const loginSchema = z.object({
   login: z.string().trim().min(1, "validation.required"),
@@ -76,8 +75,9 @@ export const resetSchema = z
   .object({ password, confirm: z.string() })
   .refine((v) => v.password === v.confirm, passwordsMatch)
 
+// a new team member always has a Lao mobile phone (proved with an SMS code while SMS codes are on)
 export const acceptNewSchema = z
-  .object({ name, phone, password, confirm: z.string() })
+  .object({ name, phone: phoneRequired, password, confirm: z.string() })
   .refine((v) => v.password === v.confirm, passwordsMatch)
 
 export type LoginValues = z.infer<typeof loginSchema>

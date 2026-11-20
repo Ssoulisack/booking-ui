@@ -91,5 +91,8 @@ export interface ProfileInput {
 export interface AcceptInput {
   name?: string
   password?: string
+  /** required for a new account */
   phone?: string
+  /** the SMS code (purpose "register"), while SMS codes are on */
+  phone_code?: string
 }
